@@ -37,6 +37,8 @@ Method to create new SFDX Project. If the project is created, the projectFolder 
 
 SFDXProjectResult Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('MyOrg', '51.0', undefined, 'namespacePrefix');
@@ -47,6 +49,9 @@ SFDXProjectResult Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+
+**Example with await:**
 
     try {
         const result = await createSFDXProject(projectName, outputDir, template, withManifest);
@@ -63,6 +68,8 @@ Method to set the Auth Org on a SFDX Project. If the Org is authorized, the user
 
 SFDXProjectResult Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection(undefined, '51.0', 'path/to/Project', 'namespacePrefix');
@@ -71,6 +78,8 @@ SFDXProjectResult Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         await setAuthOrg(usuernameOrAlias);
@@ -83,6 +92,8 @@ SFDXProjectResult Class to process response are in @ah/core Types Module.
 
 Method to query data
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -94,6 +105,8 @@ Method to query data
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const records = await connection.query('Select Id, Name from Accounts', useToolingApi);
@@ -109,6 +122,8 @@ Method to query data
 
 Method to export data in tree format
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -121,6 +136,8 @@ Method to export data in tree format
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const result = await connection.exportTreeData('Select Id, Name from Accounts', filePrefix, outputPath);
@@ -137,6 +154,8 @@ Method to export data in tree format
 
 Method to import data in tree format
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -149,6 +168,8 @@ Method to import data in tree format
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const results = await connection.importTreeData(filePath);
@@ -166,6 +187,8 @@ Method to import data in tree format
 Method to delete data with BulkAPI
 
 BulkStatus Class to process response are in @ah/core Types Module.
+
+**Example with then().catch():**
 
     const Connection = require('@ah/connector');
 
@@ -185,6 +208,8 @@ BulkStatus Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const statuses = await connection.bulkDelete(csvFile, sObject);
@@ -209,6 +234,8 @@ Method to execute an Script file on Anonymous apex execution
 
 BulkStatus Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -217,6 +244,8 @@ BulkStatus Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const statuses = await connection.executeApexAnonymous(csvFile, sObject);
@@ -230,6 +259,8 @@ BulkStatus Class to process response are in @ah/core Types Module.
 Method to list the auth orgs on your system
 
 AuthOrg Class to process response are in @ah/core Types Module.
+
+**Example with then().catch():**
 
     const Connection = require('@ah/connector');
 
@@ -246,6 +277,8 @@ AuthOrg Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const authOrgs = await connection.listAuthOrgs();
@@ -267,6 +300,8 @@ Method to List All Metadata Types available in your Org
 
 MetadataDetail Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -281,6 +316,8 @@ MetadataDetail Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const metadataDetails = await connection.listMetadataTypes();
@@ -301,6 +338,8 @@ Method to describe the specified metadata types from your Org
 
 MetadataType Class, MetadataObject Class and MetadataItem Class to process response are in @ah/core Types Module.
     
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
     const { MetadataTypes } = require('@ah/core').Values;
 
@@ -352,6 +391,8 @@ MetadataType Class, MetadataObject Class and MetadataItem Class to process respo
         // Handle errors
     });
 
+**Example with await:**
+
     try {
         const metadataDetails = await connection.listMetadataTypes();   // Also accept a list of metadata details to download
         const metadataTypes = await connection.describeMetadataTypes(metadataDetails, downloadAll, (status) => {
@@ -401,6 +442,8 @@ MetadataType Class, MetadataObject Class and MetadataItem Class to process respo
 
 Method to list all available Salesforce SObejcts in your org.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -411,6 +454,8 @@ Method to list all available Salesforce SObejcts in your org.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const sObjectNames = await connection.listSObjects();
@@ -426,6 +471,8 @@ Method to list all available Salesforce SObejcts in your org.
 Method to describe the sepecified SObjects on your Org.
 
 SObject Class, SObjectField Class, PicklistValue Class and RecordType Class to process response are in @ah/core Types Module.
+
+**Example with then().catch():**
 
     const Connection = require('@ah/connector');
 
@@ -472,6 +519,8 @@ SObject Class, SObjectField Class, PicklistValue Class and RecordType Class to p
         // Handle errors
     });
 
+**Example with await:**
+
     try {
         const sObjectNames = await connection.describeSObjects(['Account', 'Case'], (status) => {
             // Progress callback to handle the downlaod progress
@@ -517,6 +566,8 @@ SObject Class, SObjectField Class, PicklistValue Class and RecordType Class to p
 
 Method to retrieve data from your Org. You can retrieve data on Source or Metadata API format. RetrieveResult Class, RetrieveInboundFile Class, RetrievePackage Class and RetrieveWarning Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -532,6 +583,8 @@ Method to retrieve data from your Org. You can retrieve data on Source or Metada
         // Handle errors
     });
 
+**Example with await:**
+
     try {
         const result = await connection.retrieve(useMetadataAPI, waitMinutes, targetDir);
         console.log(result.inboundFiles);
@@ -546,6 +599,8 @@ Method to retrieve data from your Org. You can retrieve data on Source or Metada
 Method to run a Retrive Report to check the retrieve status
 
 RetrieveStatus Class to process response are in @ah/core Types Module.
+
+**Example with then().catch():**
 
     const Connection = require('@ah/connector');
 
@@ -563,6 +618,8 @@ RetrieveStatus Class to process response are in @ah/core Types Module.
         // Handle errors
     });
 
+**Example with await:**
+
     try {
         const status = await connection.retrieveReport(retrieveId, targetDir);
         console.log(status.id);
@@ -579,6 +636,8 @@ RetrieveStatus Class to process response are in @ah/core Types Module.
 Method to Validate a package.xml for deploy.
 
 DeployStatus Class to process response are in @ah/core Types Module.
+
+**Example with then().catch():**
 
     const Connection = require('@ah/connector');
 
@@ -605,6 +664,8 @@ DeployStatus Class to process response are in @ah/core Types Module.
         // Handle errors
     });
 
+**Example with await:**
+
     try {
         const status = await connection.validateDeploy(retrieveId, targetDir);
         console.log(status.id);
@@ -629,6 +690,8 @@ DeployStatus Class to process response are in @ah/core Types Module.
 Method to deploy a package.xml in your Org
 
 DeployStatus Class to process response are in @ah/core Types Module.
+
+**Example with then().catch():**
 
     const Connection = require('@ah/connector');
 
@@ -655,6 +718,8 @@ DeployStatus Class to process response are in @ah/core Types Module.
         // Handle errors
     });
 
+**Example with await:**
+
     try {
         const status = await connection.deploy(retrieveId, targetDir);
         console.log(status.id);
@@ -680,6 +745,8 @@ Method to quick deploy a validated package
 
 DeployStatus Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -702,6 +769,8 @@ DeployStatus Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const status = await connection.quickDeploy(deployId, useMetadataAPI);
@@ -728,6 +797,8 @@ Method to get the status of a deploy
 
 DeployStatus Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -750,6 +821,8 @@ DeployStatus Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const status = await connection.deployReport(deployId, useMetadataAPI, waitMinutes);
@@ -776,6 +849,8 @@ Method to cancel a Deploy
 
 DeployStatus Class to process response are in @ah/core Types Module.
 
+**Example with then().catch():**
+
     const Connection = require('@ah/connector');
 
     const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
@@ -798,6 +873,8 @@ DeployStatus Class to process response are in @ah/core Types Module.
     }).cath((error) => {
         // Handle errors
     });
+
+**Example with await:**
 
     try {
         const status = await connection.cancelDeploy(deployId, useMetadataAPI, waitMinutes);
