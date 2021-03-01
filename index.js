@@ -257,7 +257,7 @@ class Connection {
                 if (useMetadataAPI) {
                     process = ProcessFactory.mdapiRetrievePackage(this.usernameOrAlias, this.packageFolder, this.apiVersion, targetDir, this.projectFolder, waitMinutes);
                 } else {
-                    process = ProcessFactory.sourceRetrievePackage(this.usernameOrAlias, this.packageFile, this.apiVersion, this.projectFolder, waitMinutes);
+                    process = ProcessFactory.sourceRetrievePackage(this.usernameOrAlias, this.packageFile, this.projectFolder, this.apiVersion, waitMinutes);
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
