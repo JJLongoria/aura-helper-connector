@@ -1,0 +1,45 @@
+{
+  "name": "@ah/connector",
+  "productName": "Aura Helper SalesForce Metadata Connector",
+  "version": "1.0.0",
+  "description": "Powerfull Libraries to connect with Salesforce to list, describe, deploy or retrieve metadata types. Also can describe SObjects, Create Projects, Authorize Orgs, Execute Queries, Export or Import Data... To the correct work of this library, you need to have SFDX CLI installed in your system.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage --runInBand"
+  },
+  "keywords": [
+    "Metadata Connector",
+    "Salesforce Connector",
+    "Metadata",
+    "Connector",
+    "Package Generator",
+    "GIT",
+    "Factory",
+    "Describe Metadata",
+    "List Metadata",
+    "Deploy Metadata",
+    "Retrieve Metadata",
+    "Package Generator",
+    "Describe SObjects",
+    "Auth Org",
+    "Salesforce",
+    "Force.com",
+    "Aura",
+    "Aura Helper",
+    "AuraHelper",
+    "aura-helper",
+    "aura-helper-cli",
+    "Aura Helper CLI",
+    "Aura Helper VSCode",
+    "Aura Helper Extension"
+  ],
+  "author": "Juan José Longoria López (Kanko) <juanjoselongoria@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@ah/core": "file:../ah-core"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.20",
+    "jest": "^26.6.3"
+  }
+}
