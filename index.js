@@ -779,7 +779,7 @@ function downloadSObjectsData(connection, sObjects, progressCallback) {
                 addProcess(connection, process);
                 const response = await ProcessHandler.runProcess(process);
                 handleResponse(response, () => {
-                    const sObjectResult = TypesFactory.createMetadataFromJSONSchema(response);
+                    const sObjectResult = TypesFactory.createSObjectFromJSONSchema(response);
                     connection.percentage += connection.increment;
                     if (sObjectResult !== undefined)
                         sObjectsResult[sObject] = sObjectResult;
