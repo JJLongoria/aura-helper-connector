@@ -1,8 +1,14 @@
 const { ProcessHandler, ProcessFactory } = require('@ah/core').ProcessManager;
-const { TypesFactory, RetrieveStatus, DeployStatus, RetrieveResult, SFDXProjectResult, BulkStatus } = require('@ah/core').Types;
-const { OSUtils, Utils, MathUtils, StrUtils } = require('@ah/core').Utils;
-const { MetadataTypes, NotIncludedMetadata } = require('@ah/core').Values;
-const path = require('path');
+const { RetrieveStatus, DeployStatus, RetrieveResult, SFDXProjectResult, BulkStatus, AuthOrg, MetadataType, MetadataObject, ProgressStatus } = require('@ah/core').Types;
+const { OSUtils, Utils, MathUtils, StrUtils, Validator, MetadataUtils, ProjectUtils } = require('@ah/core').CoreUtils;
+const { MetadataTypes, NotIncludedMetadata, SpecialMetadata, ProgressStages } = require('@ah/core').Values;
+const { FileChecker, FileReader, FileWriter, PathUtils } = require('@ah/core').FileSystem;
+const TypesFactory = require('@ah/metadata-factory');
+const PackageGenerator = require('@ah/package-generator');
+const XMLCompressor = require('@ah/xml-compressor');
+const { XMLParser, XMLUtils } = require('@ah/languages').XML;
+
+const PROJECT_NAME = 'TempProject';
 
 const METADATA_QUERIES = {
     Report: 'Select Id, DeveloperName, NamespacePrefix, FolderName from Report',
@@ -10,12 +16,15 @@ const METADATA_QUERIES = {
     Document: 'Select Id, DeveloperName, NamespacePrefix, FolderId from Document',
     EmailTemplate: 'Select Id, DeveloperName, NamespacePrefix, FolderId FROM EmailTemplate'
 }
+const SUBFOLDER_BY_METADATA_TYPE = {
+    RecordType: 'recordTypes'
+}
 class Connection {
 
     constructor(usernameOrAlias, apiVersion, projectFolder, namespacePrefix) {
         this.usernameOrAlias = usernameOrAlias;
         this.apiVersion = apiVersion;
-        this.projectFolder = (projectFolder !== undefined) ? StrUtils.replace(path.resolve(projectFolder), '\\', '/') : projectFolder;
+        this.projectFolder = (projectFolder !== undefined) ? PathUtils.getAbsolutePath(projectFolder) : projectFolder;
         this.processes = {};
         this.abort = false;
         this.percentage = 0;
@@ -24,12 +33,25 @@ class Connection {
         this.namespacePrefix = (namespacePrefix !== undefined) ? namespacePrefix : '';
         this.multiThread = false;
         this.abortCallback;
+        this.progressCallback;
         this.allowConcurrence = false;
+        this.packageFolder = this.projectFolder + '/manifest';
+        this.packageFile = this.projectFolder + '/manifest/package.xml';
+    }
+
+    onProgress(progressCallback) {
+        this.progressCallback = progressCallback;
+    }
+
+    onAbort(abortCallback) {
+        this.abortCallback = abortCallback;
     }
 
     abortConnection() {
         this.abort = true;
         killProcesses(this);
+        if (this.abortCallback)
+            this.abortCallback.call(this);
     }
 
     setUsernameOrAlias(usernameOrAlias) {
@@ -43,16 +65,21 @@ class Connection {
     }
 
     setProjectFolder(projectFolder) {
-        this.projectFolder = (projectFolder !== undefined) ? StrUtils.replace(path.resolve(projectFolder), '\\', '/') : projectFolder;
+        this.projectFolder = (projectFolder !== undefined) ? PathUtils.getAbsolutePath(projectFolder) : projectFolder;
+        this.packageFolder = this.projectFolder + '/manifest';
+        this.packageFile = this.projectFolder + '/manifest/package.xml';
         return this;
     }
 
     setPackageFile(packageFile) {
-        this.packageFile = (packageFile !== undefined) ? StrUtils.replace(path.resolve(packageFile), '\\', '/') : packageFile;
+        this.packageFile = (packageFile !== undefined) ? PathUtils.getAbsolutePath(packageFile) : packageFile;
+        return this;
     }
 
     setPackageFolder(packageFolder) {
-        this.packageFolder = (packageFolder !== undefined) ? StrUtils.replace(path.resolve(packageFolder), '\\', '/') : packageFolder;
+        this.packageFolder = (packageFolder !== undefined) ? PathUtils.getAbsolutePath(packageFolder) : packageFolder;
+        this.packageFile = this.projectFolder + '/manifest/package.xml';
+        return this;
     }
 
     setNamespacePrefix(namespacePrefix) {
@@ -62,10 +89,79 @@ class Connection {
 
     setMultiThread() {
         this.multiThread = true;
+        return this;
     }
 
     setSingleThread() {
         this.multiThread = false;
+        return this;
+    }
+
+    getAuthUsername() {
+        startOperation(this);
+        return new Promise(async (resolve, reject) => {
+            try {
+                this.allowConcurrence = true;
+                const authOrgs = await this.listAuthOrgs();
+                let username;
+                if (authOrgs && authOrgs.length > 0) {
+                    const defaultUsername = this.usernameOrAlias || ProjectUtils.getOrgAlias(this.projectFolder);
+                    for (const authOrg of authOrgs) {
+                        if (defaultUsername.indexOf('@') !== -1) {
+                            if (authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim())
+                                username = authOrg.username;
+                        } else {
+                            if (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim())
+                                username = authOrg.username;
+                        }
+                        if (!username && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim())))
+                            username = authOrg.username;
+                    }
+                    this.allowConcurrence = false;
+                    endOperation(this);
+                    resolve(username);
+                } else {
+                    this.allowConcurrence = false;
+                    endOperation(this);
+                    resolve(undefined);
+                }
+            } catch (error) {
+                this.allowConcurrence = false;
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+    getServerInstance(usernameOrAlias) {
+        usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
+        startOperation(this);
+        return new Promise(async (resolve, reject) => {
+            try {
+                this.allowConcurrence = true;
+                const authOrgs = await this.listAuthOrgs();
+                let inbstanceUrl;
+                if (authOrgs && authOrgs.length > 0) {
+                    for (const authOrg of authOrgs) {
+                        if ((usernameOrAlias.indexOf('@') !== -1 && authOrg.username === usernameOrAlias) || (usernameOrAlias.indexOf('@') === -1 && authOrg.alias === usernameOrAlias)) {
+                            inbstanceUrl = authOrg.instanceUrl;
+                            break;
+                        }
+                    }
+                    this.allowConcurrence = false;
+                    endOperation(this);
+                    resolve(inbstanceUrl);
+                } else {
+                    this.allowConcurrence = false;
+                    endOperation(this);
+                    resolve(undefined);
+                }
+            } catch (error) {
+                this.allowConcurrence = false;
+                endOperation(this);
+                reject(error);
+            }
+        });
     }
 
     query(query, userToolingApi) {
@@ -100,7 +196,7 @@ class Connection {
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
                         const orgs = (response !== undefined) ? response.result : undefined;
-                        const authOrgs = TypesFactory.createAuthOrgs(orgs);
+                        const authOrgs = createAuthOrgs(orgs);
                         endOperation(this);
                         resolve(authOrgs);
                     });
@@ -139,7 +235,8 @@ class Connection {
         });
     }
 
-    describeMetadataTypes(typesOrDetails, downloadAll, progressCallback) {
+    describeMetadataTypes(typesOrDetails, downloadAll) {
+        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
@@ -147,7 +244,7 @@ class Connection {
                 this.allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(typesOrDetails);
                 this.increment = calculateIncrement(metadataToProcess);
-                callProgressCalback(progressCallback, this, 'prepare');
+                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
                 let foldersByType;
                 if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
                     foldersByType = await getFoldersByType(this);
@@ -166,7 +263,7 @@ class Connection {
                                 nCompleted++;
                         }
                         if (nCompleted === batchesToProcess.length) {
-                            metadata = Utils.orderMetadata(metadata);
+                            metadata = MetadataUtils.orderMetadata(metadata);
                             this.allowConcurrence = false;
                             endOperation(this);
                             resolve(metadata);
@@ -209,18 +306,19 @@ class Connection {
         });
     }
 
-    describeSObjects(sObjects, progressCallback) {
+    describeSObjects(sObjects) {
+        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
                 this.increment = calculateIncrement(sObjects);
-                callProgressCalback(progressCallback, this, 'prepare');
+                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
                 let resultObjects = {};
                 sObjects = Utils.forceArray(sObjects);
                 const batchesToProcess = getBatches(this, sObjects);
                 for (const batch of batchesToProcess) {
-                    downloadSObjectsData(this, batch.records, progressCallback).then((downloadedSObjects) => {
+                    downloadSObjectsData(this, batch.records).then((downloadedSObjects) => {
                         Object.keys(downloadedSObjects).forEach(function (key) {
                             resultObjects[key] = downloadedSObjects[key];
                         });
@@ -231,7 +329,7 @@ class Connection {
                                 nCompleted++;
                         }
                         if (nCompleted === batchesToProcess.length) {
-                            resultObjects = Utils.orderSObjects(resultObjects);
+                            resultObjects = MetadataUtils.orderSObjects(resultObjects);
                             endOperation(this);
                             resolve(resultObjects);
                             return;
@@ -254,14 +352,18 @@ class Connection {
         return new Promise((resolve, reject) => {
             try {
                 let process;
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
-                    process = ProcessFactory.mdapiRetrievePackage(this.usernameOrAlias, this.packageFolder, this.apiVersion, targetDir, this.projectFolder, waitMinutes);
+                    targetDir = Validator.validateFolderPath(targetDir);
+                    const packageFolder = Validator.validateFolderPath(this.packageFolder);
+                    process = ProcessFactory.mdapiRetrievePackage(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
                 } else {
-                    process = ProcessFactory.sourceRetrievePackage(this.usernameOrAlias, this.packageFile, this.projectFolder, this.apiVersion, waitMinutes);
+                    const packageFile = Validator.validateFilePath(this.packageFile);
+                    process = ProcessFactory.sourceRetrievePackage(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    handleResponse(response, async () => {
                         const status = (response !== undefined) ? new RetrieveResult(response.result) : undefined;
                         endOperation(this);
                         resolve(status);
@@ -282,6 +384,7 @@ class Connection {
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
+                targetDir = Validator.validateFolderPath(targetDir);
                 let process = ProcessFactory.mdapiRetrieveReport(this.usernameOrAlias, retrieveId, targetDir);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -312,10 +415,13 @@ class Connection {
                 runTests = runTests.join(',');
             try {
                 let process;
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
-                    process = ProcessFactory.mdapiValidatePackage(this.usernameOrAlias, this.packageFolder, testLevel, runTests, this.apiVersion, this.projectFolder, waitMinutes);
+                    const packageFolder = Validator.validateFolderPath(this.packageFolder);
+                    process = ProcessFactory.mdapiValidatePackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
                 } else {
-                    process = ProcessFactory.sourceValidatePackage(this.usernameOrAlias, this.packageFile, testLevel, runTests, this.apiVersion, this.projectFolder, waitMinutes);
+                    const packageFile = Validator.validateFilePath(this.packageFile);
+                    process = ProcessFactory.sourceValidatePackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -341,10 +447,13 @@ class Connection {
         return new Promise((resolve, reject) => {
             try {
                 let process;
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
-                    process = ProcessFactory.mdapiDeployPackage(this.usernameOrAlias, this.packageFolder, testLevel, runTests, this.apiVersion, this.projectFolder, waitMinutes);
+                    const packageFolder = Validator.validateFolderPath(this.packageFolder);
+                    process = ProcessFactory.mdapiDeployPackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
                 } else {
-                    process = ProcessFactory.sourceDeployPackage(this.usernameOrAlias, this.packageFile, testLevel, runTests, this.apiVersion, this.projectFolder, waitMinutes);
+                    const packageFile = Validator.validateFilePath(this.packageFile);
+                    process = ProcessFactory.sourceDeployPackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -370,10 +479,11 @@ class Connection {
         return new Promise((resolve, reject) => {
             try {
                 let process;
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
-                    process = ProcessFactory.mdapiQuickDeploy(this.usernameOrAlias, deployId, this.apiVersion, this.projectFolder);
+                    process = ProcessFactory.mdapiQuickDeploy(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
                 } else {
-                    process = ProcessFactory.sourceQuickDeploy(this.usernameOrAlias, deployId, this.apiVersion, this.projectFolder);
+                    process = ProcessFactory.sourceQuickDeploy(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -450,69 +560,75 @@ class Connection {
             }
         });
     }
-    /*
-        convertProjectToSFDX(targetDir){
-            startOperation(this);
-            resetProgress(this);
-            return new Promise((resolve, reject) => {
-                try {
-                    let process = ProcessFactory.convertToSFDX(this.packageFolder, this.packageFile, targetDir, this.apiVersion);
-                    addProcess(this, process);
-                    ProcessHandler.runProcess(process).then((response) => {
-                        handleResponse(response, () => {
-                            endOperation(this);
-                            resolve();
-                        });
-                    }).catch((error) => {
-                        endOperation(this);
-                        reject(error);
-                    });
-                } catch (error) {
-                    endOperation(this);
-                    reject(error);
-                }
-            });
-        }
-    
-        convertProjectToMetadataAPI(targetDir){
-            startOperation(this);
-            resetProgress(this);
-            return new Promise((resolve, reject) => {
-                try {
-                    let process = ProcessFactory.convertToMetadataAPI(this.packageFile, targetDir, this.projectFolder);
-                    addProcess(this, process);
-                    ProcessHandler.runProcess(process).then((response) => {
-                        handleResponse(response, () => {
-                            endOperation(this);
-                            resolve();
-                        });
-                    }).catch((error) => {
-                        endOperation(this);
-                        reject(error);
-                    });
-                } catch (error) {
-                    endOperation(this);
-                    reject(error);
-                }
-            });
-        }
-    */
-   
-    createSFDXProject(projectName, outputDir, template, withManifest) {
+
+    convertProjectToSFDX(targetDir) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                let process = ProcessFactory.createSFDXProject(projectName, outputDir, template, this.namespacePrefix, withManifest);
+                const packageFile = Validator.validateFilePath(this.packageFile);
+                const packageFolder = Validator.validateFolderPath(this.packageFolder);
+                targetDir = Validator.validateFolderPath(targetDir);
+                let process = ProcessFactory.convertToSFDX(packageFolder, packageFile, targetDir, this.apiVersion);
+                addProcess(this, process);
+                ProcessHandler.runProcess(process).then((response) => {
+                    handleResponse(response, () => {
+                        endOperation(this);
+                        resolve();
+                    });
+                }).catch((error) => {
+                    endOperation(this);
+                    reject(error);
+                });
+            } catch (error) {
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+    convertProjectToMetadataAPI(targetDir) {
+        startOperation(this);
+        resetProgress(this);
+        return new Promise((resolve, reject) => {
+            try {
+                const packageFile = Validator.validateFilePath(this.packageFile);
+                const projectFolder = Validator.validateFolderPath(this.packageFile);
+                let process = ProcessFactory.convertToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion);
+                addProcess(this, process);
+                ProcessHandler.runProcess(process).then((response) => {
+                    handleResponse(response, () => {
+                        endOperation(this);
+                        resolve();
+                    });
+                }).catch((error) => {
+                    endOperation(this);
+                    reject(error);
+                });
+            } catch (error) {
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+
+    createSFDXProject(projectName, projectFolder, template, withManifest) {
+        startOperation(this);
+        resetProgress(this);
+        return new Promise((resolve, reject) => {
+            try {
+                projectFolder = Validator.validateFolderPath(projectFolder || this.projectFolder);
+                let process = ProcessFactory.createSFDXProject(projectName, projectFolder, template, this.namespacePrefix, withManifest);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
                         const result = (response !== undefined) ? new SFDXProjectResult(response.result) : undefined;
-                        outputDir = StrUtils.replace(outputDir, '\\', '/');
-                        this.setProjectFolder(outputDir + '/' + projectName);
-                        if(withManifest){
-                            this.setPackageFolder(outputDir + '/' + projectName + '/manifest');
-                            this.setPackageFile(outputDir + '/' + projectName + '/manifest/package.xml');
+                        projectFolder = StrUtils.replace(projectFolder, '\\', '/');
+                        this.setProjectFolder(projectFolder + '/' + projectName);
+                        if (withManifest) {
+                            this.setPackageFolder(projectFolder + '/' + projectName + '/manifest');
+                            this.setPackageFile(projectFolder + '/' + projectName + '/manifest/package.xml');
                         }
                         endOperation(this);
                         resolve(result);
@@ -533,11 +649,12 @@ class Connection {
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                let process = ProcessFactory.setAuthOrg(usernameOrAlias || this.usernameOrAlias, this.projectFolder);
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
+                let process = ProcessFactory.setAuthOrg(usernameOrAlias || this.usernameOrAlias, projectFolder);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
-                        this.usernameOrAlias = this.usernameOrAlias || usernameOrAlias;
+                        this.usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
                         endOperation(this);
                         resolve();
                     });
@@ -552,12 +669,13 @@ class Connection {
         });
     }
 
-    exportTreeData(query, prefix, outputPath) {
+    exportTreeData(query, outputPath, prefix) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                let process = ProcessFactory.exportTreeData(this.usernameOrAlias, query, prefix, outputPath);
+                outputPath = Validator.validateFolderPath(outputPath);
+                let process = ProcessFactory.exportTreeData(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
@@ -580,7 +698,8 @@ class Connection {
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                let process = ProcessFactory.importTreeData(this.usernameOrAlias, file);
+                file = Validator.validateFilePath(file);
+                let process = ProcessFactory.importTreeData(this.usernameOrAlias, file, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     if (response.status === 0) {
@@ -593,12 +712,12 @@ class Connection {
                             });
                         }
                         endOperation(this);
-                        resolve(results);
+                        resolve({ results: results, errors: undefined });
                     } else {
                         if (response.name === 'ERROR_HTTP_400') {
                             let errorResults = JSON.parse(response.message);
                             endOperation(this);
-                            resolve(errorResults.results);
+                            resolve({ results: undefined, errors: errorResults.results });
                         } else {
                             endOperation(this);
                             reject(response.message);
@@ -620,13 +739,14 @@ class Connection {
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                csvfile = StrUtils.replace(path.resolve(csvfile), '\\', '/');
-                let process = ProcessFactory.bulkDelete(this.usernameOrAlias, csvfile, sObject);
+                csvfile = Validator.validateFilePath(csvfile);
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
+                let process = ProcessFactory.bulkDelete(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
                         const bulkStatus = [];
-                        for(const result of response.result){
+                        for (const result of response.result) {
                             bulkStatus.push(new BulkStatus(result));
                         }
                         endOperation(this);
@@ -648,8 +768,9 @@ class Connection {
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                scriptfile = path.resolve(scriptfile);
-                let process = ProcessFactory.executeApexAnonymous(this.usernameOrAlias, scriptfile, this.projectFolder);
+                scriptfile = Validator.validateFilePath(scriptfile);
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
+                let process = ProcessFactory.executeApexAnonymous(this.usernameOrAlias, scriptfile, projectFolder, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
@@ -666,8 +787,344 @@ class Connection {
             }
         });
     }
+
+    loadUserPermissions(tmpFolder) {
+        const progressCallback = getCallback(arguments, this);
+        startOperation(this);
+        resetProgress(this);
+        return new Promise(async (resolve, reject) => {
+            try {
+                tmpFolder = Validator.validateFolderPath(tmpFolder);
+                const originalProjectFolder = this.projectFolder;
+                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                this.allowConcurrence = true;
+                const metadata = {};
+                const metadataType = new MetadataType(MetadataTypes.PROFILE, true);
+                metadataType.childs["Admin"] = new MetadataObject("Admin", true);
+                metadata[MetadataTypes.PROFILE] = metadataType;
+                if (FileChecker.isExists(tmpFolder))
+                    FileWriter.delete(tmpFolder);
+                FileWriter.createFolderSync(tmpFolder);
+                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+                const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
+                    apiVersion: this.apiVersion,
+                    explicit: true,
+                });
+                FileWriter.delete(this.projectFolder + '/.forceignore');
+                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
+                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                const retrieveOut = await this.retrieve(false);
+                callProgressCalback(progressCallback, this, ProgressStages.PROCESS);
+                const result = [];
+                const xmlRoot = XMLParser.parseXML(FileReader.readFileSync(this.projectFolder + '/force-app/main/default/profiles/Admin.profile-meta.xml'), true);
+                if (xmlRoot[MetadataTypes.PROFILE] && xmlRoot[MetadataTypes.PROFILE].userPermissions) {
+                    let permissions = XMLUtils.forceArray(xmlRoot[MetadataTypes.PROFILE].userPermissions);
+                    for (let permission of permissions) {
+                        result.push(permission.name);
+                    }
+                }
+                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                //FileWriter.delete(tmpFolder);
+                restoreOriginalProjectData(this, originalProjectFolder);
+                this.allowConcurrence = false;
+                endOperation(this);
+                resolve(result);
+            } catch (error) {
+                this.allowConcurrence = false;
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+    retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder) {
+        const progressCallback = getCallback(arguments, this);
+        startOperation(this);
+        resetProgress(this);
+        return new Promise(async (resolve, reject) => {
+            try {
+                tmpFolder = Validator.validateFolderPath(tmpFolder);
+                if(types)
+                    Validator.validateMetadataJSON(types);
+                const originalProjectFolder = this.projectFolder;
+                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                const dataToRetrieve = [];
+                Object.keys(SpecialMetadata).forEach(function (key) {
+                    if (!types || types[key]) {
+                        if (!dataToRetrieve.includes(key))
+                            dataToRetrieve.push(key);
+                        for (let child of SpecialMetadata[key]) {
+                            if (!dataToRetrieve.includes(child))
+                                dataToRetrieve.push(child);
+                        }
+                    }
+                });
+                this.allowConcurrence = true;
+                const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
+                this.increment = calculateIncrement(metadataToProcess);
+                callProgressCalback(progressCallback, this, ProgressStages.LOADING_LOCAL);
+                const metadataDetails = await this.listMetadataTypes();
+                const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
+                const metadataFromFileSystem = TypesFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
+                const metadata = {};
+                for (const type of dataToRetrieve) {
+                    if (metadataFromFileSystem[type])
+                        metadata[type] = metadataFromFileSystem[type];
+                }
+                MetadataUtils.checkAll(metadata);
+                if (FileChecker.isExists(tmpFolder))
+                    FileWriter.delete(tmpFolder);
+                FileWriter.createFolderSync(tmpFolder);
+                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+                const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
+                    apiVersion: this.apiVersion,
+                    explicit: true,
+                });
+                FileWriter.delete(this.projectFolder + '/.forceignore');
+                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
+                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                const retrieveOut = await this.retrieve(false);
+                waitForFiles(this.projectFolder);
+                callProgressCalback(progressCallback, this, ProgressStages.COPY_DATA);
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromFileSystem, compress, sortOrder, progressCallback);
+                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                //FileWriter.delete(tmpFolder);
+                restoreOriginalProjectData(this, originalProjectFolder);
+                this.allowConcurrence = false;
+                endOperation(this);
+                resolve(retrieveOut);
+            } catch (error) {
+                this.allowConcurrence = false;
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+    retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
+        const progressCallback = getCallback(arguments, this);
+        startOperation(this);
+        resetProgress(this);
+        return new Promise(async (resolve, reject) => {
+            try {
+                tmpFolder = Validator.validateFolderPath(tmpFolder);
+                if(types)
+                    Validator.validateMetadataJSON(types);
+                const originalProjectFolder = this.projectFolder;
+                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                const dataToRetrieve = [];
+                Object.keys(SpecialMetadata).forEach(function (key) {
+                    if (!types || types[key]) {
+                        if (!dataToRetrieve.includes(key))
+                            dataToRetrieve.push(key);
+                        for (let child of SpecialMetadata[key]) {
+                            if (!dataToRetrieve.includes(child))
+                                dataToRetrieve.push(child);
+                        }
+                    }
+                });
+                this.allowConcurrence = true;
+                const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
+                this.increment = calculateIncrement(metadataToProcess);
+                callProgressCalback(progressCallback, this, ProgressStages.LOADING_LOCAL);
+                const metadataDetails = await this.listMetadataTypes();
+                const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
+                const metadataFromFileSystem = TypesFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
+                let metadata = {};
+                for (const type of dataToRetrieve) {
+                    if (metadataFromFileSystem[type])
+                        metadata[type] = metadataFromFileSystem[type];
+                }
+                callProgressCalback(progressCallback, this, ProgressStages.LOADING_ORG);
+                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll, progressCallback);
+                this.allowConcurrence = true;
+                metadata = MetadataUtils.combineMetadata(metadata, metadataFromOrg);
+                MetadataUtils.checkAll(metadata);
+                if (FileChecker.isExists(tmpFolder))
+                    FileWriter.delete(tmpFolder);
+                FileWriter.createFolderSync(tmpFolder);
+                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+                const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
+                    apiVersion: this.apiVersion,
+                    explicit: true,
+                });
+                FileWriter.delete(this.projectFolder + '/.forceignore');
+                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
+                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                const retrieveOut = await this.retrieve(false);
+                waitForFiles(this.projectFolder);
+                callProgressCalback(progressCallback, this, ProgressStages.COPY_DATA);
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadata, compress, sortOrder, progressCallback);
+                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                //FileWriter.delete(tmpFolder);
+                restoreOriginalProjectData(this, originalProjectFolder);
+                this.allowConcurrence = false;
+                endOperation(this);
+                resolve(retrieveOut);
+            } catch (error) {
+                this.allowConcurrence = false;
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+    retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
+        const progressCallback = getCallback(arguments, this);
+        startOperation(this);
+        resetProgress(this);
+        return new Promise(async (resolve, reject) => {
+            try {
+                tmpFolder = Validator.validateFolderPath(tmpFolder);
+                if(types)
+                    Validator.validateMetadataJSON(types);
+                const originalProjectFolder = this.projectFolder;
+                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                const dataToRetrieve = [];
+                Object.keys(SpecialMetadata).forEach(function (key) {
+                    if (!types || types[key]) {
+                        if (!dataToRetrieve.includes(key))
+                            dataToRetrieve.push(key);
+                        for (let child of SpecialMetadata[key]) {
+                            if (!dataToRetrieve.includes(child))
+                                dataToRetrieve.push(child);
+                        }
+                    }
+                });
+                this.allowConcurrence = true;
+                const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
+                this.increment = calculateIncrement(metadataToProcess);
+                callProgressCalback(progressCallback, this, ProgressStages.LOADING_ORG);
+                const metadataDetails = await this.listMetadataTypes();
+                const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
+                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll, progressCallback);
+                this.allowConcurrence = true;
+                MetadataUtils.checkAll(metadataFromOrg);
+                if (FileChecker.isExists(tmpFolder))
+                    FileWriter.delete(tmpFolder);
+                FileWriter.createFolderSync(tmpFolder);
+                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+                const packageResult = PackageGenerator.createPackage(metadataFromOrg, this.packageFolder, {
+                    apiVersion: this.apiVersion,
+                    explicit: true,
+                });
+                FileWriter.delete(this.projectFolder + '/.forceignore');
+                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
+                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                const retrieveOut = await this.retrieve(false);
+                waitForFiles(this.projectFolder);
+                callProgressCalback(progressCallback, this, ProgressStages.COPY_DATA);
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromOrg, compress, sortOrder, progressCallback);
+                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                //FileWriter.delete(tmpFolder);
+                restoreOriginalProjectData(this, originalProjectFolder);
+                this.allowConcurrence = false;
+                endOperation(this);
+                resolve(retrieveOut);
+            } catch (error) {
+                this.allowConcurrence = false;
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
 }
 module.exports = Connection;
+
+function getCallback(args, connection){
+    return Utils.getCallbackFunction(args) || connection.progressCallback;;
+}
+
+function waitForFiles(folder) {
+    return new Promise(async (resolve) => {
+        let files = await FileReader.getAllFiles(folder);
+        while (files.length == 0) {
+            files = await FileReader.getAllFiles(folder);
+        }
+        resolve();
+    });
+}
+
+function restoreOriginalProjectData(connection, originalProjectFolder) {
+    connection.setProjectFolder(originalProjectFolder);
+    connection.setPackageFolder(originalProjectFolder + '/manifest');
+    connection.setPackageFile(originalProjectFolder + '/manifest/package.xml');
+}
+
+function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, metadataTypes, compress, compressOrder, progressCallback) {
+    const path = connection.projectFolder;
+    for (const folder of (Object.keys(folderMetadataMap))) {
+        const metadataDetail = folderMetadataMap[folder];
+        const metadataTypeName = metadataDetail.xmlName;
+        if (!SpecialMetadata[metadataTypeName] || !metadataTypes[metadataTypeName])
+            continue;
+        const haveTypesToCopy = !Utils.isNull(types);
+        const typeToCopy = haveTypesToCopy ? types[metadataTypeName] : undefined;
+        if (haveTypesToCopy && !typeToCopy)
+            continue;
+        const metadataType = metadataTypes[metadataTypeName];
+        if (!metadataType.haveChilds())
+            continue;
+        for (const metadataObjectName of Object.keys(metadataType.getChilds())) {
+            const objectToCopy = (Utils.isNull(typeToCopy) || !MetadataUtils.haveChilds(typeToCopy)) ? undefined : typeToCopy.childs[metadataObjectName];
+            const metadataObject = metadataType.getChild(metadataObjectName);
+            if (metadataObject.haveChilds()) {
+                for (const metadataItemName of Object.keys(metadataObject.getChilds())) {
+                    const itemToCopy = (Utils.isNull(objectToCopy) || !MetadataUtils.haveChilds(objectToCopy)) ? undefined : objectToCopy.childs[metadataItemName];
+                    if (!haveTypesToCopy || (typeToCopy && typeToCopy.checked) || (objectToCopy && objectToCopy.checked) || (itemToCopy && itemToCopy.checked)) {
+                        let subPath;
+                        let fileName = metadataItemName + '.' + metadataDetail.suffix + '-meta.xml';
+                        if (SUBFOLDER_BY_METADATA_TYPE[metadataTypeName]) {
+                            subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + metadataObjectName + '/' + SUBFOLDER_BY_METADATA_TYPE[metadataTypeName] + '/' + fileName;
+                        } else {
+                            subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + metadataObjectName + '/' + fileName;
+                        }
+                        let sourceFile = path + '/' + subPath;
+                        let targetFile = targetProject + subPath;
+                        let targetFolder = PathUtils.getDirname(targetFile);
+                        if (FileChecker.isExists(sourceFile)) {
+                            callProgressCalback(progressCallback, connection, ProgressStages.COPY_FILE, metadataDetail, metadataObjectName, metadataItemName, targetFile);
+                            if (!FileChecker.isExists(targetFolder))
+                                FileWriter.createFolderSync(targetFolder);
+                            FileWriter.createFileSync(targetFile, FileReader.readFileSync(sourceFile));
+                            if (compress) {
+                                callProgressCalback(progressCallback, connection, ProgressStages.COMPRESS_FILE, metadataDetail, metadataObjectName, metadataItemName, targetFile);
+                                XMLCompressor.compressSync(targetFile, compressOrder);
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (!haveTypesToCopy || (typeToCopy && typeToCopy.checked) || (objectToCopy && objectToCopy.checked)) {
+                    let subPath;
+                    let fileName = metadataObjectName + '.' + metadataDetail.suffix + '-meta.xml';
+                    if (metadataTypeName === MetadataTypes.CUSTOM_OBJECT) {
+                        subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + metadataObjectName + '/' + fileName
+                    } else {
+                        subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + fileName
+                    }
+                    let sourceFile = path + '/' + subPath;
+                    let targetFile = targetProject + subPath;
+                    let targetFolder = PathUtils.getDirname(targetFile);
+                    if (FileChecker.isExists(sourceFile)) {
+                        callProgressCalback(progressCallback, connection, ProgressStages.COPY_FILE, metadataDetail, metadataObjectName, undefined, targetFile);
+                        if (!FileChecker.isExists(targetFolder))
+                            FileWriter.createFolderSync(targetFolder);
+                        FileWriter.createFileSync(targetFile, FileReader.readFileSync(sourceFile));
+                        if (compress) {
+                            callProgressCalback(progressCallback, connection, ProgressStages.COMPRESS_FILE, metadataDetail, metadataObjectName, undefined, targetFile);
+                            XMLCompressor.compressSync(targetFile, compressOrder);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 function processExportTreeDataOut(response) {
     let outData = StrUtils.replace(response, '\n', '').split(',');
@@ -675,7 +1132,7 @@ function processExportTreeDataOut(response) {
     for (let data of outData) {
         let splits = data.split(" ");
         let nRecords = splits[1];
-        let file = path.basename(splits[splits.length - 1]);
+        let file = PathUtils.getBasename(splits[splits.length - 1]);
         dataToReturn.push(
             {
                 file: file,
@@ -706,15 +1163,9 @@ function handleResponse(response, onSuccess) {
     }
 }
 
-function callProgressCalback(progressCallback, connection, stage, typeOrObject, data) {
+function callProgressCalback(progressCallback, connection, stage, type, object, data) {
     if (progressCallback)
-        progressCallback.call(this, {
-            stage: stage,
-            increment: connection.increment,
-            percentage: connection.percentage,
-            typeOrObject: typeOrObject,
-            data: data
-        });
+        progressCallback.call(this, new ProgressStatus(stage, connection.increment, connection.percentage, type, object, undefined, data));
 }
 
 function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType, progressCallback) {
@@ -722,39 +1173,44 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
         try {
             const metadata = {};
             for (const metadataTypeName of metadataToDownload) {
-                if (connection.abort) {
-                    connection.allowConcurrence = false;
-                    endOperation(connection);
-                    resolve(metadata);
-                    return;
-                }
-                callProgressCalback(progressCallback, connection, 'beforeDownload', metadataTypeName);
-                if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
-                    const records = await connection.query(METADATA_QUERIES[metadataTypeName]);
-                    if (!records || records.length === 0)
-                        continue;
-                    const metadataType = TypesFactory.createMetadataTypeFromRecords(metadataTypeName, records, foldersByType, connection.namespacePrefix, downloadAll);
-                    connection.percentage += connection.increment;
-                    if (metadataType !== undefined && metadataType.haveChilds())
-                        metadata[metadataTypeName] = metadataType;
-                    callProgressCalback(progressCallback, connection, 'afterDownload', metadataTypeName, metadataType);
-                } else if (NotIncludedMetadata[metadataTypeName]) {
-                    const metadataType = TypesFactory.createNotIncludedMetadataType(metadataTypeName);
-                    connection.percentage += connection.increment;
-                    if (metadataType !== undefined && metadataType.haveChilds())
-                        metadata[metadataTypeName] = metadataType;
-                    callProgressCalback(progressCallback, connection, 'afterDownload', metadataTypeName, metadataType);
-                } else {
-                    const process = ProcessFactory.describeMetadataType(connection.usernameOrAlias, metadataTypeName, undefined, connection.apiVersion);
-                    addProcess(connection, process);
-                    const response = await ProcessHandler.runProcess(process);
-                    handleResponse(response, () => {
-                        const metadataType = TypesFactory.createMetedataTypeFromResponse(response, metadataTypeName, downloadAll, connection.namespacePrefix);
+                try{
+                    if (connection.abort) {
+                        connection.allowConcurrence = false;
+                        endOperation(connection);
+                        resolve(metadata);
+                        return;
+                    }
+                    callProgressCalback(progressCallback, connection, ProgressStages.BEFORE_DOWNLOAD, metadataTypeName);
+                    if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
+                        const records = await connection.query(METADATA_QUERIES[metadataTypeName]);
+                        if (!records || records.length === 0)
+                            continue;
+                        const metadataType = TypesFactory.createMetadataTypeFromRecords(metadataTypeName, records, foldersByType, connection.namespacePrefix, downloadAll);
                         connection.percentage += connection.increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
-                        callProgressCalback(progressCallback, connection, 'afterDownload', metadataTypeName, metadataType);
-                    });
+                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
+                    } else if (NotIncludedMetadata[metadataTypeName]) {
+                        const metadataType = TypesFactory.createNotIncludedMetadataType(metadataTypeName);
+                        connection.percentage += connection.increment;
+                        if (metadataType !== undefined && metadataType.haveChilds())
+                            metadata[metadataTypeName] = metadataType;
+                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
+                    } else {
+                        const process = ProcessFactory.describeMetadataType(connection.usernameOrAlias, metadataTypeName, undefined, connection.apiVersion);
+                        addProcess(connection, process);
+                        const response = await ProcessHandler.runProcess(process);
+                        handleResponse(response, () => {
+                            const metadataType = TypesFactory.createMetedataTypeFromResponse(response, metadataTypeName, downloadAll, connection.namespacePrefix);
+                            connection.percentage += connection.increment;
+                            if (metadataType !== undefined && metadataType.haveChilds())
+                                metadata[metadataTypeName] = metadataType;
+                            callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
+                        });
+                    }
+                } catch(error){
+                    if(error.message.indexOf('INVALID_TYPE') === -1)
+                        throw error;
                 }
             }
             resolve(metadata);
@@ -774,7 +1230,7 @@ function downloadSObjectsData(connection, sObjects, progressCallback) {
                     resolve(sObjectsResult);
                     return;
                 }
-                callProgressCalback(progressCallback, connection, 'beforeDownload', sObject);
+                callProgressCalback(progressCallback, connection, ProgressStages.BEFORE_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject);
                 const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
                 addProcess(connection, process);
                 const response = await ProcessHandler.runProcess(process);
@@ -783,7 +1239,7 @@ function downloadSObjectsData(connection, sObjects, progressCallback) {
                     connection.percentage += connection.increment;
                     if (sObjectResult !== undefined)
                         sObjectsResult[sObject] = sObjectResult;
-                    callProgressCalback(progressCallback, connection, 'afterDownload', sObject, sObjectResult);
+                    callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
                 });
             }
             resolve(sObjectsResult);
@@ -909,4 +1365,15 @@ function addProcess(connection, process) {
     if (connection.processes === undefined)
         connection.processes = {};
     connection.processes[process.name] = process;
+}
+
+function createAuthOrgs(orgs) {
+    const authOrgs = [];
+    if (orgs !== undefined) {
+        orgs = Utils.forceArray(orgs);
+        for (const org of orgs) {
+            authOrgs.push(new AuthOrg(org));
+        }
+    }
+    return authOrgs;
 }
