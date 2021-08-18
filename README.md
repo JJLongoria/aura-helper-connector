@@ -1,896 +1,2019 @@
 # **Aura Helper Connector Module**
 Module to connect with Salesforce to list or describe metadata types, list or describe all SObjects, make queries, create SFDX Project, validate, deploy or retrieve in SFDX and Metadata API Formats, export and import data and much more. Is used to Aura Helper and Aura Helper CLI to support salesfore conections.
 
-## **Usage**
+---
 
-### **Instance and Util methods**
+## *Table of Contents*
 
-Instance and util methods to handle conection
+- [**Connection Class**](#connection-class)
 
-    const Connection = require('@ah/connector');
+- [**Metadata JSON Format**](#metadata-json-format)
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project/folder/root', 'namespacePrefix');
-    connection.setMultiThread();        // Allow to use several CPUs and threads to process data. 
-                                        // Only take effect on Metadata Describe and SObjects Describe methods
+---
 
-    connection.setSingleThread();       // Avoid to use several CPUs and threads to process data. 
-                                        // Only take effect on Metadata Describe and SObjects Describe methods
+# [**Connection Class**](#connection-class)
+Class to connect with Salesforce to list or describe metadata types, list or describe all SObjects, make queries, create SFDX Project, validate, deploy or retrieve in SFDX and Metadata API Formats, export and import data and much more. Is used to Aura Helper and Aura Helper CLI to support salesfore conections.
 
-    connection.setUsernameOrAlias('usernameOrAlias');       // To change the username or alias setted in constructor
+The setters methods are defined like a builder pattern to make it more usefull
+
+All connection methods return a Promise with the associated data to the processes.
+
+#### **Class Members**
+- [**Fields**](#connection-class-fields)
+
+- [**Constructors**](#connection-class-constructor)
+
+- [**Methods**](#connection-class-methods)
+
+</br>
+
+# [**Fields**](#connection-class-fields)
+The fields that start with _ are internal use only fields (Does not modify this fields to a correct connection work). To the rest of files, setter methods are recommended instead modify fields.
+
+### [**usernameOrAlias**](#connection-class-fields-usernameoralias)
+Username or Alias to connect with the org. The org bust be authorized in the system. 
+- String
+
+### [**apiVersion**](#connection-class-fields-apiversion)
+Number API Version to connect with the org.
+- String | Number
+
+### [**projectFolder**](#connection-class-fields-projectfolder)
+Path to the local project folder
+- String
+
+### [**namespacePrefix**](#connection-class-fields-namespaceprefix)
+Namespace prefix from the Org to connect
+- String
+
+### [**multiThread**](#connection-class-fields-multithread)
+True to able to the connection object to use several threads and processor cores to run some processes and run faster, false to use only one thread and core.
+- Boolean
+
+### [**packageFolder**](#connection-class-fields-packageFolder)
+Project package folder path (manifest folder). Must be a child of Project folder
+- String
+
+### [**packageFile**](#connection-class-fields-packageFile)
+Project package file path (package.xml file). Must be a child of Package folder
+- String
+  
+</br>
+
+# [**Constructors**](#connection-class-constructors)
+The Connection class has only one constructor to create a connection
+
+## [**constructor(usernameOrAlias, apiVersion, projectFolder, namespacePrefix)**](#connection-class-constructors-consttruct)
+Constructor to create a new connection object. All parameters are optional and you can use the setters methods to set the values when you want.
+
+### **Parameters:**
+  - **usernameOrAlias**: Org Username or Alias to connect. (Must be authorized in the system)
+    - String
+  - **apiVersion**: API Version number to connect with salesforce
+    - String | Number
+  - **projectFolder**: Path to the project root folder
+    - String
+  - **namespacePrefix**: Namespace prefix from the Org to connect
+    - String
+
+# [**Methods**](#connection-class-methods)
+
+  - [**setUsernameOrAlias(usernameOrAlias)**](#setusernameoraliasusernameoralias)
     
-    connection.setApiVersion('50.0');       // To change the api version setted in constructor
+    Method to set the Username or Alias to connect with org
 
-    connection.setProjectFolder('new/path/to/project/folder/root');     // To change the project folder setted in constructor
+  - [**setApiVersion(apiVersion)**](#setapiversionapiversion)
+    
+    Method to set the API Version to connect
 
-    connection.setNamespacePrefix('newNamespacePrefix');    // To change the namespace prefix setted in constructor
+  - [**setProjectFolder(projectFolder)**](#setprojectfolderprojectfolder)
+   
+    Method to set the project root folder path. When set the project root, automatically set the packageFolder and packageFile to their respective paths
 
-    connection.setPackageFolder('path/to/package/folder');      // To set the project package folder path
+  - [**setPackageFolder(packageFolder)**](#setpackagefolderpackagefolder)
+   
+    Method to set the package folder path. When set the package folder, automatically set packageFile to the respective path
 
-    connection.setPackageFile('path/to/package/folder/package.xml');    // To set the project package XML file path
+  - [**setPackageFile(packageFile)**](#setpackagefilepackagefile)
+  
+    Method to set the package xml file path
 
-    connection.abortConnection();       // To abort any operation in progress. 
-                                        // In some operations, return the data processed.
+  - [**setNamespacePrefix(namespacePrefix)**](#setnamespaceprefixnamespaceprefix)
+   
+    Method to set the Org namespace prefix
 
-### **Create SFDX Project**
+  - [**setMultiThread()**](#setmultithread)
+    
+    Method to able to the connection object to use several threads and processor cores to run some processes and run faster
 
-Method to create new SFDX Project. If the project is created, the projectFolder is setted to connection object. If with manifest is true, alse set packageFolder and packageFile. 
+  - [**setSingleThread()**](#setsinglethread)
+    
+    Method to set the connection object to use only one thread and processo core to all processes
 
-SFDXProjectResult Class to process response are in @ah/core Types Module.
+  - [**onProgress(namespacePrefix)**](#onprogressnamespaceprefix)
 
-**Example with then().catch():**
+    Method to handle the general connection progress (is called from all methods to handle the progress)
 
-    const Connection = require('@ah/connector');
+  - [**onAbort(abortCallback)**](#onabortabortcallback)
+    
+    Method to handle when connection is aborted
 
-    const connection = new Connection('MyOrg', '51.0', undefined, 'namespacePrefix');
-    connection.createSFDXProject(projectName, outputDir, template, withManifest).then((result) => {
-        console.log(result.outputDir);
-        console.log(result.created);
-        console.log(result.rawOutput);
-    }).cath((error) => {
-        // Handle errors
-    });
+  - [**abortConnection()**](#abortconnection)
 
+    Method to abort all connection running processes. When finishes call onAbort() callback
 
-**Example with await:**
+  - [**getAuthUsername()**](#getauthusername)
+   
+    Method to get the Auth Username from the org (If not found username, return the Alias)
 
-    try {
-        const result = await createSFDXProject(projectName, outputDir, template, withManifest);
-        console.log(result.outputDir);
-        console.log(result.created);
-        console.log(result.rawOutput);
-    } catch(error) {
-        // Handle errors
-    }
+  - [**getServerInstance(usernameOrAlias)**](#getserverinstanceusernameoralias)
+   
+    Method to get the server instance for an username or alias (or the connection username or alias)
 
-### **Set Auth Org**
+  - [**listAuthOrgs()**](#listauthorgs)
+   
+    Method to list all auth org on the system
 
-Method to set the Auth Org on a SFDX Project. If the Org is authorized, the usernameOrAlias is setted to connection object.
+  - [**query(query, userToolingApi)**](#queryquery-usertoolingapi)
+   
+    Method to execute a query to the connected org
 
-SFDXProjectResult Class to process response are in @ah/core Types Module.
+  - [**listMetadataTypes()**](#listmetadatatypes)
+    
+    Method to list all Metadata Types available in the connected org (according selected API Version)
 
-**Example with then().catch():**
+  - [**describeMetadataTypes(typesOrDetails, downloadAll)**](#describemetadatatypestypesordetails-downloadall)
+   
+    Method to describe all or selected Metadata Types from the connected org
 
-    const Connection = require('@ah/connector');
+  - [**listSObjects(category)**](#listsobjectscategory)
+    
+    Method to list all SObjects API Name by category
 
-    const connection = new Connection(undefined, '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.setAuthOrg(usuernameOrAlias).then(() => {
-        // Org Authorized
-    }).cath((error) => {
-        // Handle errors
-    });
+  - [**describeSObjects(sObjects)**](#describesobjectssobjects)
+  
+    Method to describe SObject data to the specified objects
 
-**Example with await:**
+  - [**retrieve(useMetadataAPI, waitMinutes, targetDir)**](#retrieveusemetadataapi-waitminutes-targetdir)
+   
+    Method to retrieve data using the connection package file. You can choose to retrieve as Metadata API format or Source Format
 
-    try {
-        await setAuthOrg(usuernameOrAlias);
-        // Org Authorized
-    } catch(error) {
-        // Handle errors
-    }
+  - [**retrieveReport(retrieveId, targetDir)**](#retrievereportretrieveid-targetdir)
 
-### **Query Data**
+    Retrieve report when use Metadata API to retrieve data
 
-Method to query data
+  - [**validateDeploy(testLevel, runTests, useMetadataAPI, waitMinutes)**](#validatedeploytestlevel-runtests-usemetadataapi-waitminutes)
 
-**Example with then().catch():**
+    Method to validate a deploy against the org using the connection package file
 
-    const Connection = require('@ah/connector');
+  - [**deploy(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploytestlevel-runtests-usemetadataapi-waitminutes)
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.query('Select Id, Name from Accounts', useToolingApi).then((records) => {
-        for(const record of records){
-            console.log(record.Id);
-            console.log(record.Name);
-        }
-    }).cath((error) => {
-        // Handle errors
-    });
+    Method to deploy data to the org using the connection package file
 
-**Example with await:**
+  - [**quickDeploy(deployId, useMetadataAPI)**](#quickdeploydeployid-usemetadataapi)
 
-    try {
-        const records = await connection.query('Select Id, Name from Accounts', useToolingApi);
-        for(const record of records){
-            console.log(record.Id);
-            console.log(record.Name);
-        }
-    } catch(error) {
-        // Handle errors
-    }
+    Method to execute a quick deploy when validation result is success
 
-### **Export Tree Data**
+  - [**deployReport(deployId, useMetadataAPI, waitMinutes)**](#deployreportdeployid-usemetadataapi-waitminutes)
 
-Method to export data in tree format
+    Method to get the report of a running deployment
 
-**Example with then().catch():**
+  - [**cancelDeploy(deployId, useMetadataAPI, waitMinutes)**](#canceldeploydeployid-usemetadataapi-waitminutes)
 
-    const Connection = require('@ah/connector');
+    Method to get the cancel a running deployment
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.exportTreeData('Select Id, Name from Accounts', filePrefix, outputPath).then((results) => {
-        for(result of results){
-            console.log(result.file);
-            console.log(result.records);
-            console.log(result.isPlanFile);
-        }
-    }).cath((error) => {
-        // Handle errors
-    });
+  - [**convertProjectToSFDX(targetDir)**](#convertprojecttosfdxtargetdir)
 
-**Example with await:**
+    Method to convert a Metadata API format Project to a Source format
 
-    try {
-        const result = await connection.exportTreeData('Select Id, Name from Accounts', filePrefix, outputPath);
-        for(result of results){
-            console.log(result.file);
-            console.log(result.records);
-            console.log(result.isPlanFile);
-        }
-    } catch(error) {
-        // Handle errors
-    }
+  - [**convertProjectToMetadataAPI(targetDir)**](#convertprojecttometadataapitargetdir)
 
-### **Import Tree Data**
+    Method to convert a Source format Project to a Metadata API format
 
-Method to import data in tree format
+  - [**createSFDXProject(projectName, projectFolder, template, withManifest)**](#createsfdxprojectprojectname-projectfolder-template-withmanifest)
 
-**Example with then().catch():**
+    Method to create a SFDX Project. This method change the connection object project folder, package folder and package file values when project is created
 
-    const Connection = require('@ah/connector');
+  - [**setAuthOrg(usernameOrAlias)**](#setauthorgusernameoralias)
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.importTreeData(filePath).then((results) => {
-        for(result of results){
-            console.log(result.refId);
-            console.log(result.id);
-            console.log(result.sobject);
-        }
-    }).cath((error) => {
-        // Handle errors
-    });
+    Method to set an auth org in a Salesforce local project. This command set the selected username or Alias to the connection object when authorize an org.
 
-**Example with await:**
+  - [**exportTreeData(query, outputPath, prefix)**](#exporttreedataquery-outputpath-prefix)
 
-    try {
-        const results = await connection.importTreeData(filePath);
-        for(result of results){
-            console.log(result.refId);
-            console.log(result.id);
-            console.log(result.sobject);
-        }
-    } catch(error) {
-        // Handle errors
-    }
+    Method to export data in a tree format from the connected org
 
-### **Bulk Delete**
+  - [**importTreeData(file)**](#importtreedatafile)
 
-Method to delete data with BulkAPI
+    Method to import data in a tree format into the connected org
 
-BulkStatus Class to process response are in @ah/core Types Module.
+  - [**bulkDelete(csvfile, sObject)**](#bulkDeletecsvfile-sObject)
 
-**Example with then().catch():**
+    Method to delete data on bulk mode
+
+  - [**executeApexAnonymous(scriptfile)**](#executeapexanonymousscriptfile)
+
+    Method to execute an Apex script file on Anonymous context
+
+  - [**loadUserPermissions(tmpFolder)**](#loaduserpermissionstmpfolder)
+
+    Method to get all available user permissions from the connected org
+
+  - [**retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder)**](#retrievelocalspecialtypestmpfolder-types-compress-sortorder)
+
+    Method to Retrieve local special types from the connected org
+
+  - [**retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder)**](#retrievemixedspecialtypestmpfolder-types-downloadall-compress-sortorder)
+
+    Method to Retrieve mixed special types from the connected org. Mixed means that only affect the Metadata Types on your project folder, but download all related data from this types from your org (and not only the local data)
+
+  - [**retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder**)](#retrieveorgspecialtypestmpfolder-types-downloadall-compress-sortorder)
+
+    Method to Retrieve org special types from the connected org. Org means that affect all Metadata types stored in your org not on your local project.
+
+---
+## [**setUsernameOrAlias(usernameOrAlias)**](#setusernameoraliasusernameoralias)
+Method to set the Username or Alias to connect with org
+
+### **Parameters:**
+  - **usernameOrAlias**: Org Username or Alias to connect. (Must be authorized in the system)
+    - String
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set Connection username or alias**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.bulkDelete(csvFile, sObject).then((statuses) => {
-        for(status of statuses){
-            console.log(status.id);
-            console.log(status.jobId);
-            console.log(status.state);
-            console.log(status.createdDate);
-            console.log(status.numberRecordsProcessed);
-            console.log(status.numberRecordsFailed);
-            console.log(status.totalProcessingTime);
-            console.log(status.apiActiveProcessingTime);
-            console.log(status.apexProcessingTime);
-        }
-    }).cath((error) => {
-        // Handle errors
-    });
+    const connection = new Connection();
 
-**Example with await:**
+    connection.setUsernameOrAlias('MyOrg'); 
+---
 
-    try {
-        const statuses = await connection.bulkDelete(csvFile, sObject);
-        for(status of statuses){
-            console.log(status.id);
-            console.log(status.jobId);
-            console.log(status.state);
-            console.log(status.createdDate);
-            console.log(status.numberRecordsProcessed);
-            console.log(status.numberRecordsFailed);
-            console.log(status.totalProcessingTime);
-            console.log(status.apiActiveProcessingTime);
-            console.log(status.apexProcessingTime);
-        }
-    } catch(error) {
-        // Handle errors
-    }
+## [**setApiVersion(apiVersion)**](#setapiversionapiversion)
+Method to set the API Version to connect
 
-### **Execute Anonymous Apex**
+### **Parameters:**
+  - **apiVersion**: API Version number to connect with salesforce
+    - String | Number
 
-Method to execute an Script file on Anonymous apex execution
+### **Return:**
+Returns the connection object
+- Connection
 
-BulkStatus Class to process response are in @ah/core Types Module.
-
-**Example with then().catch():**
+### **Examples:**
+**Set Connection api version**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.executeApexAnonymous(scriptFile).then((log) => {
-        console.log(log);
-    }).cath((error) => {
-        // Handle errors
-    });
+    const connection = new Connection();
 
-**Example with await:**
+    connection.setApiVersion(50);
 
-    try {
-        const statuses = await connection.executeApexAnonymous(csvFile, sObject);
-        console.log(log);
-    } catch(error) {
-        // Handle errors
-    }
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').setApiVersion(50); 
+---
 
-### **List Auth Orgs**
+## [**setProjectFolder(projectFolder)**](#setprojectfolderprojectfolder)
+Method to set the project root folder path. When set the project root, automatically set the packageFolder and packageFile to their respective paths
 
-Method to list the auth orgs on your system
+### **Parameters:**
+  - **projectFolder**: Path to the project root folder
+    - String
 
-AuthOrg Class to process response are in @ah/core Types Module.
+### **Return:**
+Returns the connection object
+- Connection
 
-**Example with then().catch():**
+### **Examples:**
+**Set Connection project folder**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
+    const connection = new Connection();
+
+    connection.setProjectFolder('project/root/path');
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').setProjectFolder('project/root/path'); 
+---
+
+## [**setPackageFolder(packageFolder)**](#setpackagefolderpackagefolder)
+Method to set the package folder path. When set the package folder, automatically set packageFile to the respective path
+
+### **Parameters:**
+  - **packageFolder**: Path to the package folder
+    - String
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set Connection package folder (manifest folder)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.setPackageFolder('project/root/path/manifest');
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').setPackageFolder('project/root/path/manifest'); 
+---
+
+## [**setPackageFile(packageFile)**](#setpackagefilepackagefile)
+Method to set the package xml file path
+
+### **Parameters:**
+  - **packageFile**: Path to the package folder
+    - String
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set Connection package file (package.xml)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.setPackageFile('project/root/path/manifest/package.xml');
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').setPackageFile('project/root/path/manifest/package.xml'); 
+---
+
+## [**setNamespacePrefix(namespacePrefix)**](#setnamespaceprefixnamespaceprefix)
+Method to set the package xml file path
+
+### **Parameters:**
+  - **namespacePrefix**: Namespace prefix from the Org to connect
+    - String
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set Connection namespace prefix**
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.setNamespacePrefix('orgPrefix');
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').setNamespacePrefix('orgPrefix'); 
+---
+
+## [**setMultiThread()**](#setmultithread)
+Method to able to the connection object to use several threads and processor cores to run some processes and run faster
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set Connection to user multiple threads and cores**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.setMultiThread();
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').setMultiThread(); 
+---
+
+## [**setSingleThread()**](#setsinglethread)
+Method to set the connection object to use only one thread and processo core to all processes
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set Connection to user single thread and core**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.setSingleThread();
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').setSingleThread(); 
+---
+
+## [**onProgress(namespacePrefix)**](#onprogressnamespaceprefix)
+Method to handle the general connection progress (is called from all methods to handle the progress)
+
+### **Parameters:**
+  - **progressCallback**: Callback function to handle the progress
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set general connection progress callback**
+
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onProgress((status) => {
+
+    }));
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').onProgress((status) => {
+
+    })); 
+---
+
+## [**onAbort(abortCallback)**](#onabortabortcallback)
+Method to handle when connection is aborted
+
+### **Parameters:**
+  - **abortCallback**: Callback function to call when connectin is aborted
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Set connection abort callback**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onAbort(() => {
+
+    }));
+
+    // Or can concatenate method calls because setters return a connection object
+    connection.setUsernameOrAlias('MyOrg').onAbort(() => {
+
+    })); 
+---
+
+## [**abortConnection()**](#abortconnection)
+Method to abort all connection running processes. When finishes call onAbort() callback
+
+### **Examples:**
+**Abort connection and handle on abort callback**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onAbort(() => {
+        // Execute when abortConnection() finish and kill all running processes
+    }));
+
+    connection.abortConnection(); 
+
+---
+
+## [**getAuthUsername()**](#getauthusername)
+Method to get the Auth Username from the org (If not found username, return the Alias)
+
+### **Return:**
+Return a String promise with the Username or Alias data
+- Promise\<String\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+
+### **Examples:**
+**Get auth username to the connection**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.getAuthUsername().then((username) => {
+        console.log(username);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+
+---
+
+## [**getServerInstance(usernameOrAlias)**](#getserverinstanceusernameoralias)
+Method to get the server instance for an username or alias (or the connection username or alias)
+
+### **Parameters:**
+  - **usernameOrAlias**: Username or alias to check. (If not provided, use usernameOrAlias from connection object)
+    - String
+
+### **Return:**
+Return a String promise with the instance URL
+- Promise\<String\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+
+### **Examples:**
+**Get server instance to the connected org**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+    
+    connection.setUsernameOrAlias('MyOrg');
+
+    connection.getServerInstance().then((inbstanceUrl) => {
+        console.log(inbstanceUrl);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+
+**Get server instance to another**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.getServerInstance('MyOrg2').then((inbstanceUrl) => {
+        console.log(inbstanceUrl);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+
+---
+
+## [**listAuthOrgs()**](#listauthorgs)
+Method to list all auth org on the system
+
+### **Return:**
+Return a promise with all authorized org in the system 
+- Promise\<Array\<AuthOrg\>\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+
+### **Examples:**
+**Get all auth org on the system**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 50);
+
     connection.listAuthOrgs().then((authOrgs) => {
-        for(const authOrg of authOrgs){
-            console.log(authOrg.alias);
-            console.log(authOrg.username);
-            console.log(authOrg.orgId);
-            console.log(authOrg.instanceUrl);
-            console.log(authOrg.accessToken);
-            console.log(authOrg.oauthMethod);
+        for(const org of authOrgs){
+            console.log('Alias: ' + org.alias);
+            console.log('Username: ' + org.username);
+            console.log('ORG Id: ' + org.orgId);
+            console.log('Instance URL: ' + org.instanceUrl);
+            console.log('Access Token: ' + org.accessToken);
+            console.log('OAuth Method: ' + org.oauthMethod);
         }
-    }).cath((error) => {
+    }).catch((error) => {
         // Handle errors
-    });
+    }); 
+---
 
-**Example with await:**
+## [**query(query, userToolingApi)**](#queryquery-usertoolingapi)
+Method to execute a query to the connected org
 
-    try {
-        const authOrgs = await connection.listAuthOrgs();
-        for(const authOrg of authOrgs){
-            console.log(authOrg.alias);
-            console.log(authOrg.username);
-            console.log(authOrg.orgId);
-            console.log(authOrg.instanceUrl);
-            console.log(authOrg.accessToken);
-            console.log(authOrg.oauthMethod);
-        }
-    } catch(error) {
-        // Handle errors
-    }
+### **Parameters:**
+  - **query**: Query to execute (Required)
+    - String
+  - **useToolingApi**: true to use Tooling API to execute the query
+    - Boolean
 
-### **List Metadata Types**
+### **Return:**
+Return a promise with the record list 
+- Promise\<Array\<Object\>\>
 
-Method to List All Metadata Types available in your Org
+### **Throws:**
+This method can throw the next exceptions:
 
-MetadataDetail Class to process response are in @ah/core Types Module.
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
 
-**Example with then().catch():**
+### **Examples:**
+**Query data and handle results**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
+    const connection = new Connection('MyOrg', 50);
+
+    const query = 'Select Id, Name, Phone, CustomField__c from Account where Name != null';
+
+    connection.query(query).then((records) => {
+        for(const record of records){
+            console.log('Account Id: ' + record.Id);
+            console.log('Account Name: ' + record.Name);
+            console.log('Account Phone: ' + record.Phone);
+            console.log('Account Custom Field: ' + record.CustomField__c);
+        }
+    }).catch((error) => {
+        // Handle errors
+    }); 
+---
+
+## [**listMetadataTypes()**](#listmetadatatypes)
+Method to list all Metadata Types available in the connected org (according selected API Version)
+
+### **Return:**
+Return a promise with the MetadataDetail objects from all available Metadata Types
+- Promise\<Array\<MetadataDetail\>\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+
+### **Examples:**
+**Get all available Metadata types to API 45**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 45);
+
     connection.listMetadataTypes().then((metadataDetails) => {
-        for(const typeDetail of metadataDetails){
-            console.log(typeDetail.xmlName);
-            console.log(typeDetail.suffix);
-            console.log(typeDetail.metaFile);
-            console.log(typeDetail.inFolder);
-            console.log(typeDetail.directoryName);
+        for(const detail of metadataDetails){
+            console.log('Directory Name: ' + detail.directoryName);
+            console.log('In folder: ' + detail.inFolder);
+            console.log('Has Meta file: ' + detail.metaFile);
+            console.log('Files suffix: ' + detail.suffix);
+            console.log('API Name: ' + detail.xmlName);
         }
-    }).cath((error) => {
+    }).catch((error) => {
         // Handle errors
-    });
+    }); 
 
-**Example with await:**
+**Get all available Metadata types to API 51**
 
-    try {
-        const metadataDetails = await connection.listMetadataTypes();
-        for(const typeDetail of metadataDetails){
-            console.log(typeDetail.xmlName);
-            console.log(typeDetail.suffix);
-            console.log(typeDetail.metaFile);
-            console.log(typeDetail.inFolder);
-            console.log(typeDetail.directoryName);
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    connection.listMetadataTypes().then((metadataDetails) => {
+        for(const detail of metadataDetails){
+            console.log('Directory Name: ' + detail.directoryName);
+            console.log('In folder: ' + detail.inFolder);
+            console.log('Has Meta file: ' + detail.metaFile);
+            console.log('Files suffix: ' + detail.suffix);
+            console.log('API Name: ' + detail.xmlName);
         }
-    } catch(error) {
+    }).catch((error) => {
         // Handle errors
-    }
+    });  
 
-### **Describe Metadata Types**
+## [**describeMetadataTypes(typesOrDetails, downloadAll)**](#describemetadatatypestypesordetails-downloadall)
+Method to describe all or selected Metadata Types from the connected org. See [Metadata JSON Format](#metadata-file) section to understand the JSON Metadata Format
 
-Method to describe the specified metadata types from your Org
+### **Parameters:**
+  - **typesOrDetails**: List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
+    - Arra\<String\> | Array\<MetadataDetail\>
+  - **downloadAll**: true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
+    - Boolean
+  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+    - Function
 
-MetadataType Class, MetadataObject Class and MetadataItem Class to process response are in @ah/core Types Module.
+### **Return:**
+Return a promise with Metadata JSON Object with the selected Metadata Types to describe 
+- Promise\<Array\<Object\>\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+
+### **Examples:**
+**Describe all Metadata types from the connected org and org namespace**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    connection.describeMetadataTypes().then((metadataTypes) => {
+        for(const metadataTypeName of Object.keys(metadataTypes)){
+            const metadataType = metadataTypes[metadataTypeName];
+            console.log('metadataType: ' + metadataType);
+        }
+    }).catch((error) => {
+        // Handle errors
+    }); 
     
-**Example with then().catch():**
+**Describe all Metadata types from the connected org and all namespaces**
 
     const Connection = require('@ah/connector');
-    const { MetadataTypes } = require('@ah/core').Values;
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.setMultiThread();
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
 
-    let downloadAll = false;    // flag to indicate if download all metadata types (included manage packages) or only the org namespace metadata types (user created data)
+    connection.describeMetadataTypes(undefined, true).then((metadataTypes) => {
+        for(const metadataTypeName of Object.keys(metadataTypes)){
+            const metadataType = metadataTypes[metadataTypeName];
+            console.log('metadataType: ' + metadataType);
+        }
+    }).catch((error) => {
+        // Handle errors
+    }); 
+
+**Describe some Metadata types from the connected**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    const types = [
+        'CustomObject',
+        'CustomField',
+        'ApexClass'
+    ];
+
+    connection.describeMetadataTypes(types).then((metadataTypes) => {
+        for(const metadataTypeName of Object.keys(metadataTypes)){
+            const metadataType = metadataTypes[metadataTypeName];
+            console.log('metadataType: ' + metadataType);
+        }
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**listSObjects(category)**](#listsobjectscategory)
+Method to list all SObjects API Name by category
+
+### **Parameters:**
+  - **category**: Object Category. Values are: Standard, Custom, All. (All by default) 
+    - String
+
+### **Return:**
+Return a promise with a list with the sObject names 
+- Promise\<Array\<String\>\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+
+### **Examples:**
+**List all SObjects**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    connection.listSObjects().then((objectNames) => {
+        for(const objName of objectNames){
+            console.log('Name: ' + objName);
+        }
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**List custom SObjects**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    connection.listSObjects('custom').then((objectNames) => {
+        for(const objName of objectNames){
+            console.log('Name: ' + objName);
+        }
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**List standard SObjects**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    connection.listSObjects('standard').then((objectNames) => {
+        for(const objName of objectNames){
+            console.log('Name: ' + objName);
+        }
+    }).catch((error) => {
+        // Handle errors
+    });
+
+---
+## [**describeSObjects(sObjects)**](#describesobjectssobjects)
+Method to describe SObject data to the specified objects
+
+### **Parameters:**
+  - **sObjects**: List with the object API Names to describe 
+    - Array\<String\>
+  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback 
+    - Function
+
+### **Return:**
+Return a promise with a SObjects data
+- Promise\<Array\<SObject\>\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+
+### **Examples:**
+**Describe some SObjects**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    const objects = [
+        'Account',
+        'Case',
+        'Opportunity',
+        'Task'
+    ];
+
+    connection.describeSObjects(objects).then((objectNames) => {
+        for(const objName of objectNames){
+            console.log('Name: ' + objName);
+        }
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Describe all SObjects**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg');
+    connection.setApiVersion(51);
+
+    const allSObjects = await connection.listSObjects();
+
+    connection.describeSObjects(allSObjects).then((objectNames) => {
+        for(const objName of objectNames){
+            console.log('Name: ' + objName);
+        }
+    }).catch((error) => {
+        // Handle errors
+    });
+
+---
+
+## [**retrieve(useMetadataAPI, waitMinutes, targetDir)**](#retrieveusemetadataapi-waitminutes-targetdir)
+Method to retrieve data using the connection package file. You can choose to retrieve as Metadata API format or Source Format
+
+### **Parameters:**
+  - **useMetadataAPI**: True to use Metadata API format, false to use source format 
+    - Boolean
+  - **waitMinutes**: Number of minutes to wait for the command to complete and display results 
+    - String | Number
+  - **targetDir**: Path to the target dir when retrieve with Metadata API Format
+    - String
+
+### **Return:**
+Return a promise with the RetrieveResult object with the retrieve result 
+- Promise\<RetrieveResult\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder or target dir is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder or target dir not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder or target dir is not a directory
+
+### **Examples:**
+**Retrieve data using Metadata API Format (With package.xml file on project)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
-    connection.describeMetadataTypes(['CustomObject', 'CustomField'], downloadAll, (status) => {
-        // Progress callback to handle the downlaod progress
-        if(status.stage === 'prapare'){
-            // Handle progress on prepare stage
-            console.log(status.stage);      // Stage type ('prepare', 'beforeDownload', 'afterDownload')
-            console.log(status.increment);  // Value of the increment percentage when download each metadat type
-            console.log(status.percentage); // Value of the progress percentage
-        } else if(status.stage === 'beforeDownload') {
-            // Handle progress before download one metadata type stage
-            console.log(status.stage);  
-            console.log(status.increment);
-            console.log(status.percentage); 
-            console.log(status.typeOrObject);   // Metadata Type or SObject prepared to download
-        } else if(status.stage === 'afterDownload') {
-            // Handle progress after download one metadata type stage
-            console.log(status.stage);
-            console.log(status.increment);
-            console.log(status.percentage);
-            console.log(status.typeOrObject);   // Downloaded Metadata Type or SObject 
-            console.log(status.data);           // Downloaded data
-        }
-    }).then((metadataTypes) => {
-        const metadataType = metadataTypes[MetadataTypes.CUSTOM_FIELD];
-        console.log(metadataType.name);
-        console.log(metadataType.checked);
-        console.log(metadataType.path);
-        console.log(metadattaType.suffix);
-        console.log(metadataType.childs);
-
-        const metadataObject = metadataType.getChild('Account');
-        console.log(metadataObject.name);
-        console.log(metadataObject.checked);
-        console.log(metadataObject.path);
-        console.log(metadataObject.childs);
-
-        const metadataItem = metadataObject.getChild('Name');
-        console.log(metadataItem.name);
-        console.log(metadataItem.checked);
-        console.log(metadataItem.path);
-    }).cath((error) => {
+    connection.retrieve(true, 'path/to/target/dir').then((retrieveResult) => {
+        console.log(retrieveResult);
+    }).catch((error) => {
         // Handle errors
     });
 
-**Example with await:**
 
-    try {
-        const metadataDetails = await connection.listMetadataTypes();   // Also accept a list of metadata details to download
-        const metadataTypes = await connection.describeMetadataTypes(metadataDetails, downloadAll, (status) => {
-            // Progress callback to handle the downlaod progress
-            if(status.stage === 'prapare'){
-                // Handle progress on prepare stage
-                console.log(status.stage);      // Stage type ('prepare', 'beforeDownload', 'afterDownload')
-                console.log(status.increment);  // Value of the increment percentage when download each metadat type
-                console.log(status.percentage); // Value of the progress percentage
-            } else if(status.stage === 'beforeDownload') {
-                // Handle progress before download one metadata type stage
-                console.log(status.stage);  
-                console.log(status.increment);
-                console.log(status.percentage); 
-                console.log(status.typeOrObject);   // Metadata Type or SObject prepared to download
-            } else if(status.stage === 'afterDownload') {
-                // Handle progress after download one metadata type stage
-                console.log(status.stage);
-                console.log(status.increment);
-                console.log(status.percentage);
-                console.log(status.typeOrObject);   // Downloaded Metadata Type or SObject 
-                console.log(status.data);           // Downloaded data
+**Retrieve data using Source Format (With package.xml file on project)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    connection.retrieve().then((retrieveResult) => {
+        console.log(retrieveResult);
+    }).catch((error) => {
+        // Handle errors
+    });
+
+---
+## [**retrieveReport(retrieveId, targetDir)**](#retrievereportretrieveid-targetdir)
+Retrieve report when use Metadata API to retrieve data
+
+### **Parameters:**
+  - **retrieveId**: Retrieve Id to get the report (Required) 
+    - String
+  - **targetDir**: Path to the target dir (Required) 
+    - String
+
+### **Return:**
+Return a promise with the RetrieveStatus object with the retrieve status result
+- Promise\<RetrieveStatus\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the target dir is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the target dir not exists or not have access to it
+- **InvalidDirectoryPathException**: If the target dir is not a directory
+
+### **Examples:**
+**Get a retrieve report status**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const retrieveId = '';
+    const targetDir = 'path/to/target/retrieve/dir';
+
+    connection.retrieveReport(retrieveId, targetDir).then((retrieveStatus) => {
+        console.log(retrieveStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**validateDeploy(testLevel, runTests, useMetadataAPI, waitMinutes)**](#validatedeploytestlevel-runtests-usemetadataapi-waitminutes)
+Method to validate a deploy against the org using the connection package file
+
+### **Parameters:**
+  - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+    - String
+  - **runTests**: String with comma separated test names to execute or list with the test names to execute
+    - String | Array\<String\>
+  - **useMetadataAPI**: True to validate deploy using Metadata API Format, false to use Source Format
+    - Boolean
+  - **waitMinutes**: Number of minutes to wait for the command to complete and display results
+    - String | Number
+
+### **Return:**
+Return a promise with the DeployStatus object with the deploy status result
+- Promise\<DeployStatus\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder or package folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder or package folder is not a directory
+- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the package file not exists or not have access to it
+- **InvalidFilePathException**: If the package file is not a file
+
+### **Examples:**
+
+**Validate deployment with Metadata API format (With package.xml file on project)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const testLevel = 'RunSpecifiedTests';
+    const runTest = [
+        'ApexTest1',
+        'ApexTest2',
+        'ApexText3',
+        ...,
+        ...,
+        'ApexTextN',
+    ];
+
+    connection.validateDeploy(testLevel, runTest, true).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Validate deployment with Source format (With package.xml file on project)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const testLevel = 'RunSpecifiedTests';
+    const runTest = [
+        'ApexTest1',
+        'ApexTest2',
+        'ApexText3',
+        ...,
+        ...,
+        'ApexTextN',
+    ];
+
+    connection.validateDeploy(testLevel, runTest).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**deploy(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploytestlevel-runtests-usemetadataapi-waitminutes)
+Method to deploy data to the org using the connection package file
+
+### **Parameters:**
+  - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+    - String
+  - **runTests**: String with comma separated test names to execute or list with the test names to execute
+    - String | Array\<String\>
+  - **useMetadataAPI**: True to validate deploy using Metadata API Format, false to use Source Format
+    - Boolean
+  - **waitMinutes**: Number of minutes to wait for the command to complete and display results
+    - String | Number
+
+### **Return:**
+Return a promise with the DeployStatus object with the deploy status result
+- Promise\<DeployStatus\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder or package folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder or package folder is not a directory
+- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the package file not exists or not have access to it
+- **InvalidFilePathException**: If the package file is not a file
+
+### **Examples:**
+
+**Deploy data with Metadata API format (With package.xml file on project)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const testLevel = 'RunSpecifiedTests';
+    const runTest = [
+        'ApexTest1',
+        'ApexTest2',
+        'ApexText3',
+        ...,
+        ...,
+        'ApexTextN',
+    ];
+
+    connection.deploy(testLevel, runTest, true).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Deploy data with Source format (With package.xml file on project)**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const testLevel = 'RunSpecifiedTests';
+    const runTest = [
+        'ApexTest1',
+        'ApexTest2',
+        'ApexText3',
+        ...,
+        ...,
+        'ApexTextN',
+    ];
+
+    connection.deploy(testLevel, runTest).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**quickDeploy(deployId, useMetadataAPI)**](#quickdeploydeployid-usemetadataapi)
+Method to execute a quick deploy when validation result is success
+
+### **Parameters:**
+  - **deployId**: Id to deploy the validated deployment (Required)
+    - String
+  - **useMetadataAPI**: True to execute quick deploy using Metadata API Format, false to use Source Format
+    - Boolean
+
+### **Return:**
+Return a promise with the DeployStatus object with the deploy status result
+- Promise\<DeployStatus\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder is not a directory
+
+### **Examples:**
+**Execute quick deploy to Validated deploy with Metadata API format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const deployId = '00X213as2984';
+
+    connection.quickDeploy(deployId, true).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Execute quick deploy to Validated deploy with Source format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const deployId = '00X213as2984';
+
+    connection.quickDeploy(deployId).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**deployReport(deployId, useMetadataAPI, waitMinutes)**](#deployreportdeployid-usemetadataapi-waitminutes)
+Method to get the report of a running deployment
+
+### **Parameters:**
+  - **deployId**: Id to the deployment to get the report (Required)
+    - String
+  - **useMetadataAPI**: True to execute deploy report using Metadata API Format, false to use Source Format
+    - Boolean
+  - **waitMinutes**: Number of minutes to wait for the command to complete and display results
+    - String | Number
+
+### **Return:**
+Return a promise with the DeployStatus object with the deploy status result
+- Promise\<DeployStatus\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+
+### **Examples:**
+**Execute deploy report to active deploy with Metadata API format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const deployId = '00X213as2984';
+
+    connection.deployReport(deployId, true).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Execute deploy report to active deploy with Source format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const deployId = '00X213as2984';
+
+    connection.deployReport(deployId).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**cancelDeploy(deployId, useMetadataAPI, waitMinutes)**](#canceldeploydeployid-usemetadataapi-waitminutes)
+Method to get the cancel a running deployment
+
+### **Parameters:**
+  - **deployId**: Id to the deployment to cancel (Required)
+    - String
+  - **useMetadataAPI**: True to execute cancel deploy using Metadata API Format, false to use Source FormatSource Format
+    - Boolean
+  - **waitMinutes**: Number of minutes to wait for the command to complete and display results
+    - String | Number
+
+### **Return:**
+Return a promise with the DeployStatus object with the deploy status result
+- Promise\<DeployStatus\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+
+### **Examples:**
+**Cancel deploy to active deploy with Metadata API format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const deployId = '00X213as2984';
+
+    connection.cancelDeploy(deployId, true).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Cancel deploy to active deploy with Source format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const deployId = '00X213as2984';
+
+    connection.cancelDeploy(deployId).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**convertProjectToSFDX(targetDir)**](#convertprojecttosfdxtargetdir)
+Method to convert a Metadata API format Project to a Source format
+
+### **Parameters:**
+  - **targetDir**: Path to the target dir to save the converted project (Required)
+    - String
+
+### **Return:**
+Return an empty promise when conversion finish
+- Promise\<Any\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the package folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the package folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the package folder is not a directory
+- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the package file not exists or not have access to it
+- **InvalidFilePathException**: If the package file is not a file
+
+### **Examples:**
+**Convert Metadata API Format project to Source Format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    connection.convertProjectToSFDX('path/to/folder/to/save/project').then(() => {
+        // Conversion finished
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**convertProjectToMetadataAPI(targetDir)**](#convertprojecttometadataapitargetdir)
+Method to convert a Metadata API format Project to a Source format
+
+### **Parameters:**
+  - **targetDir**: Path to the target dir to save the converted project (Required)
+    - String
+
+### **Return:**
+Return an empty promise when conversion finish
+- Promise\<Any\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the package folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the package folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the package folder is not a directory
+- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the package file not exists or not have access to it
+- **InvalidFilePathException**: If the package file is not a file
+
+### **Examples:**
+**Convert Source Format project to Metadata API Format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    connection.convertProjectToMetadataAPI('path/to/folder/to/save/project').then(() => {
+        // Conversion finished
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**createSFDXProject(projectName, projectFolder, template, withManifest)**](#createsfdxprojectprojectname-projectfolder-template-withmanifest)
+Method to create a SFDX Project. This method change the connection object project folder, package folder and package file values when project is created
+
+### **Parameters:**
+  - **projectName**: Project Name to create (Required)
+    - String
+- **projectFolder**: Path to save the project. If undefined use the connection project folder
+    - String
+- **template**: Template to use to create the project. Empty by default
+    - String
+- **withManifest**: True to create the project with manifest, false in otherwise
+    - Boolean
+
+
+### **Return:**
+Return a promise with SFDXProjectResult Object with the creation result
+- Promise\<SFDXProjectResult\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder is not a directory
+
+### **Examples:**
+**Create new SFDX Project with connection project folder**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const projectName = 'NEW SFDX Project';
+
+    connection.createSFDXProject(projectName).then((createResult) => {
+        console.log(createResult);
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Create new SFDX Project on a different connection project folder**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const projectName = 'NEW SFDX Project';
+    const projectFolder = 'path/to/project/folder';
+
+    connection.createSFDXProject(projectName, projectFolder).then((createResult) => {
+        console.log(createResult);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**setAuthOrg(usernameOrAlias)**](#setauthorgusernameoralias)
+Method to set an auth org in a Salesforce local project. This command set the selected username or Alias to the connection object when authorize an org.
+
+### **Parameters:**
+  - **usernameOrAlias**: Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
+    - String
+
+### **Return:**
+Return an empty promise when operation finish
+- Promise\<Any\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder is not a directory
+
+### **Examples:**
+**Auth new org with connection username or alias**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    connection.setAuthOrg().then(() => {
+        // Org set
+    }).catch((error) => {
+        // Handle errors
+    });
+
+**Auth new org with different connection username or alias**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const usernameOrAlias = 'MyOrg2';
+
+    connection.setAuthOrg(usernameOrAlias).then(() => {
+        // Org set
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**exportTreeData(query, outputPath, prefix)**](#exporttreedataquery-outputpath-prefix)
+Method to export data in a tree format from the connected org
+
+### **Parameters:**
+  - **query**: Query to extract the data (Required)
+    - String
+  - **outputPath**: Path to the folder to (Required)
+    - String
+  - **prefix**: Prefix to add to the created files
+    - String
+
+### **Return:**
+Return an array with the extrated data information
+- Promise\<Array\<Object\>\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the output folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the output folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the output folder is not a directory
+
+### **Examples:**
+**Export Accounts data with related contacts**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const query = 'Select Id, Name, Phone, (Select Id, Name, Phone from Contacts) from Account where Name != null';
+    const outputPath = 'path/to/save/the/result';
+
+    connection.exportTreeData(query, outputPath).then((results) => {
+        for(const result of results){
+            console.log(result.file);
+            console.log(result.nRecords);
+            console.log(result.isPlanFile);
+        }
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+## [**importTreeData(file)**](#importtreedatafile)
+Method to import data in a tree format into the connected org
+
+### **Parameters:**
+  - **file**: Path to the file to import (Required)
+    - String
+
+### **Return:**
+Return a promise with an object with the ok result and errors on insert
+- Promise\<Object\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongFilePathException**: If the file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the file not exists or not have access to it
+- **InvalidFilePathException**: If the file is not a directory
+
+### **Examples:**
+**Import file with exported records**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+
+    const fileToImport = 'path/to/file/to/import.json';
+
+    connection.importTreeData(fileToImport).then((result) => {
+        if(result.results){
+            for(const result of result.results){
+                console.log(result.refId);
+                console.log(result.id);
+                console.log(result.sobject);
             }
-        });
-        const metadataType = metadataTypes[MetadataTypes.CUSTOM_FIELD];
-        console.log(metadataType.name);
-        console.log(metadataType.checked);
-        console.log(metadataType.path);
-        console.log(metadattaType.suffix);
-        console.log(metadataType.childs);
-
-        const metadataObject = metadataType.getChild('Account');
-        console.log(metadataObject.name);
-        console.log(metadataObject.checked);
-        console.log(metadataObject.path);
-        console.log(metadataObject.childs);
-
-        const metadataItem = metadataObject.getChild('Name');
-        console.log(metadataItem.name);
-        console.log(metadataItem.checked);
-        console.log(metadataItem.path);
-    } catch(error) {
-        // Handle errors
-    }
-
-### **List SObjects**
-
-Method to list all available Salesforce SObejcts in your org.
-
-**Example with then().catch():**
-
-    const Connection = require('@ah/connector');
-
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.listSObjects(category).then((sObjectNames) => {
-        for(const sObjectName of sObjectNames){
-            console.log(sObjectName);
-        }
-    }).cath((error) => {
-        // Handle errors
-    });
-
-**Example with await:**
-
-    try {
-        const sObjectNames = await connection.listSObjects();
-        for(const sObjectName of sObjectNames){
-            console.log(sObjectName);
-        }
-    } catch(error) {
-        // Handle errors
-    }
-
-### **Describe SObjects**
-
-Method to describe the sepecified SObjects on your Org.
-
-SObject Class, SObjectField Class, PicklistValue Class and RecordType Class to process response are in @ah/core Types Module.
-
-**Example with then().catch():**
-
-    const Connection = require('@ah/connector');
-
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.setMultiThread();
-
-    connection.describeSObjects(['Account', 'Case'], (status) => {
-        // Progress callback to handle the downlaod progress
-        if(status.stage === 'prapare'){
-            // Handle progress on prepare stage
-            console.log(status.stage);      // Stage type ('prepare', 'beforeDownload', 'afterDownload')
-            console.log(status.increment);  // Value of the increment percentage when download each metadat type
-            console.log(status.percentage); // Value of the progress percentage
-        } else if(status.stage === 'beforeDownload') {
-            // Handle progress before download one metadata type stage
-            console.log(status.stage);  
-            console.log(status.increment);
-            console.log(status.percentage); 
-            console.log(status.typeOrObject);   // Metadata Type or SObject prepared to download
-        } else if(status.stage === 'afterDownload') {
-            // Handle progress after download one metadata type stage
-            console.log(status.stage);
-            console.log(status.increment);
-            console.log(status.percentage);
-            console.log(status.typeOrObject);   // Downloaded Metadata Type or SObject 
-            console.log(status.data);           // Downloaded data
-        }
-    }).then((sObjects) => {
-        for(const sObject of sObjects){
-            console.log(sObject.name);
-            console.log(sObject.label);
-            console.log(sObject.labelPlural);
-            console.log(sObject.keyPrefix);
-            console.log(sObject.custom);
-            console.log(sObject.queryable);
-            console.log(sObject.customSetting);
-            console.log(sObject.namespace);
-            console.log(sObject.getRecordType('devName').developerName);
-            console.log(sObject.getRecordType('devName').name);
-            console.log(sObject.getField('Name').name);
-            console.log(sObject.getField('Name').label);
-        }
-    }).cath((error) => {
-        // Handle errors
-    });
-
-**Example with await:**
-
-    try {
-        const sObjectNames = await connection.describeSObjects(['Account', 'Case'], (status) => {
-            // Progress callback to handle the downlaod progress
-            if(status.stage === 'prapare'){
-                // Handle progress on prepare stage
-                console.log(status.stage);      // Stage type ('prepare', 'beforeDownload', 'afterDownload')
-                console.log(status.increment);  // Value of the increment percentage when download each metadat type
-                console.log(status.percentage); // Value of the progress percentage
-            } else if(status.stage === 'beforeDownload') {
-                // Handle progress before download one metadata type stage
-                console.log(status.stage);  
-                console.log(status.increment);
-                console.log(status.percentage); 
-                console.log(status.typeOrObject);   // Metadata Type or SObject prepared to download
-            } else if(status.stage === 'afterDownload') {
-                // Handle progress after download one metadata type stage
-                console.log(status.stage);
-                console.log(status.increment);
-                console.log(status.percentage);
-                console.log(status.typeOrObject);   // Downloaded Metadata Type or SObject 
-                console.log(status.data);           // Downloaded data
+        } else {
+            for(const error of result.errors){
+                console.log(error);
             }
-        })
-        for(const sObject of sObjects){
-            console.log(sObject.name);
-            console.log(sObject.label);
-            console.log(sObject.labelPlural);
-            console.log(sObject.keyPrefix);
-            console.log(sObject.custom);
-            console.log(sObject.queryable);
-            console.log(sObject.customSetting);
-            console.log(sObject.namespace);
-            console.log(sObject.getRecordType('devName').developerName);
-            console.log(sObject.getRecordType('devName').name);
-            console.log(sObject.getField('Name').name);
-            console.log(sObject.getField('Name').label);
         }
-    } catch(error) {
+    }).catch((error) => {
         // Handle errors
-    }
+    });
+---
 
-### **Retrieve**
+## [**bulkDelete(csvfile, sObject)**](#bulkDeletecsvfile-sObject)
+Method to delete data on bulk mode
 
-Method to retrieve data from your Org. You can retrieve data on Source or Metadata API format. RetrieveResult Class, RetrieveInboundFile Class, RetrievePackage Class and RetrieveWarning Class to process response are in @ah/core Types Module.
+### **Parameters:**
+  - **csvfile**: Path to the CSV file with the ids to delete (Required)
+    - String
+  - **sObject**: Records SObject API Name (Required)
+    - String
 
-**Example with then().catch():**
+
+### **Return:**
+Return a promise with an array with BulkStatus objects with the delete result
+- Promise\<Array\<BulkStatus\>\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder is not a directory
+- **WrongFilePathException**: If the csv file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the csv file not exists or not have access to it
+- **InvalidFilePathException**: If the csv file is not a directory
+
+### **Examples:**
+**Delete data at bulk mode**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.setPackageFolder('path/to/package/folder');
-    connection.setPackageFile('path/to/package/file');
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
-    connection.retrieve(useMetadataAPI, waitMinutes, targetDir).then((result) => {
-        // targetDir is only required if use MetadataAPI
-        console.log(result.inboundFiles);
-        console.log(result.packages);
-        console.log(result.warnings);
-    }).cath((error) => {
+    const csvFile = 'path/to/csv/file/to/delete.csv';
+
+    connection.bulkDelete(csvFile, 'Account').then((deleteResults) => {
+        for(const result of deleteResults){
+            console.log(result);
+        }
+    }).catch((error) => {
         // Handle errors
     });
+---
 
-**Example with await:**
+## [**executeApexAnonymous(scriptfile)**](#executeapexanonymousscriptfile)
+Method to execute an Apex script file on Anonymous context
 
-    try {
-        const result = await connection.retrieve(useMetadataAPI, waitMinutes, targetDir);
-        console.log(result.inboundFiles);
-        console.log(result.packages);
-        console.log(result.warnings);
-    } catch(error) {
-        // Handle errors
-    }
+### **Parameters:**
+  - **scriptfile**: Path to the script file (Required)
+    - String
 
-### **Retrieve Report**
+### **Return:**
+Return a promise with the execution log as String
+- Promise\<String\>
 
-Method to run a Retrive Report to check the retrieve status
+### **Throws:**
+This method can throw the next exceptions:
 
-RetrieveStatus Class to process response are in @ah/core Types Module.
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder is not a directory
+- **WrongFilePathException**: If the script file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the script file not exists or not have access to it
+- **InvalidFilePathException**: If the script file is not a directory
 
-**Example with then().catch():**
+### **Examples:**
+**Execute an Apex Anonymous script**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.setPackageFolder('path/to/package/folder');
-    connection.setPackageFile('path/to/package/file');
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
-    connection.retrieveReport(retrieveId, targetDir).then((status) => {
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-    }).cath((error) => {
+    const scriptFile = 'path/to/csv/file/to/delete.csv';
+
+    connection.executeApexAnonymous(scriptFile).then((executionLog) => {
+        console.log(executionLog);
+    }).catch((error) => {
         // Handle errors
     });
+---
 
-**Example with await:**
+## [**loadUserPermissions(tmpFolder)**](#loaduserpermissionstmpfolder)
+Method to get all available user permissions from the connected org
 
-    try {
-        const status = await connection.retrieveReport(retrieveId, targetDir);
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-    } catch(error) {
-        // Handle errors
-    }
+### **Parameters:**
+  - **tmpFolder**: Temporal folder to save support files (Required)
+    - String
+  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+    - Function
 
-### **Validate Deploy**
+### **Return:**
+Return a promise with the list of user permissions
+- Promise\<Array\<String\>\>
 
-Method to Validate a package.xml for deploy.
+### **Throws:**
+This method can throw the next exceptions:
 
-DeployStatus Class to process response are in @ah/core Types Module.
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the temp folder is not a directory
 
-**Example with then().catch():**
+### **Examples:**
+**Load User permissions from connected org**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.setPackageFolder('path/to/package/folder');
-    connection.setPackageFile('path/to/package/file');
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
-    connection.validateDeploy(testLevel, runTests, useMetadataAPI, waitMinutes).then((status) => {
-        // runTests can be a comma separatd values or Array with class names
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    }).cath((error) => {
+    connection.loadUserPermissions('path/to/temporal/folder').then((permissions) => {
+        console.log(permissions);
+    }).catch((error) => {
         // Handle errors
     });
+---
 
-**Example with await:**
+## [**retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder)**](#retrievelocalspecialtypestmpfolder-types-compress-sortorder)
+Method to get all available user permissions from the connected org
 
-    try {
-        const status = await connection.validateDeploy(retrieveId, targetDir);
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    } catch(error) {
-        // Handle errors
-    }
+### **Parameters:**
+  - **tmpFolder**: Temporal folder to save support files (Required)
+    - String
+  - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+    - Object
+  - **compress**: true to compress affected files, false in otherwise
+    - Boolean
+  - **sortOrder**: Compress sort order when compress files
+    - String
+  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+    - Function
 
-### **Deploy**
+### **Return:**
+Return a promise with a RetrieveResult with the retrieve result
+- Promise\<RetrieveResult\>
 
-Method to deploy a package.xml in your Org
+### **Throws:**
+This method can throw the next exceptions:
 
-DeployStatus Class to process response are in @ah/core Types Module.
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the temp folder is not a directory
+- **WrongFilePathException**: If the types file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the types file not exists or not have access to it
+- **InvalidFilePathException**: If the types file is not a file
+- **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
 
-**Example with then().catch():**
+### **Examples:**
+**Retrieve all local special Metadata Types from Org**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
-    connection.setPackageFolder('path/to/package/folder');
-    connection.setPackageFile('path/to/package/file');
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
-    connection.deploy(testLevel, runTests, useMetadataAPI, waitMinutes).then((status) => {
-        // runTests can be a comma separatd values or Array with class names
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    }).cath((error) => {
+    connection.retrieveLocalSpecialTypes('path/to/temporal/folder').then((result) => {
+        console.log(result);
+    }).catch((error) => {
         // Handle errors
     });
 
-**Example with await:**
+**Retrieve some local special Metadata Types from Org**
 
-    try {
-        const status = await connection.deploy(retrieveId, targetDir);
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    } catch(error) {
+    const Connection = require('@ah/connector');
+    const { Types, Values } = require('@ah/core');
+    const MetadataTypes = Values.MetadataTypes;
+    const MetadataType = Types.MetadataType;
+    const MetadataObject = Types.MetadataObject;
+    const MetadataItem = Types.MetadataItem;
+
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const types: {};
+    types[MetadataTypes.CUSTOM_APPLICATION] = new MetadataType(MetadataTypes.CUSTOM_APPLICATION, true); // set to true Metadata Type to ignore all custom application
+    types[MetadataTypes.PERMISSION_SET] = new MetadataType(MetadataTypes.PERMISSION_SET, false);    // set to false Metadata Type to ignore some permission sets 
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet1', true));   // Set to true to repair PermissionSet1
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet2', true));  // Set to true to repair PermissionSet2
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet3', false));  // Set to false to not repair PermissionSet3
+
+
+    connection.retrieveLocalSpecialTypes('path/to/temporal/folder', types).then((result) => {
+        console.log(result);
+    }).catch((error) => {
         // Handle errors
-    }
+    });
+---
 
-### **Quick Deploy**
+## [**retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder)**](#retrievemixedspecialtypestmpfolder-types-downloadall-compress-sortorder)
+Method to Retrieve mixed special types from the connected org. Mixed means that only affect the Metadata Types on your project folder, but download all related data from this types from your org (and not only the local data)
 
-Method to quick deploy a validated package
+### **Parameters:**
+  - **tmpFolder**: Temporal folder to save support files (Required)
+    - String
+  - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+    - Object
+  - **downloadAll**: true to compress affected files, false in otherwise
+    - Boolean
+  - **compress**: true to download all related data from any namespace, false to downlaod only the org namespace data
+    - Boolean
+  - **sortOrder**: Compress sort order when compress files
+    - String
+  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+    - Function
 
-DeployStatus Class to process response are in @ah/core Types Module.
+### **Return:**
+Return a promise with a RetrieveResult with the retrieve result
+- Promise\<RetrieveResult\>
 
-**Example with then().catch():**
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the temp folder is not a directory
+- **WrongFilePathException**: If the types file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the types file not exists or not have access to it
+- **InvalidFilePathException**: If the types file is not a file
+- **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+
+### **Examples:**
+**Retrieve all mixed special Metadata Types from Org**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
-    connection.quickDeploy(deployId, useMetadataAPI).then((status) => {
-        // runTests can be a comma separatd values or Array with class names
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    }).cath((error) => {
+    connection.retrieveMixedSpecialTypes('path/to/temporal/folder').then((result) => {
+        console.log(result);
+    }).catch((error) => {
         // Handle errors
     });
 
-**Example with await:**
+**Retrieve some mixed special Metadata Types from Org**
 
-    try {
-        const status = await connection.quickDeploy(deployId, useMetadataAPI);
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    } catch(error) {
+    const Connection = require('@ah/connector');
+    const { Types, Values } = require('@ah/core');
+    const MetadataTypes = Values.MetadataTypes;
+    const MetadataType = Types.MetadataType;
+    const MetadataObject = Types.MetadataObject;
+    const MetadataItem = Types.MetadataItem;
+
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const types: {};
+    types[MetadataTypes.CUSTOM_APPLICATION] = new MetadataType(MetadataTypes.CUSTOM_APPLICATION, true); // set to true Metadata Type to ignore all custom application
+    types[MetadataTypes.PERMISSION_SET] = new MetadataType(MetadataTypes.PERMISSION_SET, false);    // set to false Metadata Type to ignore some permission sets 
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet1', true));   // Set to true to repair PermissionSet1
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet2', true));  // Set to true to repair PermissionSet2
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet3', false));  // Set to false to not repair PermissionSet3
+
+
+    connection.retrieveMixedSpecialTypes('path/to/temporal/folder', types).then((result) => {
+        console.log(result);
+    }).catch((error) => {
         // Handle errors
-    }
+    });
+---
 
-### **Deploy Report**
+## [**retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder)**](#retrieveorgspecialtypestmpfolder-types-downloadall-compress-sortorder)
+Method to Retrieve org special types from the connected org. Org means that affect all Metadata types stored in your org not on your local project.
 
-Method to get the status of a deploy
+### **Parameters:**
+  - **tmpFolder**: Temporal folder to save support files (Required)
+    - String
+  - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+    - Object
+  - **downloadAll**: true to compress affected files, false in otherwise
+    - Boolean
+  - **compress**: true to download all related data from any namespace, false to downlaod only the org namespace data
+    - Boolean
+  - **sortOrder**: Compress sort order when compress files
+    - String
+  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+    - Function
 
-DeployStatus Class to process response are in @ah/core Types Module.
+### **Return:**
+Return a promise with a RetrieveResult with the retrieve result
+- Promise\<RetrieveResult\>
 
-**Example with then().catch():**
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the temp folder is not a directory
+- **WrongFilePathException**: If the types file is not a String or can't convert to absolute path
+- **FileNotFoundException**: If the types file not exists or not have access to it
+- **InvalidFilePathException**: If the types file is not a file
+- **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+
+### **Examples:**
+**Retrieve all org special Metadata Types from Org**
 
     const Connection = require('@ah/connector');
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
-    connection.deployReport(deployId, useMetadataAPI, waitMinutes).then((status) => {
-        // runTests can be a comma separatd values or Array with class names
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    }).cath((error) => {
+    connection.retrieveOrgSpecialTypes('path/to/temporal/folder').then((result) => {
+        console.log(result);
+    }).catch((error) => {
         // Handle errors
     });
 
-**Example with await:**
-
-    try {
-        const status = await connection.deployReport(deployId, useMetadataAPI, waitMinutes);
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    } catch(error) {
-        // Handle errors
-    }
-
-### **Cancel Deploy**
-
-Method to cancel a Deploy
-
-DeployStatus Class to process response are in @ah/core Types Module.
-
-**Example with then().catch():**
+**Retrieve some org special Metadata Types from Org**
 
     const Connection = require('@ah/connector');
+    const { Types, Values } = require('@ah/core');
+    const MetadataTypes = Values.MetadataTypes;
+    const MetadataType = Types.MetadataType;
+    const MetadataObject = Types.MetadataObject;
+    const MetadataItem = Types.MetadataItem;
 
-    const connection = new Connection('aliasOrUsername', '51.0', 'path/to/Project', 'namespacePrefix');
 
-    connection.cancelDeploy(deployId, useMetadataAPI, waitMinutes).then((status) => {
-        // runTests can be a comma separatd values or Array with class names
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    }).cath((error) => {
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const types: {};
+    types[MetadataTypes.CUSTOM_APPLICATION] = new MetadataType(MetadataTypes.CUSTOM_APPLICATION, true); // set to true Metadata Type to ignore all custom application
+    types[MetadataTypes.PERMISSION_SET] = new MetadataType(MetadataTypes.PERMISSION_SET, false);    // set to false Metadata Type to ignore some permission sets 
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet1', true));   // Set to true to repair PermissionSet1
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet2', true));  // Set to true to repair PermissionSet2
+    types[MetadataTypes.PERMISSION_SET].addChild(new MetadataObject('PermissionSet3', false));  // Set to false to not repair PermissionSet3
+
+
+    connection.retrieveOrgSpecialTypes('path/to/temporal/folder', types).then((result) => {
+        console.log(result);
+    }).catch((error) => {
         // Handle errors
     });
 
-**Example with await:**
+# [**Metadata JSON Format**](#metadata-file)
 
-    try {
-        const status = await connection.cancelDeploy(deployId, useMetadataAPI, waitMinutes);
-        console.log(status.id);
-        console.log(status.status);
-        console.log(status.done);
-        console.log(status.success);
-        console.log(status.zipFilePath);
-        console.log(status.checkOnly);
-        console.log(status.numberComponentErrors);
-        console.log(status.numberComponentsDeployed);
-        console.log(status.numberComponentsTotal);
-        console.log(status.numberTestErrors);
-        console.log(status.numberTestsCompleted);
-        console.log(status.numberTestsTotal);
-        console.log(status.runTestsEnabled);
-    } catch(error) {
-        // Handle errors
+The Metadata JSON Format used by Aura Helper Framework and modules have the next structure. Some fields are required and the datatypes checked to ensure the correct file structure. 
+
+    {
+        "MetadataAPIName": {
+            "name": "MetadataAPIName",                                  // Required (String). Contains the Metadata Type API Name (like object Key)
+            "checked": false,                                           // Required (Boolean). Field for include this type on package or not
+            "path": "path/to/the/metadata/folder",                      // Optional (String). Path to the Metadata Type folder in local project
+            "suffix": "fileSuffix",                                     // Optional (String). Metadata File suffix
+            "childs": {                                                 // Object with a collection of childs (Field required (JSON Object) but can be an empty object)
+                "MetadataObjectName":{
+                    "name": "MetadataObjectName",                       // Required (String). Contains the Metadata Object API Name (like object Key)
+                    "checked": false,                                   // Required (Boolean). Field for include this object on package or not
+                    "path": "path/to/the/metadata/file/or/folder",      // Optional (String). Path to the object file or folder path
+                    "childs": {                                         // Object with a collection of childs (Field required (JSON Object) but can be an empty object)
+                        "MetadataItemName": {
+                            "name": "MetadataItemName",                 // Required (String). Contains the Metadata Item API Name (like object Key)
+                            "checked": false,                           // Required (Boolean). Field for include this object on package or not
+                            "path": "path/to/the/metadata/file"
+                        },
+                        "MetadataItemName2": {
+                            ...
+                        },
+                        ...,
+                        ...,
+                        ...
+                    }
+                }
+                "MetadataObjectName2":{
+                   ...
+                },
+                ...,
+                ...,
+                ...
+            }
+        }
+    }
+
+### **Example**:
+
+    {
+        "CustomObject": {
+            "name": "CustomObject",
+            "checked": false,
+            "path":  "path/to/root/project/force-app/main/default/objects",
+            "suffix": "object",
+            "childs": {
+                "Account": {
+                    "name": "Account",
+                    "checked": true,            // Add Account Object to the package
+                    "path": "path/to/root/project/force-app/main/default/objects/Account/Account.object-meta.xml",
+                    "childs": {}
+                },
+                "Case": {
+                    "name": "Case",
+                    "checked": true,            // Add Case Object to the package
+                    "path": "path/to/root/project/force-app/main/default/objects/Case/Case.object-meta.xml",
+                    "childs": {}
+                },
+                ...,
+                ...,
+                ...
+            }
+        },
+        "CustomField": {
+            "name": "CustomField",
+            "checked": false,
+            "path":  "path/to/root/project/force-app/main/default/objects",
+            "suffix": "field",
+            "childs": {
+                "Account": {
+                    "name": "Account",
+                    "checked": false,            
+                    "path": "path/to/root/project/force-app/main/default/objects/Account/fields",
+                    "childs": {
+                        "customField__c": {
+                            "name": "customField__c",
+                            "checked": true,    // Add customField__c to the package
+                            "path": "path/to/root/project/force-app/main/default/objects/Account/fields/customField__c.field-meta.xml",
+                        },
+                        ...,
+                        ...,
+                        ...
+                    }
+                },
+                "Case": {
+                    "name": "Case",
+                    "checked": false,           
+                    "path": "path/to/root/project/force-app/main/default/objects/Case/fields",
+                    "childs": {
+                        "CaseNumber": {
+                            "name": "CaseNumber",
+                            "checked": true,    // Add CaseNumber to the package
+                            "path": "path/to/root/project/force-app/main/default/objects/Account/fields/CaseNumber.field-meta.xml",
+                        },
+                        ...,
+                        ...,
+                        ...
+                    }
+                },
+                ...,
+                ...,
+                ...
+            }
+        }
     }
