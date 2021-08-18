@@ -28,7 +28,7 @@ All connection methods return a Promise with the associated data to the processe
 </br>
 
 # [**Fields**](#connection-class-fields)
-The fields that start with _ are internal use only fields (Does not modify this fields to a correct connection work). To the rest of files, setter methods are recommended instead modify fields.
+The fields that start with _ are internal for use only (Does not modify this fields to a correct connection work). To the rest of fields, setter methods are recommended instead modify fields.
 
 ### [**usernameOrAlias**](#connection-class-fields-usernameoralias)
 Username or Alias to connect with the org. The org bust be authorized in the system. 
