@@ -3,6 +3,7 @@ const { RetrieveStatus, DeployStatus, RetrieveResult, SFDXProjectResult, BulkSta
 const { OSUtils, Utils, MathUtils, StrUtils, Validator, MetadataUtils, ProjectUtils } = require('@ah/core').CoreUtils;
 const { MetadataTypes, NotIncludedMetadata, SpecialMetadata, ProgressStages } = require('@ah/core').Values;
 const { FileChecker, FileReader, FileWriter, PathUtils } = require('@ah/core').FileSystem;
+const { OperationNotAllowedException, ConnectionException } = require('@ah/core').Exceptions;
 const TypesFactory = require('@ah/metadata-factory');
 const PackageGenerator = require('@ah/package-generator');
 const XMLCompressor = require('@ah/xml-compressor');
@@ -19,51 +20,73 @@ const METADATA_QUERIES = {
 const SUBFOLDER_BY_METADATA_TYPE = {
     RecordType: 'recordTypes'
 }
+
+/**
+ * Class to connect with Salesforce to list or describe metadata types, list or describe all SObjects, make queries, create SFDX Project, validate, 
+ * deploy or retrieve in SFDX and Metadata API Formats, export and import data and much more. 
+ * Is used to Aura Helper and Aura Helper CLI to support salesfore conections.
+ * 
+ * The setters methods are defined like a builder pattern to make it more usefull
+ * 
+ * All connection methods return a Promise with the associated data to the processes. 
+ */
 class Connection {
 
+    /**
+     * Constructor to create a new connection object
+     * @param {String} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
+     * @param {String | Number} apiVersion API Version number to connect with salesforce
+     * @param {String} projectFolder Path to the project root folder
+     * @param {String} namespacePrefix Namespace prefix from the Org to connect
+     */
     constructor(usernameOrAlias, apiVersion, projectFolder, namespacePrefix) {
         this.usernameOrAlias = usernameOrAlias;
         this.apiVersion = apiVersion;
         this.projectFolder = (projectFolder !== undefined) ? PathUtils.getAbsolutePath(projectFolder) : projectFolder;
-        this.processes = {};
-        this.abort = false;
-        this.percentage = 0;
-        this.increment = 0;
-        this.inProgress;
         this.namespacePrefix = (namespacePrefix !== undefined) ? namespacePrefix : '';
         this.multiThread = false;
-        this.abortCallback;
-        this.progressCallback;
-        this.allowConcurrence = false;
-        this.packageFolder = this.projectFolder + '/manifest';
-        this.packageFile = this.projectFolder + '/manifest/package.xml';
+        if (!Utils.isNull(this.projectFolder)) {
+            this.packageFolder = this.projectFolder + '/manifest';
+            this.packageFile = this.projectFolder + '/manifest/package.xml';
+        }
+        this._processes = {};
+        this._inProgress = false;
+        this._percentage = 0;
+        this._increment = 0;
+        this._abort = false;
+        this._allowConcurrence = false;
+        this._abortCallback = undefined;
+        this._progressCallback = undefined;
     }
 
-    onProgress(progressCallback) {
-        this.progressCallback = progressCallback;
-    }
-
-    onAbort(abortCallback) {
-        this.abortCallback = abortCallback;
-    }
-
-    abortConnection() {
-        this.abort = true;
-        killProcesses(this);
-        if (this.abortCallback)
-            this.abortCallback.call(this);
-    }
-
+    /**
+     * Method to set the Username or Alias to connect with org
+     * @param {String} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
+     * 
+     * @returns {Connection} Returns the connection object
+     */
     setUsernameOrAlias(usernameOrAlias) {
         this.usernameOrAlias = usernameOrAlias;
         return this;
     }
 
+    /**
+     * Method to set the API Version to connect
+     * @param {String | Number} apiVersion API Version number to connect with salesforce
+     * 
+     * @returns {Connection} Returns the connection object
+     */
     setApiVersion(apiVersion) {
         this.apiVersion = apiVersion;
         return this;
     }
 
+    /**
+     * Method to set the project root folder path. When set the project root, automatically set the packageFolder and packageFile to their respective paths
+     * @param {String} projectFolder Path to the project root folder
+     * 
+     * @returns {Connection} Returns the connection object
+     */
     setProjectFolder(projectFolder) {
         this.projectFolder = (projectFolder !== undefined) ? PathUtils.getAbsolutePath(projectFolder) : projectFolder;
         this.packageFolder = this.projectFolder + '/manifest';
@@ -71,37 +94,100 @@ class Connection {
         return this;
     }
 
-    setPackageFile(packageFile) {
-        this.packageFile = (packageFile !== undefined) ? PathUtils.getAbsolutePath(packageFile) : packageFile;
-        return this;
-    }
-
+    /**
+     * Method to set the package folder path. When set the package folder, automatically set packageFile to the respective path
+     * @param {String} packageFile Path to the package folder
+     * 
+     * @returns {Connection} Returns the connection object
+     */
     setPackageFolder(packageFolder) {
         this.packageFolder = (packageFolder !== undefined) ? PathUtils.getAbsolutePath(packageFolder) : packageFolder;
         this.packageFile = this.projectFolder + '/manifest/package.xml';
         return this;
     }
 
+    /**
+     * Method to set the package xml file path
+     * @param {String} packageFile Path to the package file
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    setPackageFile(packageFile) {
+        this.packageFile = (packageFile !== undefined) ? PathUtils.getAbsolutePath(packageFile) : packageFile;
+        return this;
+    }
+
+    /**
+     * Method to set the Org namespace prefix
+     * @param {String} namespacePrefix Namespace prefix from the Org to connect
+     * 
+     * @returns {Connection} Returns the connection object
+     */
     setNamespacePrefix(namespacePrefix) {
         this.namespacePrefix = (namespacePrefix !== undefined) ? namespacePrefix : '';
         return this;
     }
 
+    /**
+     * Method to able to the connection object to use several threads and processor cores to run some processes and run faster
+     * 
+     * @returns {Connection} Returns the connection object
+     */
     setMultiThread() {
         this.multiThread = true;
         return this;
     }
 
+    /**
+     * Method to set the connection object to use only one thread and processo core to all processes
+     * 
+     * @returns {Connection} Returns the connection object
+     */
     setSingleThread() {
         this.multiThread = false;
         return this;
     }
 
+    /**
+     * Method to handle the general connection progress (is called from all methods to handle the progress)
+     * @param {Function} progressCallback Callback function to handle the progress
+     */
+    onProgress(progressCallback) {
+        this._progressCallback = progressCallback;
+        return this;
+    }
+
+    /**
+     * Method to handle when connection is aborted
+     * @param {Function} abortCallback Callback function to call when connectin is aborted
+     */
+    onAbort(abortCallback) {
+        this._abortCallback = abortCallback;
+        return this;
+    }
+
+    /**
+     * Method to abort all connection running processes. When finishes call onAbort() callback
+     */
+    abortConnection() {
+        this._abort = true;
+        killProcesses(this);
+        if (this._abortCallback)
+            this._abortCallback.call(this);
+    }
+
+    /**
+     * Method to get the Auth Username from the org (If not found username, return the Alias)
+     * 
+     * @returns {Promise<String>} Return a String promise with the Username or Alias data
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     */
     getAuthUsername() {
         startOperation(this);
         return new Promise(async (resolve, reject) => {
             try {
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 const authOrgs = await this.listAuthOrgs();
                 let username;
                 if (authOrgs && authOrgs.length > 0) {
@@ -117,28 +203,36 @@ class Connection {
                         if (!username && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim())))
                             username = authOrg.username;
                     }
-                    this.allowConcurrence = false;
+                    this._allowConcurrence = false;
                     endOperation(this);
                     resolve(username);
                 } else {
-                    this.allowConcurrence = false;
+                    this._allowConcurrence = false;
                     endOperation(this);
                     resolve(undefined);
                 }
             } catch (error) {
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
+    /**
+     * Method to get the server instance for an username or alias (or the connection username or alias)
+     * @param {String} usernameOrAlias Username or alias to check. (If not provided, use usernameOrAlias from connection object)
+     * 
+     * @returns {Promise<String>} Return a String promise with the instance URL
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     */
     getServerInstance(usernameOrAlias) {
         usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
         startOperation(this);
         return new Promise(async (resolve, reject) => {
             try {
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 const authOrgs = await this.listAuthOrgs();
                 let inbstanceUrl;
                 if (authOrgs && authOrgs.length > 0) {
@@ -148,45 +242,29 @@ class Connection {
                             break;
                         }
                     }
-                    this.allowConcurrence = false;
+                    this._allowConcurrence = false;
                     endOperation(this);
                     resolve(inbstanceUrl);
                 } else {
-                    this.allowConcurrence = false;
+                    this._allowConcurrence = false;
                     endOperation(this);
                     resolve(undefined);
                 }
             } catch (error) {
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
-    query(query, userToolingApi) {
-        startOperation(this);
-        return new Promise((resolve, reject) => {
-            try {
-                const process = ProcessFactory.query(this.usernameOrAlias, query, userToolingApi);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
-                        const records = (response !== undefined) ? Utils.forceArray(response.result.records) : [];
-                        endOperation(this);
-                        resolve(records);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
-            }
-        });
-    }
-
+    /**
+     * Method to list all auth org on the system
+     * 
+     * @returns {Promise<Array<AuthOrg>>} Return a promise with all authorized org in the system 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     */
     listAuthOrgs() {
         startOperation(this);
         return new Promise((resolve, reject) => {
@@ -211,6 +289,49 @@ class Connection {
         });
     }
 
+    /**
+     * Method to execute a query to the connected org
+     * @param {String} query Query to execute (Required)
+     * @param {Boolean} useToolingApi true to use Tooling API to execute the query
+     * 
+     * @returns {Promise<Array<Object>>} Return a promise with the record list 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     */
+    query(query, useToolingApi) {
+        startOperation(this);
+        return new Promise((resolve, reject) => {
+            try {
+                const process = ProcessFactory.query(this.usernameOrAlias, query, useToolingApi);
+                addProcess(this, process);
+                ProcessHandler.runProcess(process).then((response) => {
+                    handleResponse(response, () => {
+                        const records = (response !== undefined) ? Utils.forceArray(response.result.records) : [];
+                        endOperation(this);
+                        resolve(records);
+                    });
+                }).catch((error) => {
+                    endOperation(this);
+                    reject(error);
+                });
+            } catch (error) {
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Method to list all Metadata Types available in the connected org (according selected API Version)
+     * 
+     * @returns {Promise<Array<MetadataDetail>>} Return a promise with the MetadataDetail objects from all available Metadata Types
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     */
     listMetadataTypes() {
         startOperation(this);
         return new Promise((resolve, reject) => {
@@ -235,15 +356,27 @@ class Connection {
         });
     }
 
+    /**
+     * Method to describe all or selected Metadata Types from the connected org
+     * @param {Arra<String> | Array<MetadataDetail>} typesOrDetails List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
+     * @param {Boolean} downloadAll true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
+     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * 
+     * @returns {Promise<Array<Object>>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     */
     describeMetadataTypes(typesOrDetails, downloadAll) {
         const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
             try {
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(typesOrDetails);
-                this.increment = calculateIncrement(metadataToProcess);
+                this._increment = calculateIncrement(metadataToProcess);
                 callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
                 let foldersByType;
                 if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
@@ -264,25 +397,35 @@ class Connection {
                         }
                         if (nCompleted === batchesToProcess.length) {
                             metadata = MetadataUtils.orderMetadata(metadata);
-                            this.allowConcurrence = false;
+                            this._allowConcurrence = false;
                             endOperation(this);
                             resolve(metadata);
                             return;
                         }
                     }).catch((error) => {
-                        this.allowConcurrence = false;
+                        this._allowConcurrence = false;
                         endOperation(this);
                         reject(error);
                     });
                 }
             } catch (error) {
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
+    /**
+     * Method to list all SObjects API Name by category
+     * @param {String} category Object Category. Values are: Standard, Custom, All. (All by default) 
+     * 
+     * @returns {Promise<Array<String>>} Return a promise with a list with the sObject names 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     */
     listSObjects(category) {
         startOperation(this);
         return new Promise((resolve, reject) => {
@@ -306,13 +449,24 @@ class Connection {
         });
     }
 
+    /**
+     * Method to describe SObject data to the specified objects
+     * @param {Array<String>} sObjects List with the object API Names to describe
+     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * 
+     * @returns {Promise<Array<SObject>>} Return a promise with a SObjects data
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     */
     describeSObjects(sObjects) {
         const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                this.increment = calculateIncrement(sObjects);
+                this._increment = calculateIncrement(sObjects);
                 callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
                 let resultObjects = {};
                 sObjects = Utils.forceArray(sObjects);
@@ -346,7 +500,22 @@ class Connection {
         });
     }
 
-    retrieve(useMetadataAPI, waitMinutes, targetDir) {
+    /**
+     * Method to retrieve data using the connection package file. You can choose to retrieve as Metadata API format or Source Format
+     * @param {Boolean} useMetadataAPI True to use Metadata API format, false to use source format
+     * @param {String} targetDir Path to the target dir when retrieve with Metadata API Format
+     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     *  
+     * @returns {Promise<RetrieveResult>} Return a promise with the RetrieveResult object with the retrieve result 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder or target dir is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder or target dir not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder or target dir is not a directory
+     */
+    retrieve(useMetadataAPI, targetDir, waitMinutes) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
@@ -379,21 +548,38 @@ class Connection {
         });
     }
 
+    /**
+     * Retrieve report when use Metadata API to retrieve data
+     * @param {String} retrieveId Retrieve Id to get the report (Required)
+     * @param {String} targetDir Path to the target dir (Required)
+     * 
+     * @returns {Promise<RetrieveStatus>} Return a promise with the RetrieveStatus object with the retrieve status result
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the target dir is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the target dir not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the target dir is not a directory
+     */
     retrieveReport(retrieveId, targetDir) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
+                this._allowConcurrence = true;
                 targetDir = Validator.validateFolderPath(targetDir);
                 let process = ProcessFactory.mdapiRetrieveReport(this.usernameOrAlias, retrieveId, targetDir);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
                         const status = (response !== undefined) ? new RetrieveStatus(response.result) : undefined;
+                        this._allowConcurrence = false;
                         endOperation(this);
                         resolve(status);
                     });
                 }).catch((error) => {
+                    this._allowConcurrence = false;
                     if (error.message && error.message.indexOf('Retrieve result has been deleted') != -1) {
                         resolve(new RetrieveStatus(retrieveId, 'Succeeded', true, true));
                     }
@@ -401,12 +587,32 @@ class Connection {
                     reject(error);
                 });
             } catch (error) {
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
+    /**
+     * Method to validate a deploy against the org using the connection package file
+     * @param {String} testLevel Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {String | Array<String>} runTests String with comma separated test names to execute or list with the test names to execute
+     * @param {Boolean} useMetadataAPI True to validate deploy using Metadata API Format, false to use Source Format
+     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * 
+     * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder or package folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder or package folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder or package folder is not a directory
+     * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the package file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the package file is not a file
+     */
     validateDeploy(testLevel, runTests, useMetadataAPI, waitMinutes) {
         startOperation(this);
         resetProgress(this);
@@ -441,6 +647,25 @@ class Connection {
         });
     }
 
+    /**
+     * Method to deploy data to the org using the connection package file
+     * @param {String} testLevel Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {String | Array<String>} runTests String with comma separated test names to execute or list with the test names to execute
+     * @param {Boolean} useMetadataAPI True to Deploy data using Metadata API Format, false to use Source Format
+     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * 
+     * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder or package folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder or package folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder or package folder is not a directory
+     * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the package file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the package file is not a file
+     */
     deploy(testLevel, runTests, useMetadataAPI, waitMinutes) {
         startOperation(this);
         resetProgress(this);
@@ -473,6 +698,20 @@ class Connection {
         });
     }
 
+    /**
+     * Method to execute a quick deploy when validation result is success
+     * @param {String} deployId Id to deploy the validated deployment (Required)
+     * @param {Boolean} useMetadataAPI True to execute quick deploy using Metadata API Format, false to use Source Format
+     * 
+     * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder is not a directory
+     */
     quickDeploy(deployId, useMetadataAPI) {
         startOperation(this);
         resetProgress(this);
@@ -503,11 +742,24 @@ class Connection {
         });
     }
 
+    /**
+     * Method to get the report of a running deployment
+     * @param {String} deployId Id to the deployment to get the report (Required)
+     * @param {Boolean} useMetadataAPI True to execute deploy report using Metadata API Format, false to use Source Format
+     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * 
+     * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     */
     deployReport(deployId, useMetadataAPI, waitMinutes) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
+                this._allowConcurrence = true;
                 let process;
                 if (useMetadataAPI) {
                     process = ProcessFactory.mdapiDeployReport(this.usernameOrAlias, deployId, waitMinutes);
@@ -517,21 +769,36 @@ class Connection {
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
+                        this._allowConcurrence = false;
                         const status = (response !== undefined) ? new DeployStatus(response.result) : undefined;
                         endOperation(this);
                         resolve(status);
                     });
                 }).catch((error) => {
+                    this._allowConcurrence = false;
                     endOperation(this);
                     reject(error);
                 });
             } catch (error) {
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
+    /**
+     * Method to get the cancel a running deployment
+     * @param {String} deployId Id to the deployment to cancel (Required)
+     * @param {Boolean} useMetadataAPI True to execute cancel deploy using Metadata API Format, false to use Source Format
+     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * 
+     * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     */
     cancelDeploy(deployId, useMetadataAPI, waitMinutes) {
         startOperation(this);
         resetProgress(this);
@@ -561,6 +828,22 @@ class Connection {
         });
     }
 
+    /**
+     * Method to convert a Metadata API format Project to a Source format
+     * @param {String} targetDir Path to the target dir to save the converted project (Required)
+     * 
+     * @returns {Promise<Any>} Return an empty promise when conversion finish 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the package folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the package folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the package folder is not a directory
+     * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the package file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the package file is not a file
+     */
     convertProjectToSFDX(targetDir) {
         startOperation(this);
         resetProgress(this);
@@ -587,13 +870,29 @@ class Connection {
         });
     }
 
+    /**
+     * Method to convert a Source format Project to a Metadata API format
+     * @param {String} targetDir Path to the target dir to save the converted project (Required)
+     * 
+     * @returns {Promise<Any>} Return an empty promise when conversion finish 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder is not a directory
+     * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the package file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the package file is not a file
+     */
     convertProjectToMetadataAPI(targetDir) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
                 const packageFile = Validator.validateFilePath(this.packageFile);
-                const projectFolder = Validator.validateFolderPath(this.packageFile);
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 let process = ProcessFactory.convertToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -612,7 +911,22 @@ class Connection {
         });
     }
 
-
+    /**
+     * Method to create a SFDX Project. This method change the connection object project folder, package folder and package file values when project is created
+     * @param {String} projectName Project Name to create (Required)
+     * @param {String} projectFolder Path to save the project. If undefined use the connection project folder
+     * @param {String} template Template to use to create the project. Empty by default
+     * @param {Boolean} withManifest True to create the project with manifest, false in otherwise
+     * 
+     * @returns {Promise<SFDXProjectResult>} Return a promise with SFDXProjectResult Object with the creation result
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder is not a directory
+     */
     createSFDXProject(projectName, projectFolder, template, withManifest) {
         startOperation(this);
         resetProgress(this);
@@ -644,6 +958,19 @@ class Connection {
         });
     }
 
+    /**
+     * Method to set an auth org in a Salesforce local project. This command set the selected username or Alias to the connection object when authorize an org.
+     * @param {String} usernameOrAlias Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
+     * 
+     * @returns {Promise<Any>} Return an empty promise when operation finish
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder is not a directory
+     */
     setAuthOrg(usernameOrAlias) {
         startOperation(this);
         resetProgress(this);
@@ -669,6 +996,21 @@ class Connection {
         });
     }
 
+    /**
+     * Method to export data in a tree format from the connected org
+     * @param {String} query Query to extract the data (Required)
+     * @param {String} outputPath Path to the folder to (Required)
+     * @param {String} prefix Prefix to add to the created files
+     * 
+     * @returns {Promise<Array<Object>>} Return an array with the extrated data information
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the output folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the output folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the output folder is not a directory
+     */
     exportTreeData(query, outputPath, prefix) {
         startOperation(this);
         resetProgress(this);
@@ -684,7 +1026,7 @@ class Connection {
                     });
                 }).catch((error) => {
                     endOperation(this);
-                    reject(new Error(error));
+                    reject(error);
                 });
             } catch (error) {
                 endOperation(this);
@@ -693,6 +1035,19 @@ class Connection {
         });
     }
 
+    /**
+     * Method to import data in a tree format into the connected org
+     * @param {String} file Path to the file to import (Required)
+     * 
+     * @returns {Promise<Object>} Return a promise with an object with the ok result and errors on insert
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongFilePathException} If the file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the file is not a file
+     */
     importTreeData(file) {
         startOperation(this);
         resetProgress(this);
@@ -734,6 +1089,23 @@ class Connection {
         });
     }
 
+    /**
+     * Method to delete data on bulk mode
+     * @param {String} csvfile Path to the CSV file with the ids to delete (Required)
+     * @param {String} sObject Records SObject API Name (Required)
+     *  
+     * @returns {Promise<Array<BulkStatus>>} Return a promise with an array with BulkStatus objects with the delete result
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder is not a directory
+     * @throws {WrongFilePathException} If the csv file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the csv file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the csv file is not a file
+     */
     bulkDelete(csvfile, sObject) {
         startOperation(this);
         resetProgress(this);
@@ -763,6 +1135,22 @@ class Connection {
         });
     }
 
+    /**
+     * Method to execute an Apex script file on Anonymous context
+     * @param {String} scriptfile Path to the script file (Required)
+     *
+     * @returns {Promise<String>} Return a promise with the execution log as String
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder is not a directory
+     * @throws {WrongFilePathException} If the script file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the script file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the script file is not a file
+     */
     executeApexAnonymous(scriptfile) {
         startOperation(this);
         resetProgress(this);
@@ -788,6 +1176,20 @@ class Connection {
         });
     }
 
+    /**
+     * Method to get all available user permissions from the connected org
+     * @param {String} tmpFolder Temporal folder to save support files (Required)
+     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * 
+     * @returns {Promise<Array<String>>} Return a promise with the list of user permissions
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system 
+     * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the temp folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the temp folder is not a directory
+     */
     loadUserPermissions(tmpFolder) {
         const progressCallback = getCallback(arguments, this);
         startOperation(this);
@@ -797,7 +1199,7 @@ class Connection {
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
                 const originalProjectFolder = this.projectFolder;
                 callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 const metadata = {};
                 const metadataType = new MetadataType(MetadataTypes.PROFILE, true);
                 metadataType.childs["Admin"] = new MetadataObject("Admin", true);
@@ -827,17 +1229,38 @@ class Connection {
                 //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 resolve(result);
             } catch (error) {
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
+    /**
+     * Method to Retrieve local special types from the connected org
+     * @param {String} tmpFolder Temporal folder to save support files (Required)
+     * @param {Object} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+     * @param {Boolean} compress true to compress affected files, false in otherwise
+     * @param {String} sortOrder Compress sort order when compress files
+     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * 
+     * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the temp folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the temp folder is not a directory
+     * @throws {WrongFilePathException} If the types file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the types file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the types file is not a file
+     * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
+     */
     retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder) {
         const progressCallback = getCallback(arguments, this);
         startOperation(this);
@@ -845,8 +1268,8 @@ class Connection {
         return new Promise(async (resolve, reject) => {
             try {
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if(types)
-                    Validator.validateMetadataJSON(types);
+                if (types)
+                    types = Validator.validateMetadataJSON(types);
                 const originalProjectFolder = this.projectFolder;
                 callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
                 const dataToRetrieve = [];
@@ -860,9 +1283,9 @@ class Connection {
                         }
                     }
                 });
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
-                this.increment = calculateIncrement(metadataToProcess);
+                this._increment = calculateIncrement(metadataToProcess);
                 callProgressCalback(progressCallback, this, ProgressStages.LOADING_LOCAL);
                 const metadataDetails = await this.listMetadataTypes();
                 const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
@@ -892,17 +1315,39 @@ class Connection {
                 //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 resolve(retrieveOut);
             } catch (error) {
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
+    /**
+     * Method to Retrieve mixed special types from the connected org. Mixed means that only affect the Metadata Types on your project folder, but download all related data from this types from your org (and not only the local data)
+     * @param {String} tmpFolder Temporal folder to save support files (Required)
+     * @param {Object} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+     * @param {Boolean} downloadAll true to download all related data from any namespace, false to downlaod only the org namespace data
+     * @param {Boolean} compress true to compress affected files, false in otherwise
+     * @param {String} sortOrder Compress sort order when compress files
+     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * 
+     * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the temp folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the temp folder is not a directory
+     * @throws {WrongFilePathException} If the types file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the types file is not a file
+     * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
+     */
     retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
         const progressCallback = getCallback(arguments, this);
         startOperation(this);
@@ -910,8 +1355,8 @@ class Connection {
         return new Promise(async (resolve, reject) => {
             try {
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if(types)
-                    Validator.validateMetadataJSON(types);
+                if (types)
+                    types = Validator.validateMetadataJSON(types);
                 const originalProjectFolder = this.projectFolder;
                 callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
                 const dataToRetrieve = [];
@@ -925,9 +1370,9 @@ class Connection {
                         }
                     }
                 });
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
-                this.increment = calculateIncrement(metadataToProcess);
+                this._increment = calculateIncrement(metadataToProcess);
                 callProgressCalback(progressCallback, this, ProgressStages.LOADING_LOCAL);
                 const metadataDetails = await this.listMetadataTypes();
                 const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
@@ -939,7 +1384,7 @@ class Connection {
                 }
                 callProgressCalback(progressCallback, this, ProgressStages.LOADING_ORG);
                 const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll, progressCallback);
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 metadata = MetadataUtils.combineMetadata(metadata, metadataFromOrg);
                 MetadataUtils.checkAll(metadata);
                 if (FileChecker.isExists(tmpFolder))
@@ -961,17 +1406,39 @@ class Connection {
                 //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 resolve(retrieveOut);
             } catch (error) {
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
         });
     }
 
+    /**
+     * Method to Retrieve org special types from the connected org. Org means that affect all Metadata types stored in your org not on your local project.
+     * @param {String} tmpFolder Temporal folder to save support files (Required)
+     * @param {Object} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+     * @param {Boolean} downloadAll true to download all related data from any namespace, false to downlaod only the org namespace data
+     * @param {Boolean} compress true to compress affected files, false in otherwise
+     * @param {String} sortOrder Compress sort order when compress files
+     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * 
+     * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the temp folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the temp folder is not a directory
+     * @throws {WrongFilePathException} If the types file is not a String or can't convert to absolute path
+     * @throws {FileNotFoundException} If the file not exists or not have access to it
+     * @throws {InvalidFilePathException} If the types file is not a file
+     * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
+     */
     retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
         const progressCallback = getCallback(arguments, this);
         startOperation(this);
@@ -979,8 +1446,8 @@ class Connection {
         return new Promise(async (resolve, reject) => {
             try {
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if(types)
-                    Validator.validateMetadataJSON(types);
+                if (types)
+                    types = Validator.validateMetadataJSON(types);
                 const originalProjectFolder = this.projectFolder;
                 callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
                 const dataToRetrieve = [];
@@ -994,14 +1461,14 @@ class Connection {
                         }
                     }
                 });
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
-                this.increment = calculateIncrement(metadataToProcess);
+                this._increment = calculateIncrement(metadataToProcess);
                 callProgressCalback(progressCallback, this, ProgressStages.LOADING_ORG);
                 const metadataDetails = await this.listMetadataTypes();
                 const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
                 const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll, progressCallback);
-                this.allowConcurrence = true;
+                this._allowConcurrence = true;
                 MetadataUtils.checkAll(metadataFromOrg);
                 if (FileChecker.isExists(tmpFolder))
                     FileWriter.delete(tmpFolder);
@@ -1022,11 +1489,11 @@ class Connection {
                 //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 resolve(retrieveOut);
             } catch (error) {
-                this.allowConcurrence = false;
+                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
@@ -1035,8 +1502,8 @@ class Connection {
 }
 module.exports = Connection;
 
-function getCallback(args, connection){
-    return Utils.getCallbackFunction(args) || connection.progressCallback;;
+function getCallback(args, connection) {
+    return Utils.getCallbackFunction(args) || connection._progressCallback;;
 }
 
 function waitForFiles(folder) {
@@ -1150,7 +1617,7 @@ function handleResponse(response, onSuccess) {
             if (response.status === 0) {
                 onSuccess.call(this);
             } else {
-                throw new Error(response.message);
+                throw new ConnectionException(response.message);
             }
         } else {
             onSuccess.call(this);
@@ -1165,7 +1632,7 @@ function handleResponse(response, onSuccess) {
 
 function callProgressCalback(progressCallback, connection, stage, type, object, data) {
     if (progressCallback)
-        progressCallback.call(this, new ProgressStatus(stage, connection.increment, connection.percentage, type, object, undefined, data));
+        progressCallback.call(this, new ProgressStatus(stage, connection._increment, connection._percentage, type, object, undefined, data));
 }
 
 function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType, progressCallback) {
@@ -1173,9 +1640,9 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
         try {
             const metadata = {};
             for (const metadataTypeName of metadataToDownload) {
-                try{
-                    if (connection.abort) {
-                        connection.allowConcurrence = false;
+                try {
+                    if (connection._abort) {
+                        connection._allowConcurrence = false;
                         endOperation(connection);
                         resolve(metadata);
                         return;
@@ -1186,13 +1653,13 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         if (!records || records.length === 0)
                             continue;
                         const metadataType = TypesFactory.createMetadataTypeFromRecords(metadataTypeName, records, foldersByType, connection.namespacePrefix, downloadAll);
-                        connection.percentage += connection.increment;
+                        connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
                         callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
                     } else if (NotIncludedMetadata[metadataTypeName]) {
                         const metadataType = TypesFactory.createNotIncludedMetadataType(metadataTypeName);
-                        connection.percentage += connection.increment;
+                        connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
                         callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
@@ -1201,15 +1668,15 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         addProcess(connection, process);
                         const response = await ProcessHandler.runProcess(process);
                         handleResponse(response, () => {
-                            const metadataType = TypesFactory.createMetedataTypeFromResponse(response, metadataTypeName, downloadAll, connection.namespacePrefix);
-                            connection.percentage += connection.increment;
+                            const metadataType = TypesFactory.createMetedataTypeFromResponse(metadataTypeName, response, connection.namespacePrefix, downloadAll);
+                            connection._percentage += connection._increment;
                             if (metadataType !== undefined && metadataType.haveChilds())
                                 metadata[metadataTypeName] = metadataType;
                             callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
                         });
                     }
-                } catch(error){
-                    if(error.message.indexOf('INVALID_TYPE') === -1)
+                } catch (error) {
+                    if (error.message.indexOf('INVALID_TYPE') === -1)
                         throw error;
                 }
             }
@@ -1225,7 +1692,7 @@ function downloadSObjectsData(connection, sObjects, progressCallback) {
         try {
             const sObjectsResult = {};
             for (const sObject of sObjects) {
-                if (connection.abort) {
+                if (connection._abort) {
                     endOperation(connection);
                     resolve(sObjectsResult);
                     return;
@@ -1236,7 +1703,7 @@ function downloadSObjectsData(connection, sObjects, progressCallback) {
                 const response = await ProcessHandler.runProcess(process);
                 handleResponse(response, () => {
                     const sObjectResult = TypesFactory.createSObjectFromJSONSchema(response);
-                    connection.percentage += connection.increment;
+                    connection._percentage += connection._increment;
                     if (sObjectResult !== undefined)
                         sObjectsResult[sObject] = sObjectResult;
                     callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
@@ -1303,8 +1770,8 @@ function getFoldersByType(connection) {
     return new Promise((resolve, reject) => {
         const query = 'Select Id, Name, DeveloperName, NamespacePrefix, Type FROM Folder';
         try {
-            if (connection.abort) {
-                connection.allowConcurrence = false;
+            if (connection._abort) {
+                connection._allowConcurrence = false;
                 endOperation(connection);
                 resolve({});
                 return;
@@ -1327,44 +1794,44 @@ function getFoldersByType(connection) {
 }
 
 function resetProgress(connection) {
-    connection.percentage = 0;
-    connection.increment = 0;
+    connection._percentage = 0;
+    connection._increment = 0;
 }
 
 function killProcesses(connection) {
-    if (connection.processes && Object.keys(connection.processes).length > 0) {
-        for (let process of Object.keys(connection.processes)) {
-            killProcess(connection, connection.processes[process]);
+    if (connection._processes && Object.keys(connection._processes).length > 0) {
+        for (let process of Object.keys(connection._processes)) {
+            killProcess(connection, connection._processes[process]);
         }
     }
 }
 
 function killProcess(connection, process) {
     process.kill();
-    delete connection.processes[process.name];
+    delete connection._processes[process.name];
 }
 
 function startOperation(connection) {
-    if (!connection.allowConcurrence) {
-        if (connection.inProgress)
-            throw new Error('Connection in use. Abort the current operation to execute other.');
-        connection.abort = false;
-        connection.inProgress = true;
-        connection.processes = {};
+    if (!connection._allowConcurrence) {
+        if (connection._inProgress)
+            throw new OperationNotAllowedException('Connection in use. Abort the current operation to execute other.');
+        connection._abort = false;
+        connection._inProgress = true;
+        connection._processes = {};
     }
 }
 
 function endOperation(connection) {
-    if (!connection.allowConcurrence) {
-        connection.inProgress = false;
-        connection.processes = {};
+    if (!connection._allowConcurrence) {
+        connection._inProgress = false;
+        connection._processes = {};
     }
 }
 
 function addProcess(connection, process) {
-    if (connection.processes === undefined)
-        connection.processes = {};
-    connection.processes[process.name] = process;
+    if (connection._processes === undefined)
+        connection._processes = {};
+    connection._processes[process.name] = process;
 }
 
 function createAuthOrgs(orgs) {
