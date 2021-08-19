@@ -498,7 +498,7 @@ Return a String promise with the Username or Alias data
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 
 ### **Examples:**
 **Get auth username to the connection**
@@ -529,7 +529,7 @@ Return a String promise with the instance URL
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 
 ### **Examples:**
 **Get server instance to the connected org**
@@ -570,7 +570,7 @@ Return a promise with all authorized org in the system
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 
 ### **Examples:**
 **Get all auth org on the system**
@@ -609,7 +609,7 @@ Return a promise with the record list
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 
@@ -644,7 +644,7 @@ Return a promise with the MetadataDetail objects from all available Metadata Typ
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 
@@ -704,7 +704,7 @@ Return a promise with Metadata JSON Object with the selected Metadata Types to d
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 
@@ -778,7 +778,7 @@ Return a promise with a list with the sObject names
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 
@@ -845,7 +845,7 @@ Return a promise with a SObjects data
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 
@@ -909,7 +909,7 @@ Return a promise with the RetrieveResult object with the retrieve result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder or target dir is not a String or can't convert to absolute path
@@ -959,7 +959,7 @@ Return a promise with the RetrieveStatus object with the retrieve status result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the target dir is not a String or can't convert to absolute path
@@ -1003,7 +1003,7 @@ Return a promise with the DeployStatus object with the deploy status result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
@@ -1080,7 +1080,7 @@ Return a promise with the DeployStatus object with the deploy status result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
@@ -1153,7 +1153,7 @@ Return a promise with the DeployStatus object with the deploy status result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
@@ -1208,7 +1208,7 @@ Return a promise with the DeployStatus object with the deploy status result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 
@@ -1260,7 +1260,7 @@ Return a promise with the DeployStatus object with the deploy status result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 
@@ -1308,7 +1308,7 @@ Return an empty promise when conversion finish
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the package folder is not a String or can't convert to absolute path
@@ -1346,7 +1346,7 @@ Return an empty promise when conversion finish
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the package folder is not a String or can't convert to absolute path
@@ -1391,7 +1391,7 @@ Return a promise with SFDXProjectResult Object with the creation result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
@@ -1443,7 +1443,7 @@ Return an empty promise when operation finish
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
@@ -1496,7 +1496,7 @@ Return an array with the extrated data information
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the output folder is not a String or can't convert to absolute path
@@ -1538,7 +1538,7 @@ Return a promise with an object with the ok result and errors on insert
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongFilePathException**: If the file is not a String or can't convert to absolute path
@@ -1588,7 +1588,7 @@ Return a promise with an array with BulkStatus objects with the delete result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
@@ -1630,7 +1630,7 @@ Return a promise with the execution log as String
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
@@ -1672,7 +1672,7 @@ Return a promise with the list of user permissions
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
@@ -1715,7 +1715,7 @@ Return a promise with a RetrieveResult with the retrieve result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
@@ -1789,7 +1789,7 @@ Return a promise with a RetrieveResult with the retrieve result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
@@ -1863,7 +1863,7 @@ Return a promise with a RetrieveResult with the retrieve result
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
 - **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
