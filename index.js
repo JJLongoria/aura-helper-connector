@@ -181,7 +181,7 @@ class Connection {
      * 
      * @returns {Promise<String>} Return a String promise with the Username or Alias data
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
     getAuthUsername() {
         startOperation(this);
@@ -225,7 +225,7 @@ class Connection {
      * 
      * @returns {Promise<String>} Return a String promise with the instance URL
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
     getServerInstance(usernameOrAlias) {
         usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
@@ -263,7 +263,7 @@ class Connection {
      * 
      * @returns {Promise<Array<AuthOrg>>} Return a promise with all authorized org in the system 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
     listAuthOrgs() {
         startOperation(this);
@@ -296,7 +296,7 @@ class Connection {
      * 
      * @returns {Promise<Array<Object>>} Return a promise with the record list 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
@@ -328,7 +328,7 @@ class Connection {
      * 
      * @returns {Promise<Array<MetadataDetail>>} Return a promise with the MetadataDetail objects from all available Metadata Types
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
@@ -364,7 +364,7 @@ class Connection {
      * 
      * @returns {Promise<Array<Object>>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
@@ -422,7 +422,7 @@ class Connection {
      * 
      * @returns {Promise<Array<String>>} Return a promise with a list with the sObject names 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
@@ -456,7 +456,7 @@ class Connection {
      * 
      * @returns {Promise<Array<SObject>>} Return a promise with a SObjects data
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
@@ -508,7 +508,7 @@ class Connection {
      *  
      * @returns {Promise<RetrieveResult>} Return a promise with the RetrieveResult object with the retrieve result 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder or target dir is not a String or can't convert to absolute path
@@ -555,7 +555,7 @@ class Connection {
      * 
      * @returns {Promise<RetrieveStatus>} Return a promise with the RetrieveStatus object with the retrieve status result
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the target dir is not a String or can't convert to absolute path
@@ -603,7 +603,7 @@ class Connection {
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder or package folder is not a String or can't convert to absolute path
@@ -656,7 +656,7 @@ class Connection {
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder or package folder is not a String or can't convert to absolute path
@@ -705,7 +705,7 @@ class Connection {
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
@@ -750,7 +750,7 @@ class Connection {
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
@@ -795,7 +795,7 @@ class Connection {
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
@@ -834,7 +834,7 @@ class Connection {
      * 
      * @returns {Promise<Any>} Return an empty promise when conversion finish 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the package folder is not a String or can't convert to absolute path
@@ -876,7 +876,7 @@ class Connection {
      * 
      * @returns {Promise<Any>} Return an empty promise when conversion finish 
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
@@ -920,7 +920,7 @@ class Connection {
      * 
      * @returns {Promise<SFDXProjectResult>} Return a promise with SFDXProjectResult Object with the creation result
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
@@ -964,7 +964,7 @@ class Connection {
      * 
      * @returns {Promise<Any>} Return an empty promise when operation finish
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
@@ -1004,7 +1004,7 @@ class Connection {
      * 
      * @returns {Promise<Array<Object>>} Return an array with the extrated data information
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the output folder is not a String or can't convert to absolute path
@@ -1041,7 +1041,7 @@ class Connection {
      * 
      * @returns {Promise<Object>} Return a promise with an object with the ok result and errors on insert
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongFilePathException} If the file is not a String or can't convert to absolute path
@@ -1096,7 +1096,7 @@ class Connection {
      *  
      * @returns {Promise<Array<BulkStatus>>} Return a promise with an array with BulkStatus objects with the delete result
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
@@ -1141,7 +1141,7 @@ class Connection {
      *
      * @returns {Promise<String>} Return a promise with the execution log as String
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
@@ -1183,7 +1183,7 @@ class Connection {
      * 
      * @returns {Promise<Array<String>>} Return a promise with the list of user permissions
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system 
      * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
@@ -1250,7 +1250,7 @@ class Connection {
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
@@ -1337,7 +1337,7 @@ class Connection {
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
@@ -1428,7 +1428,7 @@ class Connection {
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
-     * @throws {ConnectionException} If run other connection process when has one process running 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
