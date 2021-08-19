@@ -28,7 +28,7 @@ All connection methods return a Promise with the associated data to the processe
 </br>
 
 # [**Fields**](#connection-class-fields)
-The fields that start with _ are internal for use only (Does not modify this fields to a correct connection work). To the rest of fields, setter methods are recommended instead modify fields.
+The fields that start with _ are for internal use only (Does not modify this fields to a correct connection work). To the rest of fields, setter methods are recommended instead modify fields.
 
 ### [**usernameOrAlias**](#connection-class-fields-usernameoralias)
 Username or Alias to connect with the org. The org bust be authorized in the system. 
@@ -63,7 +63,7 @@ Project package file path (package.xml file). Must be a child of Package folder
 # [**Constructors**](#connection-class-constructors)
 The Connection class has only one constructor to create a connection
 
-## [**constructor(usernameOrAlias, apiVersion, projectFolder, namespacePrefix)**](#connection-class-constructors-consttruct)
+## [**constructor(usernameOrAlias, apiVersion, projectFolder, namespacePrefix)**](#connection-class-constructors-construct)
 Constructor to create a new connection object. All parameters are optional and you can use the setters methods to set the values when you want.
 
 ### **Parameters:**
@@ -75,6 +75,8 @@ Constructor to create a new connection object. All parameters are optional and y
     - String
   - **namespacePrefix**: Namespace prefix from the Org to connect
     - String
+
+</br>
 
 # [**Methods**](#connection-class-methods)
 
