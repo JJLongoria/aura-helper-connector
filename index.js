@@ -1201,6 +1201,7 @@ class Connection {
      * @throws {WrongDirectoryPathException} If the temp folder is not a String or can't convert to absolute path
      * @throws {DirectoryNotFoundException} If the temp folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the temp folder is not a directory
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     loadUserPermissions(tmpFolder) {
         const progressCallback = getCallback(arguments, this);

@@ -647,6 +647,7 @@ This method can throw the next exceptions:
 - **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 **Get all available Metadata types to API 45**
@@ -707,6 +708,7 @@ This method can throw the next exceptions:
 - **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
 - **DataRequiredException**: If required data is not provided
 - **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 **Describe all Metadata types from the connected org and org namespace**
@@ -915,6 +917,7 @@ This method can throw the next exceptions:
 - **WrongDirectoryPathException**: If the project folder or target dir is not a String or can't convert to absolute path
 - **DirectoryNotFoundException**: If the project folder or target dir not exists or not have access to it
 - **InvalidDirectoryPathException**: If the project folder or target dir is not a directory
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 **Retrieve data using Metadata API Format (With package.xml file on project)**
@@ -1012,6 +1015,7 @@ This method can throw the next exceptions:
 - **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
 - **FileNotFoundException**: If the package file not exists or not have access to it
 - **InvalidFilePathException**: If the package file is not a file
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 
@@ -1089,6 +1093,8 @@ This method can throw the next exceptions:
 - **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
 - **FileNotFoundException**: If the package file not exists or not have access to it
 - **InvalidFilePathException**: If the package file is not a file
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 
@@ -1159,6 +1165,8 @@ This method can throw the next exceptions:
 - **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
 - **DirectoryNotFoundException**: If the project folder not exists or not have access to it
 - **InvalidDirectoryPathException**: If the project folder is not a directory
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Execute quick deploy to Validated deploy with Metadata API format**
@@ -1317,6 +1325,8 @@ This method can throw the next exceptions:
 - **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
 - **FileNotFoundException**: If the package file not exists or not have access to it
 - **InvalidFilePathException**: If the package file is not a file
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Convert Metadata API Format project to Source Format**
@@ -1355,6 +1365,8 @@ This method can throw the next exceptions:
 - **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
 - **FileNotFoundException**: If the package file not exists or not have access to it
 - **InvalidFilePathException**: If the package file is not a file
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Convert Source Format project to Metadata API Format**
@@ -1502,6 +1514,8 @@ This method can throw the next exceptions:
 - **WrongDirectoryPathException**: If the output folder is not a String or can't convert to absolute path
 - **DirectoryNotFoundException**: If the output folder not exists or not have access to it
 - **InvalidDirectoryPathException**: If the output folder is not a directory
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Export Accounts data with related contacts**
@@ -1544,6 +1558,8 @@ This method can throw the next exceptions:
 - **WrongFilePathException**: If the file is not a String or can't convert to absolute path
 - **FileNotFoundException**: If the file not exists or not have access to it
 - **InvalidFilePathException**: If the file is not a directory
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Import file with exported records**
@@ -1597,6 +1613,8 @@ This method can throw the next exceptions:
 - **WrongFilePathException**: If the csv file is not a String or can't convert to absolute path
 - **FileNotFoundException**: If the csv file not exists or not have access to it
 - **InvalidFilePathException**: If the csv file is not a directory
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Delete data at bulk mode**
@@ -1639,6 +1657,8 @@ This method can throw the next exceptions:
 - **WrongFilePathException**: If the script file is not a String or can't convert to absolute path
 - **FileNotFoundException**: If the script file not exists or not have access to it
 - **InvalidFilePathException**: If the script file is not a directory
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Execute an Apex Anonymous script**
@@ -1678,6 +1698,8 @@ This method can throw the next exceptions:
 - **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
 - **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
 - **InvalidDirectoryPathException**: If the temp folder is not a directory
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Load User permissions from connected org**
@@ -1725,6 +1747,8 @@ This method can throw the next exceptions:
 - **FileNotFoundException**: If the types file not exists or not have access to it
 - **InvalidFilePathException**: If the types file is not a file
 - **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Retrieve all local special Metadata Types from Org**
@@ -1799,6 +1823,8 @@ This method can throw the next exceptions:
 - **FileNotFoundException**: If the types file not exists or not have access to it
 - **InvalidFilePathException**: If the types file is not a file
 - **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Retrieve all mixed special Metadata Types from Org**
@@ -1873,6 +1899,8 @@ This method can throw the next exceptions:
 - **FileNotFoundException**: If the types file not exists or not have access to it
 - **InvalidFilePathException**: If the types file is not a file
 - **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
 
 ### **Examples:**
 **Retrieve all org special Metadata Types from Org**
