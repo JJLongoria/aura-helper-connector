@@ -331,6 +331,7 @@ class Connection {
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     listMetadataTypes() {
         startOperation(this);
@@ -425,6 +426,7 @@ class Connection {
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     listSObjects(category) {
         startOperation(this);
@@ -514,6 +516,7 @@ class Connection {
      * @throws {WrongDirectoryPathException} If the project folder or target dir is not a String or can't convert to absolute path
      * @throws {DirectoryNotFoundException} If the project folder or target dir not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the project folder or target dir is not a directory
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     retrieve(useMetadataAPI, targetDir, waitMinutes) {
         startOperation(this);
@@ -612,6 +615,7 @@ class Connection {
      * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
      * @throws {FileNotFoundException} If the package file not exists or not have access to it
      * @throws {InvalidFilePathException} If the package file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     validateDeploy(testLevel, runTests, useMetadataAPI, waitMinutes) {
         startOperation(this);
@@ -665,6 +669,7 @@ class Connection {
      * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
      * @throws {FileNotFoundException} If the package file not exists or not have access to it
      * @throws {InvalidFilePathException} If the package file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     deploy(testLevel, runTests, useMetadataAPI, waitMinutes) {
         startOperation(this);
@@ -711,6 +716,7 @@ class Connection {
      * @throws {WrongDirectoryPathException} If the project folder is not a String or can't convert to absolute path
      * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     quickDeploy(deployId, useMetadataAPI) {
         startOperation(this);
@@ -843,6 +849,7 @@ class Connection {
      * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
      * @throws {FileNotFoundException} If the package file not exists or not have access to it
      * @throws {InvalidFilePathException} If the package file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     convertProjectToSFDX(targetDir) {
         startOperation(this);
@@ -885,6 +892,7 @@ class Connection {
      * @throws {WrongFilePathException} If the package file is not a String or can't convert to absolute path
      * @throws {FileNotFoundException} If the package file not exists or not have access to it
      * @throws {InvalidFilePathException} If the package file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     convertProjectToMetadataAPI(targetDir) {
         startOperation(this);
@@ -1010,6 +1018,7 @@ class Connection {
      * @throws {WrongDirectoryPathException} If the output folder is not a String or can't convert to absolute path
      * @throws {DirectoryNotFoundException} If the output folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the output folder is not a directory
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     exportTreeData(query, outputPath, prefix) {
         startOperation(this);
@@ -1047,6 +1056,7 @@ class Connection {
      * @throws {WrongFilePathException} If the file is not a String or can't convert to absolute path
      * @throws {FileNotFoundException} If the file not exists or not have access to it
      * @throws {InvalidFilePathException} If the file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     importTreeData(file) {
         startOperation(this);
@@ -1105,6 +1115,7 @@ class Connection {
      * @throws {WrongFilePathException} If the csv file is not a String or can't convert to absolute path
      * @throws {FileNotFoundException} If the csv file not exists or not have access to it
      * @throws {InvalidFilePathException} If the csv file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     bulkDelete(csvfile, sObject) {
         startOperation(this);
@@ -1150,6 +1161,7 @@ class Connection {
      * @throws {WrongFilePathException} If the script file is not a String or can't convert to absolute path
      * @throws {FileNotFoundException} If the script file not exists or not have access to it
      * @throws {InvalidFilePathException} If the script file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     executeApexAnonymous(scriptfile) {
         startOperation(this);
@@ -1260,6 +1272,7 @@ class Connection {
      * @throws {FileNotFoundException} If the types file not exists or not have access to it
      * @throws {InvalidFilePathException} If the types file is not a file
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder) {
         const progressCallback = getCallback(arguments, this);
@@ -1347,6 +1360,7 @@ class Connection {
      * @throws {FileNotFoundException} If the file not exists or not have access to it
      * @throws {InvalidFilePathException} If the types file is not a file
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
         const progressCallback = getCallback(arguments, this);
@@ -1438,6 +1452,7 @@ class Connection {
      * @throws {FileNotFoundException} If the file not exists or not have access to it
      * @throws {InvalidFilePathException} If the types file is not a file
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
         const progressCallback = getCallback(arguments, this);
