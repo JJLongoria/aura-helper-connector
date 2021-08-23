@@ -1646,9 +1646,9 @@ function handleResponse(response, onSuccess) {
     }
 }
 
-function callProgressCalback(progressCallback, connection, stage, type, object, data) {
+function callProgressCalback(progressCallback, connection, stage, entityName, entityType, entityItem, data) {
     if (progressCallback)
-        progressCallback.call(this, new ProgressStatus(stage, connection._increment, connection._percentage, type, object, undefined, data));
+        progressCallback.call(this, new ProgressStatus(stage, connection._increment, connection._percentage, entityName, entityType, entityItem, data));
 }
 
 function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType, progressCallback) {
@@ -1672,13 +1672,13 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
-                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
+                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
                     } else if (NotIncludedMetadata[metadataTypeName]) {
                         const metadataType = TypesFactory.createNotIncludedMetadataType(metadataTypeName);
                         connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
-                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
+                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
                     } else {
                         const process = ProcessFactory.describeMetadataType(connection.usernameOrAlias, metadataTypeName, undefined, connection.apiVersion);
                         addProcess(connection, process);
@@ -1688,7 +1688,7 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                             connection._percentage += connection._increment;
                             if (metadataType !== undefined && metadataType.haveChilds())
                                 metadata[metadataTypeName] = metadataType;
-                            callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, metadataType);
+                            callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
                         });
                     }
                 } catch (error) {
