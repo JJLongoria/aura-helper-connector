@@ -34,7 +34,7 @@ class Connection {
 
     /**
      * Constructor to create a new connection object
-     * @param {String} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
+     * @param {String?} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
      * @param {(String | Number)?} apiVersion API Version number to connect with salesforce
      * @param {String?} projectFolder Path to the project root folder
      * @param {String?} namespacePrefix Namespace prefix from the Org to connect
