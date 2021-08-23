@@ -35,9 +35,9 @@ class Connection {
     /**
      * Constructor to create a new connection object
      * @param {String} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
-     * @param {String | Number} apiVersion API Version number to connect with salesforce
-     * @param {String} projectFolder Path to the project root folder
-     * @param {String} namespacePrefix Namespace prefix from the Org to connect
+     * @param {(String | Number)?} apiVersion API Version number to connect with salesforce
+     * @param {String?} projectFolder Path to the project root folder
+     * @param {String?} namespacePrefix Namespace prefix from the Org to connect
      */
     constructor(usernameOrAlias, apiVersion, projectFolder, namespacePrefix) {
         this.usernameOrAlias = usernameOrAlias;
@@ -221,7 +221,7 @@ class Connection {
 
     /**
      * Method to get the server instance for an username or alias (or the connection username or alias)
-     * @param {String} usernameOrAlias Username or alias to check. (If not provided, use usernameOrAlias from connection object)
+     * @param {String?} usernameOrAlias Username or alias to check. (If not provided, use usernameOrAlias from connection object)
      * 
      * @returns {Promise<String>} Return a String promise with the instance URL
      * 
@@ -292,7 +292,7 @@ class Connection {
     /**
      * Method to execute a query to the connected org
      * @param {String} query Query to execute (Required)
-     * @param {Boolean} useToolingApi true to use Tooling API to execute the query
+     * @param {Boolean?} useToolingApi true to use Tooling API to execute the query
      * 
      * @returns {Promise<Array<Object>>} Return a promise with the record list 
      * 
@@ -359,9 +359,9 @@ class Connection {
 
     /**
      * Method to describe all or selected Metadata Types from the connected org
-     * @param {Arra<String> | Array<MetadataDetail>} typesOrDetails List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
-     * @param {Boolean} downloadAll true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
-     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * @param {(Arra<String> | Array<MetadataDetail>)?} typesOrDetails List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
+     * @param {Boolean?} downloadAll true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
+     * @param {Function?} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<Array<Object>>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
      * 
@@ -419,7 +419,7 @@ class Connection {
 
     /**
      * Method to list all SObjects API Name by category
-     * @param {String} category Object Category. Values are: Standard, Custom, All. (All by default) 
+     * @param {String?} category Object Category. Values are: Standard, Custom, All. (All by default) 
      * 
      * @returns {Promise<Array<String>>} Return a promise with a list with the sObject names 
      * 
@@ -454,7 +454,7 @@ class Connection {
     /**
      * Method to describe SObject data to the specified objects
      * @param {Array<String>} sObjects List with the object API Names to describe
-     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * @param {Function?} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<Array<SObject>>} Return a promise with a SObjects data
      * 
@@ -506,7 +506,7 @@ class Connection {
      * Method to retrieve data using the connection package file. You can choose to retrieve as Metadata API format or Source Format
      * @param {Boolean} useMetadataAPI True to use Metadata API format, false to use source format
      * @param {String} targetDir Path to the target dir when retrieve with Metadata API Format
-     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * @param {(String | Number)?} waitMinutes Number of minutes to wait for the command to complete and display results
      *  
      * @returns {Promise<RetrieveResult>} Return a promise with the RetrieveResult object with the retrieve result 
      * 
@@ -599,10 +599,10 @@ class Connection {
 
     /**
      * Method to validate a deploy against the org using the connection package file
-     * @param {String} testLevel Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-     * @param {String | Array<String>} runTests String with comma separated test names to execute or list with the test names to execute
-     * @param {Boolean} useMetadataAPI True to validate deploy using Metadata API Format, false to use Source Format
-     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * @param {String?} testLevel Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {(String | Array<String>)?} runTests String with comma separated test names to execute or list with the test names to execute
+     * @param {Boolean?} useMetadataAPI True to validate deploy using Metadata API Format, false to use Source Format
+     * @param {(String | Number)?} waitMinutes Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -653,10 +653,10 @@ class Connection {
 
     /**
      * Method to deploy data to the org using the connection package file
-     * @param {String} testLevel Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-     * @param {String | Array<String>} runTests String with comma separated test names to execute or list with the test names to execute
-     * @param {Boolean} useMetadataAPI True to Deploy data using Metadata API Format, false to use Source Format
-     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * @param {String?} testLevel Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {(String | Array<String>)?} runTests String with comma separated test names to execute or list with the test names to execute
+     * @param {Boolean?} useMetadataAPI True to Deploy data using Metadata API Format, false to use Source Format
+     * @param {(String | Number)?} waitMinutes Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -706,7 +706,7 @@ class Connection {
     /**
      * Method to execute a quick deploy when validation result is success
      * @param {String} deployId Id to deploy the validated deployment (Required)
-     * @param {Boolean} useMetadataAPI True to execute quick deploy using Metadata API Format, false to use Source Format
+     * @param {Boolean?} useMetadataAPI True to execute quick deploy using Metadata API Format, false to use Source Format
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -751,8 +751,8 @@ class Connection {
     /**
      * Method to get the report of a running deployment
      * @param {String} deployId Id to the deployment to get the report (Required)
-     * @param {Boolean} useMetadataAPI True to execute deploy report using Metadata API Format, false to use Source Format
-     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * @param {Boolean?} useMetadataAPI True to execute deploy report using Metadata API Format, false to use Source Format
+     * @param {(String | Number)?} waitMinutes Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -796,8 +796,8 @@ class Connection {
     /**
      * Method to get the cancel a running deployment
      * @param {String} deployId Id to the deployment to cancel (Required)
-     * @param {Boolean} useMetadataAPI True to execute cancel deploy using Metadata API Format, false to use Source Format
-     * @param {String | Number} waitMinutes Number of minutes to wait for the command to complete and display results
+     * @param {Boolean?} useMetadataAPI True to execute cancel deploy using Metadata API Format, false to use Source Format
+     * @param {(String | Number)?} waitMinutes Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -922,9 +922,9 @@ class Connection {
     /**
      * Method to create a SFDX Project. This method change the connection object project folder, package folder and package file values when project is created
      * @param {String} projectName Project Name to create (Required)
-     * @param {String} projectFolder Path to save the project. If undefined use the connection project folder
-     * @param {String} template Template to use to create the project. Empty by default
-     * @param {Boolean} withManifest True to create the project with manifest, false in otherwise
+     * @param {String?} projectFolder Path to save the project. If undefined use the connection project folder
+     * @param {String?} template Template to use to create the project. Empty by default
+     * @param {Boolean?} withManifest True to create the project with manifest, false in otherwise
      * 
      * @returns {Promise<SFDXProjectResult>} Return a promise with SFDXProjectResult Object with the creation result
      * 
@@ -968,7 +968,7 @@ class Connection {
 
     /**
      * Method to set an auth org in a Salesforce local project. This command set the selected username or Alias to the connection object when authorize an org.
-     * @param {String} usernameOrAlias Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
+     * @param {String?} usernameOrAlias Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
      * 
      * @returns {Promise<Any>} Return an empty promise when operation finish
      * 
@@ -1008,7 +1008,7 @@ class Connection {
      * Method to export data in a tree format from the connected org
      * @param {String} query Query to extract the data (Required)
      * @param {String} outputPath Path to the folder to (Required)
-     * @param {String} prefix Prefix to add to the created files
+     * @param {String?} prefix Prefix to add to the created files
      * 
      * @returns {Promise<Array<Object>>} Return an array with the extrated data information
      * 
@@ -1191,7 +1191,7 @@ class Connection {
     /**
      * Method to get all available user permissions from the connected org
      * @param {String} tmpFolder Temporal folder to save support files (Required)
-     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * @param {Function?} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<Array<String>>} Return a promise with the list of user permissions
      * 
@@ -1256,10 +1256,10 @@ class Connection {
     /**
      * Method to Retrieve local special types from the connected org
      * @param {String} tmpFolder Temporal folder to save support files (Required)
-     * @param {Object} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-     * @param {Boolean} compress true to compress affected files, false in otherwise
-     * @param {String} sortOrder Compress sort order when compress files
-     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * @param {Object?} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+     * @param {Boolean?} compress true to compress affected files, false in otherwise
+     * @param {String?} sortOrder Compress sort order when compress files
+     * @param {Function?} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1343,11 +1343,11 @@ class Connection {
     /**
      * Method to Retrieve mixed special types from the connected org. Mixed means that only affect the Metadata Types on your project folder, but download all related data from this types from your org (and not only the local data)
      * @param {String} tmpFolder Temporal folder to save support files (Required)
-     * @param {Object} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-     * @param {Boolean} downloadAll true to download all related data from any namespace, false to downlaod only the org namespace data
-     * @param {Boolean} compress true to compress affected files, false in otherwise
-     * @param {String} sortOrder Compress sort order when compress files
-     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * @param {Object?} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+     * @param {Boolean?} downloadAll true to download all related data from any namespace, false to downlaod only the org namespace data
+     * @param {Boolean?} compress true to compress affected files, false in otherwise
+     * @param {String?} sortOrder Compress sort order when compress files
+     * @param {Function?} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1435,11 +1435,11 @@ class Connection {
     /**
      * Method to Retrieve org special types from the connected org. Org means that affect all Metadata types stored in your org not on your local project.
      * @param {String} tmpFolder Temporal folder to save support files (Required)
-     * @param {Object} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-     * @param {Boolean} downloadAll true to download all related data from any namespace, false to downlaod only the org namespace data
-     * @param {Boolean} compress true to compress affected files, false in otherwise
-     * @param {String} sortOrder Compress sort order when compress files
-     * @param {Function} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
+     * @param {Object?} types Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+     * @param {Boolean?} downloadAll true to download all related data from any namespace, false to downlaod only the org namespace data
+     * @param {Boolean?} compress true to compress affected files, false in otherwise
+     * @param {String?} sortOrder Compress sort order when compress files
+     * @param {Function?} callback Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
