@@ -6,12 +6,40 @@ const { MetadataTypes } = require('@ah/core').Values;
 describe('Testing index.js', () => {
     test('Testing query()', async (done) => {
         const connection = new Connection('MyOrg', '50.0');
-        connection.onProgress(() => {
+        connection.onAfterDownload(() => {
 
         });
-        connection.onAbort(() => {
+        connection.onBeforeDownload(() => {
 
         });
+        connection.onCompressFile(() => {
+
+        });
+        connection.onCopyData(() => {
+
+        });
+        connection.onCopyFile(() => {
+
+        });
+        connection.onCreateProject(() => {
+
+        });
+        connection.onLoadingLocal(() => {
+
+        });
+        connection.onLoadingOrg(() => {
+
+        });
+        connection.onPrepare(() => {
+
+        });
+        connection.onProcess(() => {
+
+        });
+        connection.onRetrieve(() => {
+
+        });
+        
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
         connection.setApiVersion('50.0');
@@ -26,12 +54,7 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing query() with Error', async (done) => {
         const connection = new Connection('MyOrg', '50');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
         connection.query('Select Id from Acc', false).then((receord) => {
@@ -61,30 +84,21 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing listMetadataTypes() with Error', async (done) => {
         const connection = new Connection('MyOrg', '50');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
         connection.listMetadataTypes().then((metadataTypes) => {
-            expect(metadataTypes.length).toEqual(0);
+            expect(metadataTypes.length).toBeGreaterThan(0);
             done();
         }).catch((error) => {
-            expect(error.message).toEqual('The API version \'50\' is not valid.  Must be in the format, \'i.0\'');
+            expect(error.message).toMatch('The API version \'50\' is not valid.  Must be in the format, \'i.0\'');
             done();
         });
     }, 300000);
     test('Testing describeMetadataTypes() Download All', async (done) => {
         const connection = new Connection('MyOrg', '50.0');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.describeMetadataTypes(['Report', 'Dashboard', 'EmailTemplate', 'Document', 'CustomObject', 'CustomField', 'Flow', 'Layout', 'StandardValueSet'], true, function (status) {
         }).then((metadata) => {
@@ -98,12 +112,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing describeMetadataTypes() Download Only Org Namespace', async (done) => {
         const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.describeMetadataTypes(['Report', 'Dashboard', 'EmailTemplate', 'Document', 'CustomObject', 'CustomField', 'Flow', 'Layout'], false, function (status) {
         }).then((metadata) => {
@@ -121,11 +131,11 @@ describe('Testing index.js', () => {
         connection.onAbort(() => {
             console.log("aborted");
         });
+        connection.onAfterDownload(() => {
+            connection.abortConnection();
+        });
         connection.setSingleThread();
-        connection.describeMetadataTypes(objects, true, function (status) {
-            if(status.stage === 'afterDownload')
-                connection.abortConnection();
-        }).then((metadata) => {
+        connection.describeMetadataTypes(objects, true).then((metadata) => {
             expect(Object.keys(metadata).length).toBeLessThan(objects.length);
             done();
         }).catch((error) => {
@@ -136,12 +146,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing describeMetadataTypes() Entire Metadata', async (done) => {
         const connection = new Connection('MyOrg', '50.0');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
         connection.setApiVersion('50.0');
@@ -160,12 +166,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing listAuthOrgs()', async (done) => {
         const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.listAuthOrgs().then((authOrgs) => {
             expect(authOrgs.length).toBeGreaterThan(0);
@@ -178,12 +180,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing listSObjects()', async (done) => {
         const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.listSObjects().then((sObjects) => {
             expect(sObjects.length).toBeGreaterThan(0);
@@ -196,12 +194,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing listSObjects() With Error', async (done) => {
         const connection = new Connection('MyOrg', '50', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.listSObjects().then((sObjects) => {
             expect(sObjects.length).toBeGreaterThan(0);
@@ -213,12 +207,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing describeSObjects()', async (done) => {
         const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.describeSObjects(['Account']).then((sObjects) => {
             expect(sObjects['Account'].name).toEqual('Account');
@@ -231,12 +221,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing retrieve()', async (done) => {
         const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -251,12 +237,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing retrieve() With Error', async (done) => {
         const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -271,12 +253,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing validateDeploy()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -291,12 +269,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing validateDeploy() with Error', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -311,12 +285,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing deploy()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -331,12 +301,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing deploy() with Error', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -351,12 +317,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing quickDeploy()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -376,12 +338,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing quickDeploy() with Error', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -396,12 +354,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing deployReport()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -423,12 +377,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing deployReport() with Error', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -443,12 +393,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing cancelDeploy() with Error', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
@@ -466,12 +412,8 @@ describe('Testing index.js', () => {
             FileWriter.delete('./test/assets/SFDXProject/newProject');
         FileWriter.createFolderSync('./test/assets/SFDXProject/newProject');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.createSFDXProject('MyOrg', './test/assets/SFDXProject/newProject', 'standard', true).then((sfdxProject) => {
             expect(sfdxProject.outputDir).toMatch('\\test\\assets\\SFDXProject\\newProject');
@@ -490,12 +432,8 @@ describe('Testing index.js', () => {
             FileWriter.delete('./test/assets/SFDXProject/newProject');
         FileWriter.createFolderSync('./test/assets/SFDXProject/newProject');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.createSFDXProject('MyOrg', './test/assets/SFDXProject/newProject', 'standard', true).then((sfdxProject) => {
             done();
@@ -507,12 +445,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing setAuthOrg()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/newProject/MyOrg');
         connection.setPackageFolder('./test/assets/SFDXProject/newProject/MyOrg/manifest');
@@ -527,12 +461,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing setAuthOrg() with Error', async (done) => {
         const connection = new Connection(undefined, '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./test/assets/SFDXProject/newProject');
         connection.setPackageFolder('./test/assets/SFDXProject/newProject/manifest');
@@ -547,12 +477,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing exportTreeData()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./');
         connection.setNamespacePrefix('acn')
@@ -568,12 +494,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing exportTreeData() with error', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./');
         connection.setNamespacePrefix('acn')
@@ -583,18 +505,15 @@ describe('Testing index.js', () => {
         connection.exportTreeData('Select Id, Name from acc', './test/assets/exported', 'accounts').then(() => {
             done();
         }).catch((error) => {
-            expect(error.message).toMatch('sObject type \'acc\' is not supported');
+            console.log(error);
+            expect(error).toMatch('sObject type \'acc\' is not supported');
             done();
         });
     }, 300000);
     test('Testing importTreeData() and deleteBulk()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./');
         connection.setNamespacePrefix('acn')
@@ -627,12 +546,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing deleteBulk() with Error', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setProjectFolder('./');
         connection.setNamespacePrefix('acn')
@@ -649,12 +564,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing executeApexAnonymous()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -670,12 +581,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing getAuthUsername()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -691,12 +598,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing getAuthUsername() from project', async (done) => {
         const connection = new Connection(undefined, '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -712,12 +615,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing getServerInstance()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -733,12 +632,8 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing getServerInstance With Other username()', async (done) => {
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -755,12 +650,8 @@ describe('Testing index.js', () => {
     test('Testing loadUserPermissions()', async (done) => {
         FileWriter.createFolderSync('./test/assets/tmpFolder');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -777,12 +668,8 @@ describe('Testing index.js', () => {
     test('Testing retrieveLocalSpecialTypes()', async (done) => {
         FileWriter.createFolderSync('./test/assets/tmpFolder');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -810,12 +697,8 @@ describe('Testing index.js', () => {
     test('Testing retrieveLocalSpecialTypes() all', async (done) => {
         FileWriter.createFolderSync('./test/assets/tmpFolder');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -831,12 +714,8 @@ describe('Testing index.js', () => {
     test('Testing retrieveMixedSpecialTypes()', async (done) => {
         FileWriter.createFolderSync('./test/assets/tmpFolder');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -862,12 +741,8 @@ describe('Testing index.js', () => {
     test('Testing retrieveMixedSpecialTypes() all', async (done) => {
         FileWriter.createFolderSync('./test/assets/tmpFolder');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -883,12 +758,8 @@ describe('Testing index.js', () => {
     test('Testing retrieveOrgSpecialTypes()', async (done) => {
         FileWriter.createFolderSync('./test/assets/tmpFolder');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
@@ -914,12 +785,8 @@ describe('Testing index.js', () => {
     test('Testing retrieveOrgSpecialTypes() All', async (done) => {
         FileWriter.createFolderSync('./test/assets/tmpFolder');
         const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
-        connection.onProgress(() => {
-
-        });
-        connection.onAbort(() => {
-
-        });
+        
+        
         connection.setMultiThread();
         connection.setNamespacePrefix('acn')
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
