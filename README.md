@@ -112,9 +112,49 @@ Constructor to create a new connection object. All parameters are optional and y
     
     Method to set the connection object to use only one thread and processo core to all processes
 
-  - [**onProgress(namespacePrefix)**](#onprogressnamespaceprefix)
+  - [**onPrepare(callback)**](#onpreparecallback)
 
-    Method to handle the general connection progress (is called from all methods to handle the progress)
+    Method to handle the event when preparing execution of some processes
+
+  - [**onCreateProject(callback)**](#oncreateprojectcallback)
+
+    Method to handle the event before the create a project on some processes 
+
+  - [**onRetrieve(callback)**](#onretrievecallback)
+ 
+    Method to handle the event before start retrieve data on some processes
+
+  - [**onProcess(callback)**](#onprocesscallback)
+
+    Method to handle the event before start processing results on some processes
+
+  - [**onLoadingLocal(callback)**](#onloadinglocalcallback)
+
+    Method to handle the event before start loading local metadata types on some processes
+
+  - [**onLoadingOrg(callback)**](#onloadingorgcallback)
+
+    Method to handle the event before start loading metadata types from org on some processes
+
+  - [**onCopyData(callback)**](#oncopydatacallback)
+
+    Method to handle the event before start copying files on some processes
+
+  - [**onCopyFile(callback)**](#oncopyfilecallback)
+
+    Method to handle the event before start copying file content on some processes
+
+  - [**onCompressFile(callback)**](#oncompressfilecallback)
+
+    Method to handle the event before start compress XML File on some processes
+
+  - [**onBeforeDownload(callback)**](#onbeforedownloadcallback)
+
+    Method to handle the event before download a Metadata Type from Org on some processes
+
+  - [**onAfterDownload(callback)**](#onafterdownloadcallback)
+
+    Method to handle the event after download a Metadata Type from Org on some processes
 
   - [**onAbort(callback)**](#onabortcallback)
     
