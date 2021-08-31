@@ -1,3 +1,4 @@
+const EventEmitter = require('events').EventEmitter;
 const { ProcessHandler, ProcessFactory } = require('@ah/core').ProcessManager;
 const { RetrieveStatus, DeployStatus, RetrieveResult, SFDXProjectResult, BulkStatus, AuthOrg, MetadataType, MetadataObject, ProgressStatus } = require('@ah/core').Types;
 const { OSUtils, Utils, MathUtils, StrUtils, Validator, MetadataUtils, ProjectUtils } = require('@ah/core').CoreUtils;
@@ -20,6 +21,21 @@ const METADATA_QUERIES = {
 const SUBFOLDER_BY_METADATA_TYPE = {
     RecordType: 'recordTypes'
 }
+
+const EVENT = {
+    PREPARE: 'preapre',
+    CREATE_PROJECT: 'createProject',
+    RETRIEVE: 'retrieve',
+    PROCESS: 'process',
+    LOADING_LOCAL: 'loadingLocal',
+    LOADING_ORG: 'loadingOrg',
+    COPY_DATA: 'copyData',
+    COPY_FILE: 'copyFile',
+    COMPRESS_FILE: 'compressFile',
+    BEFORE_DOWNLOAD: 'beforeDownload',
+    AFTER_DOWNLOAD: 'afterDownload',
+    ABORT: 'abort',
+};
 
 /**
  * Class to connect with Salesforce to list or describe metadata types, list or describe all SObjects, make queries, create SFDX Project, validate, 
@@ -55,8 +71,7 @@ class Connection {
         this._increment = 0;
         this._abort = false;
         this._allowConcurrence = false;
-        this._abortCallback = undefined;
-        this._progressCallback = undefined;
+        this._event = new EventEmitter();
     }
 
     /**
@@ -149,20 +164,134 @@ class Connection {
     }
 
     /**
-     * Method to handle the general connection progress (is called from all methods to handle the progress)
-     * @param {Function} progressCallback Callback function to handle the progress
+     * Method to handle the event when preparing execution of some processes
+     * @param {Function} callback Callback function to call when connection is on prepare
+     * 
+     * @returns {Connection} Returns the connection object
      */
-    onProgress(progressCallback) {
-        this._progressCallback = progressCallback;
+    onPrepare(callback){
+        this._event.on(EVENT.PREPARE, callback);
+        return this;
+    } 
+
+    /**
+     * Method to handle the event before the create a project on some processes 
+     * @param {Function} callback Callback function to handle progress when connection will create a project
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onCreateProject(callback){
+        this._event.on(EVENT.CREATE_PROJECT, callback);
+        return this;
+    } 
+
+    /**
+     * Method to handle the event before start retrieve data on some processes
+     * @param {Function} callback Callback function to handle progress when connection retrieve data
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onRetrieve(callback){
+        this._event.on(EVENT.RETRIEVE, callback);
+        return this;
+    } 
+
+    /**
+     * Method to handle the event before start processing results on some processes
+     * @param {Function} callback Callback function to handle progress when connection is processing results
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onProcess(callback){
+        this._event.on(EVENT.PROCESS, callback);
         return this;
     }
 
     /**
-     * Method to handle when connection is aborted
-     * @param {Function} abortCallback Callback function to call when connectin is aborted
+     * Method to handle the event before start loading local metadata types on some processes
+     * @param {Function} callback Callback function to handle progress when connection load metadata types from local project
+     * 
+     * @returns {Connection} Returns the connection object
      */
-    onAbort(abortCallback) {
-        this._abortCallback = abortCallback;
+    onLoadingLocal(callback){
+        this._event.on(EVENT.LOADING_LOCAL, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event before start loading metadata types from org on some processes
+     * @param {Function} callback Callback function to handle progress when connection load metadata types from connected org
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onLoadingOrg(callback){
+        this._event.on(EVENT.LOADING_ORG, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event before start copying files on some processes
+     * @param {Function} callback Callback function to handle progress when connection start to copying files
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onCopyData(callback){
+        this._event.on(EVENT.COPY_DATA, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event before start copying file content on some processes
+     * @param {Function} callback Callback function to handle progress when connection star to copy a single file
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onCopyFile(callback){
+        this._event.on(EVENT.COPY_FILE, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event before start compress XML File on some processes
+     * @param {Function} callback Callback function to handle progress when start compress
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onCompressFile(callback){
+        this._event.on(EVENT.COMPRESS_FILE, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event before download a Metadata Type from Org on some processes
+     * @param {Function} callback Callback function to handle progress when start download metadata type
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onBeforeDownload(callback){
+        this._event.on(EVENT.BEFORE_DOWNLOAD, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event after download a Metadata Type from Org on some processes
+     * @param {Function} callback Callback function to handle progress when metadata type is downloaded
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onAfterDownload(callback){
+        this._event.on(EVENT.AFTER_DOWNLOAD, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event when connection is aborted
+     * @param {Function} callback Callback function to call when connection is aborted
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onAbort(callback) {
+        this._event.on(EVENT.ABORT, callback);
         return this;
     }
 
@@ -172,8 +301,7 @@ class Connection {
     abortConnection() {
         this._abort = true;
         killProcesses(this);
-        if (this._abortCallback)
-            this._abortCallback.call(this);
+        this._event.emit(EVENT.ABORT);
     }
 
     /**
@@ -361,7 +489,6 @@ class Connection {
      * Method to describe all or selected Metadata Types from the connected org
      * @param {(Arra<String> | Array<MetadataDetail>)} [typesOrDetails] List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
      * @param {Boolean} [downloadAll] true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
-     * @param {Function} [callback] Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<Array<Object>>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
      * 
@@ -370,7 +497,6 @@ class Connection {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
     describeMetadataTypes(typesOrDetails, downloadAll) {
-        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
@@ -378,7 +504,7 @@ class Connection {
                 this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(typesOrDetails);
                 this._increment = calculateIncrement(metadataToProcess);
-                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                callEvent(this, EVENT.PREPARE);
                 let foldersByType;
                 if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
                     foldersByType = await getFoldersByType(this);
@@ -386,7 +512,7 @@ class Connection {
                 let metadata = {};
                 const batchesToProcess = getBatches(this, metadataToProcess);
                 for (const batch of batchesToProcess) {
-                    downloadMetadata(this, batch.records, downloadAll, foldersByType, progressCallback).then((downloadedMetadata) => {
+                    downloadMetadata(this, batch.records, downloadAll, foldersByType).then((downloadedMetadata) => {
                         Object.keys(downloadedMetadata).forEach(function (key) {
                             metadata[key] = downloadedMetadata[key];
                         });
@@ -454,7 +580,6 @@ class Connection {
     /**
      * Method to describe SObject data to the specified objects
      * @param {Array<String>} sObjects List with the object API Names to describe
-     * @param {Function} [callback] Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<Array<SObject>>} Return a promise with a SObjects data
      * 
@@ -463,13 +588,12 @@ class Connection {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
     describeSObjects(sObjects) {
-        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
                 this._increment = calculateIncrement(sObjects);
-                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                callEvent(this, EVENT.PREPARE);
                 let resultObjects = {};
                 sObjects = Utils.forceArray(sObjects);
                 const batchesToProcess = getBatches(this, sObjects);
@@ -1191,7 +1315,6 @@ class Connection {
     /**
      * Method to get all available user permissions from the connected org
      * @param {String} tmpFolder Temporal folder to save support files (Required)
-     * @param {Function} [callback] Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<Array<String>>} Return a promise with the list of user permissions
      * 
@@ -1204,14 +1327,13 @@ class Connection {
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     loadUserPermissions(tmpFolder) {
-        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
             try {
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
                 const originalProjectFolder = this.projectFolder;
-                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                callEvent(this, EVENT.PREPARE);
                 this._allowConcurrence = true;
                 const metadata = {};
                 const metadataType = new MetadataType(MetadataTypes.PROFILE, true);
@@ -1220,7 +1342,7 @@ class Connection {
                 if (FileChecker.isExists(tmpFolder))
                     FileWriter.delete(tmpFolder);
                 FileWriter.createFolderSync(tmpFolder);
-                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
                 const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
                     apiVersion: this.apiVersion,
@@ -1228,9 +1350,9 @@ class Connection {
                 });
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                callEvent(this, EVENT.RETRIEVE);
                 const retrieveOut = await this.retrieve(false);
-                callProgressCalback(progressCallback, this, ProgressStages.PROCESS);
+                callEvent(this, EVENT.PROCESS);
                 const result = [];
                 const xmlRoot = XMLParser.parseXML(FileReader.readFileSync(this.projectFolder + '/force-app/main/default/profiles/Admin.profile-meta.xml'), true);
                 if (xmlRoot[MetadataTypes.PROFILE] && xmlRoot[MetadataTypes.PROFILE].userPermissions) {
@@ -1239,7 +1361,7 @@ class Connection {
                         result.push(permission.name);
                     }
                 }
-                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                //callProgressCalback(this, EVENT.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
                 this._allowConcurrence = false;
@@ -1259,7 +1381,6 @@ class Connection {
      * @param {Object} [types] Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
      * @param {Boolean} [compress] true to compress affected files, false in otherwise
      * @param {String} [sortOrder] Compress sort order when compress files
-     * @param {Function} [callback] Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1276,7 +1397,6 @@ class Connection {
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder) {
-        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
@@ -1285,7 +1405,7 @@ class Connection {
                 if (types)
                     types = Validator.validateMetadataJSON(types);
                 const originalProjectFolder = this.projectFolder;
-                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                callEvent(this, EVENT.PREPARE);
                 const dataToRetrieve = [];
                 Object.keys(SpecialMetadata).forEach(function (key) {
                     if (!types || types[key]) {
@@ -1300,7 +1420,7 @@ class Connection {
                 this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
                 this._increment = calculateIncrement(metadataToProcess);
-                callProgressCalback(progressCallback, this, ProgressStages.LOADING_LOCAL);
+                callEvent(this, EVENT.LOADING_LOCAL);
                 const metadataDetails = await this.listMetadataTypes();
                 const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
                 const metadataFromFileSystem = TypesFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
@@ -1313,7 +1433,7 @@ class Connection {
                 if (FileChecker.isExists(tmpFolder))
                     FileWriter.delete(tmpFolder);
                 FileWriter.createFolderSync(tmpFolder);
-                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
                 const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
                     apiVersion: this.apiVersion,
@@ -1321,12 +1441,12 @@ class Connection {
                 });
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                callEvent(this, EVENT.RETRIEVE);
                 const retrieveOut = await this.retrieve(false);
                 waitForFiles(this.projectFolder);
-                callProgressCalback(progressCallback, this, ProgressStages.COPY_DATA);
-                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromFileSystem, compress, sortOrder, progressCallback);
-                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                callEvent(this, EVENT.COPY_DATA);
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromFileSystem, compress, sortOrder);
+                //callProgressCalback(this, EVENT.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
                 this._allowConcurrence = false;
@@ -1347,7 +1467,6 @@ class Connection {
      * @param {Boolean} [downloadAll] true to download all related data from any namespace, false to downlaod only the org namespace data
      * @param {Boolean} [compress] true to compress affected files, false in otherwise
      * @param {String} [sortOrder] Compress sort order when compress files
-     * @param {Function} [callback] Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1364,7 +1483,6 @@ class Connection {
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
-        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
@@ -1373,7 +1491,7 @@ class Connection {
                 if (types)
                     types = Validator.validateMetadataJSON(types);
                 const originalProjectFolder = this.projectFolder;
-                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                callEvent(this, EVENT.PREPARE);
                 const dataToRetrieve = [];
                 Object.keys(SpecialMetadata).forEach(function (key) {
                     if (!types || types[key]) {
@@ -1388,7 +1506,7 @@ class Connection {
                 this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
                 this._increment = calculateIncrement(metadataToProcess);
-                callProgressCalback(progressCallback, this, ProgressStages.LOADING_LOCAL);
+                callEvent(this, EVENT.LOADING_LOCAL);
                 const metadataDetails = await this.listMetadataTypes();
                 const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
                 const metadataFromFileSystem = TypesFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
@@ -1397,15 +1515,15 @@ class Connection {
                     if (metadataFromFileSystem[type])
                         metadata[type] = metadataFromFileSystem[type];
                 }
-                callProgressCalback(progressCallback, this, ProgressStages.LOADING_ORG);
-                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll, progressCallback);
+                callEvent(this, EVENT.LOADING_ORG);
+                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
                 this._allowConcurrence = true;
                 metadata = MetadataUtils.combineMetadata(metadata, metadataFromOrg);
                 MetadataUtils.checkAll(metadata);
                 if (FileChecker.isExists(tmpFolder))
                     FileWriter.delete(tmpFolder);
                 FileWriter.createFolderSync(tmpFolder);
-                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
                 const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
                     apiVersion: this.apiVersion,
@@ -1413,12 +1531,12 @@ class Connection {
                 });
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                callEvent(this, EVENT.RETRIEVE);
                 const retrieveOut = await this.retrieve(false);
                 waitForFiles(this.projectFolder);
-                callProgressCalback(progressCallback, this, ProgressStages.COPY_DATA);
-                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadata, compress, sortOrder, progressCallback);
-                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                callEvent(this, EVENT.COPY_DATA);
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadata, compress, sortOrder);
+                //callProgressCalback(this, EVENT.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
                 this._allowConcurrence = false;
@@ -1439,7 +1557,6 @@ class Connection {
      * @param {Boolean} [downloadAll] true to download all related data from any namespace, false to downlaod only the org namespace data
      * @param {Boolean} [compress] true to compress affected files, false in otherwise
      * @param {String} [sortOrder] Compress sort order when compress files
-     * @param {Function} [callback] Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1456,7 +1573,6 @@ class Connection {
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
-        const progressCallback = getCallback(arguments, this);
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
@@ -1465,7 +1581,7 @@ class Connection {
                 if (types)
                     types = Validator.validateMetadataJSON(types);
                 const originalProjectFolder = this.projectFolder;
-                callProgressCalback(progressCallback, this, ProgressStages.PREPARE);
+                callEvent(this, EVENT.PREPARE);
                 const dataToRetrieve = [];
                 Object.keys(SpecialMetadata).forEach(function (key) {
                     if (!types || types[key]) {
@@ -1480,16 +1596,16 @@ class Connection {
                 this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
                 this._increment = calculateIncrement(metadataToProcess);
-                callProgressCalback(progressCallback, this, ProgressStages.LOADING_ORG);
+                callEvent(this, EVENT.LOADING_ORG);
                 const metadataDetails = await this.listMetadataTypes();
                 const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
-                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll, progressCallback);
+                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
                 this._allowConcurrence = true;
                 MetadataUtils.checkAll(metadataFromOrg);
                 if (FileChecker.isExists(tmpFolder))
                     FileWriter.delete(tmpFolder);
                 FileWriter.createFolderSync(tmpFolder);
-                callProgressCalback(progressCallback, this, ProgressStages.CREATE_PROJECT);
+                callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
                 const packageResult = PackageGenerator.createPackage(metadataFromOrg, this.packageFolder, {
                     apiVersion: this.apiVersion,
@@ -1497,12 +1613,12 @@ class Connection {
                 });
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callProgressCalback(progressCallback, this, ProgressStages.RETRIEVE);
+                callEvent(this, EVENT.RETRIEVE);
                 const retrieveOut = await this.retrieve(false);
                 waitForFiles(this.projectFolder);
-                callProgressCalback(progressCallback, this, ProgressStages.COPY_DATA);
-                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromOrg, compress, sortOrder, progressCallback);
-                //callProgressCalback(progressCallback, this, ProgressStages.CLEANING);
+                callEvent(this, EVENT.COPY_DATA);
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromOrg, compress, sortOrder);
+                //callProgressCalback(this, EVENT.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
                 this._allowConcurrence = false;
@@ -1517,10 +1633,6 @@ class Connection {
     }
 }
 module.exports = Connection;
-
-function getCallback(args, connection) {
-    return Utils.getCallbackFunction(args) || connection._progressCallback;;
-}
 
 function waitForFiles(folder) {
     return new Promise(async (resolve) => {
@@ -1538,7 +1650,7 @@ function restoreOriginalProjectData(connection, originalProjectFolder) {
     connection.setPackageFile(originalProjectFolder + '/manifest/package.xml');
 }
 
-function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, metadataTypes, compress, compressOrder, progressCallback) {
+function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, metadataTypes, compress, compressOrder) {
     const path = connection.projectFolder;
     for (const folder of (Object.keys(folderMetadataMap))) {
         const metadataDetail = folderMetadataMap[folder];
@@ -1570,13 +1682,13 @@ function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, 
                         let targetFile = targetProject + subPath;
                         let targetFolder = PathUtils.getDirname(targetFile);
                         if (FileChecker.isExists(sourceFile)) {
-                            callProgressCalback(progressCallback, connection, ProgressStages.COPY_FILE, metadataDetail, metadataObjectName, metadataItemName, targetFile);
+                            callEvent(connection, EVENT.COPY_FILE, metadataTypeName, metadataObjectName, metadataItemName, targetFile);
                             if (!FileChecker.isExists(targetFolder))
                                 FileWriter.createFolderSync(targetFolder);
                             FileWriter.createFileSync(targetFile, FileReader.readFileSync(sourceFile));
                             if (compress) {
-                                callProgressCalback(progressCallback, connection, ProgressStages.COMPRESS_FILE, metadataDetail, metadataObjectName, metadataItemName, targetFile);
-                                XMLCompressor.compressSync(targetFile, compressOrder);
+                                callEvent(connection, EVENT.COMPRESS_FILE, metadataTypeName, metadataObjectName, metadataItemName, targetFile);
+                                new XMLCompressor(targetFile, compressOrder).compressSync();
                             }
                         }
                     }
@@ -1594,13 +1706,13 @@ function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, 
                     let targetFile = targetProject + subPath;
                     let targetFolder = PathUtils.getDirname(targetFile);
                     if (FileChecker.isExists(sourceFile)) {
-                        callProgressCalback(progressCallback, connection, ProgressStages.COPY_FILE, metadataDetail, metadataObjectName, undefined, targetFile);
+                        callEvent(connection, EVENT.COPY_FILE, metadataTypeName, metadataObjectName, undefined, targetFile);
                         if (!FileChecker.isExists(targetFolder))
                             FileWriter.createFolderSync(targetFolder);
                         FileWriter.createFileSync(targetFile, FileReader.readFileSync(sourceFile));
                         if (compress) {
-                            callProgressCalback(progressCallback, connection, ProgressStages.COMPRESS_FILE, metadataDetail, metadataObjectName, undefined, targetFile);
-                            XMLCompressor.compressSync(targetFile, compressOrder);
+                            callEvent(connection, EVENT.COMPRESS_FILE, metadataTypeName, metadataObjectName, undefined, targetFile);
+                            new XMLCompressor(targetFile, compressOrder).compressSync();
                         }
                     }
                 }
@@ -1646,12 +1758,11 @@ function handleResponse(response, onSuccess) {
     }
 }
 
-function callProgressCalback(progressCallback, connection, stage, entityName, entityType, entityItem, data) {
-    if (progressCallback)
-        progressCallback.call(this, new ProgressStatus(stage, connection._increment, connection._percentage, entityName, entityType, entityItem, data));
+function callEvent(connection, stage, entityName, entityType, entityItem, data) {
+    connection._event.emit(stage ,new ProgressStatus(connection._increment, connection._percentage, entityName, entityType, entityItem, data));
 }
 
-function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType, progressCallback) {
+function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType) {
     return new Promise(async (resolve, reject) => {
         try {
             const metadata = {};
@@ -1663,7 +1774,7 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         resolve(metadata);
                         return;
                     }
-                    callProgressCalback(progressCallback, connection, ProgressStages.BEFORE_DOWNLOAD, metadataTypeName);
+                    callEvent(connection, EVENT.BEFORE_DOWNLOAD, metadataTypeName);
                     if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
                         const records = await connection.query(METADATA_QUERIES[metadataTypeName]);
                         if (!records || records.length === 0)
@@ -1672,13 +1783,13 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
-                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
+                        callEvent(connection, EVENT.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
                     } else if (NotIncludedMetadata[metadataTypeName]) {
                         const metadataType = TypesFactory.createNotIncludedMetadataType(metadataTypeName);
                         connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
-                        callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
+                        callEvent(connection, EVENT.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
                     } else {
                         const process = ProcessFactory.describeMetadataType(connection.usernameOrAlias, metadataTypeName, undefined, connection.apiVersion);
                         addProcess(connection, process);
@@ -1688,7 +1799,7 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                             connection._percentage += connection._increment;
                             if (metadataType !== undefined && metadataType.haveChilds())
                                 metadata[metadataTypeName] = metadataType;
-                            callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
+                            callEvent(connection, EVENT.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
                         });
                     }
                 } catch (error) {
@@ -1703,7 +1814,7 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
     });
 }
 
-function downloadSObjectsData(connection, sObjects, progressCallback) {
+function downloadSObjectsData(connection, sObjects) {
     return new Promise(async (resolve, reject) => {
         try {
             const sObjectsResult = {};
@@ -1713,7 +1824,7 @@ function downloadSObjectsData(connection, sObjects, progressCallback) {
                     resolve(sObjectsResult);
                     return;
                 }
-                callProgressCalback(progressCallback, connection, ProgressStages.BEFORE_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject);
+                callEvent(connection, EVENT.BEFORE_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject);
                 const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
                 addProcess(connection, process);
                 const response = await ProcessHandler.runProcess(process);
@@ -1722,7 +1833,7 @@ function downloadSObjectsData(connection, sObjects, progressCallback) {
                     connection._percentage += connection._increment;
                     if (sObjectResult !== undefined)
                         sObjectsResult[sObject] = sObjectResult;
-                    callProgressCalback(progressCallback, connection, ProgressStages.AFTER_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
+                    callEvent(connection, EVENT.AFTER_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
                 });
             }
             resolve(sObjectsResult);

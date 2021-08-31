@@ -116,9 +116,9 @@ Constructor to create a new connection object. All parameters are optional and y
 
     Method to handle the general connection progress (is called from all methods to handle the progress)
 
-  - [**onAbort(abortCallback)**](#onabortabortcallback)
+  - [**onAbort(callback)**](#onabortcallback)
     
-    Method to handle when connection is aborted
+    Method to handle the event when connection is aborted
 
   - [**abortConnection()**](#abortconnection)
 
@@ -413,11 +413,11 @@ Returns the connection object
     connection.setUsernameOrAlias('MyOrg').setSingleThread(); 
 ---
 
-## [**onProgress(namespacePrefix)**](#onprogressnamespaceprefix)
-Method to handle the general connection progress (is called from all methods to handle the progress)
+## [**onPrepare(callback)**](#onpreparecallback)
+Method to handle the event when preparing execution of some processes
 
 ### **Parameters:**
-  - **progressCallback**: Callback function to handle the progress
+  - **callback**: Callback function to call when connection is on prepare
     - Function
 
 ### **Return:**
@@ -425,28 +425,274 @@ Returns the connection object
 - Connection
 
 ### **Examples:**
-**Set general connection progress callback**
-
+**Handling progress on prepare stage**
 
     const Connection = require('@ah/connector');
 
     const connection = new Connection();
 
-    connection.onProgress((status) => {
-
+    connection.onPrepare(() => {
+      console.log('Handling progress on prepare');
     }));
 
-    // Or can concatenate method calls because setters return a connection object
-    connection.setUsernameOrAlias('MyOrg').onProgress((status) => {
-
-    })); 
 ---
 
-## [**onAbort(abortCallback)**](#onabortabortcallback)
-Method to handle when connection is aborted
+## [**onCreateProject(callback)**](#oncreateprojectcallback)
+Method to handle the event before the create a project on some processes 
 
 ### **Parameters:**
-  - **abortCallback**: Callback function to call when connectin is aborted
+  - **callback**: Callback function to handle progress when connection will create a project
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on create project stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onCreateProject(() => {
+      console.log('Handling progress on create project');
+    }));
+
+---
+
+## [**onRetrieve(callback)**](#onretrievecallback)
+Method to handle the event before start retrieve data on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when connection retrieve data
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on retrieve stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onRetrieve(() => {
+      console.log('Handling progress on create project');
+    }));
+
+---
+
+## [**onProcess(callback)**](#onprocesscallback)
+Method to handle the event before start processing results on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when connection is processing results
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on process stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onProcess(() => {
+      console.log('Handling progress when process');
+    }));
+
+---
+
+## [**onLoadingLocal(callback)**](#onloadinglocalcallback)
+Method to handle the event before start loading local metadata types on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when connection load metadata types from local project
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on loading local stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onLoadingLocal(() => {
+      console.log('Handling progress on loading local data');
+    }));
+
+---
+
+## [**onLoadingOrg(callback)**](#onloadingorgcallback)
+Method to handle the event before start loading metadata types from org on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when connection load metadata types from connected org
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on loading org stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onLoadingOrg(() => {
+      console.log('Handling progress on create project');
+    }));
+
+---
+
+## [**onCopyData(callback)**](#oncopydatacallback)
+Method to handle the event before start copying files on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when connection start to copying files
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on copy data stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onCopyData(() => {
+      console.log('Handling progress when copy data');
+    }));
+
+---
+
+## [**onCopyFile(callback)**](#oncopyfilecallback)
+Method to handle the event before start copying file content on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when connection star to copy a single file
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on copy file stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onCopyFile((status) => {
+      console.log('Handling progress when copy file');
+      console.log('MetadataType => ' + status.entityType);
+      console.log('MetadataObject => ' + status.entityObject);
+      console.log('MetadataItem => ' + status.entityItem);
+      console.log('file => ' + status.data);
+    }));
+
+---
+
+## [**onCompressFile(callback)**](#oncompressfilecallback)
+Method to handle the event before start compress XML File on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when start compress
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on compress file stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onCompressFile((status) => {
+      console.log('Handling progress when copy file');
+      console.log('MetadataType => ' + status.entityType);
+      console.log('MetadataObject => ' + status.entityObject);
+      console.log('MetadataItem => ' + status.entityItem);
+      console.log('file => ' + status.data);
+    }));
+
+---
+
+## [**onBeforeDownload(callback)**](#onbeforedownloadcallback)
+Method to handle the event before download a Metadata Type from Org on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when start download metadata type
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on before download stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onBeforeDownload((status) => {
+      console.log('Handling progress when copy file');
+      console.log('MetadataType => ' + status.entityType);
+    }));
+
+---
+
+## [**onAfterDownload(callback)**](#onafterdownloadcallback)
+Method to handle the event after download a Metadata Type from Org on some processes
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when metadata type is downloaded
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on after download stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onAfterDownload((status) => {
+      console.log('Handling progress when copy file');
+      console.log('MetadataType => ' + status.entityType);
+      console.log('Downloaded Data => ' + status.data);
+    }));
+
+---
+
+## [**onAbort(callback)**](#onabortabortcallback)
+Method to handle the event when connection is aborted
+
+### **Parameters:**
+  - **callback**: Callback function to call when connectin is aborted
     - Function
 
 ### **Return:**
