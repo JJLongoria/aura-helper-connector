@@ -490,7 +490,7 @@ class Connection {
      * @param {(Arra<String> | Array<MetadataDetail>)} [typesOrDetails] List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
      * @param {Boolean} [downloadAll] true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
      * 
-     * @returns {Promise<Array<Object>>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
+     * @returns {Promise<Object>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
@@ -1344,10 +1344,7 @@ class Connection {
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
-                    apiVersion: this.apiVersion,
-                    explicit: true,
-                });
+                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
                 callEvent(this, EVENT.RETRIEVE);
@@ -1435,10 +1432,7 @@ class Connection {
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
-                    apiVersion: this.apiVersion,
-                    explicit: true,
-                });
+                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
                 callEvent(this, EVENT.RETRIEVE);
@@ -1525,10 +1519,7 @@ class Connection {
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = PackageGenerator.createPackage(metadata, this.packageFolder, {
-                    apiVersion: this.apiVersion,
-                    explicit: true,
-                });
+                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
                 callEvent(this, EVENT.RETRIEVE);
@@ -1607,10 +1598,7 @@ class Connection {
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = PackageGenerator.createPackage(metadataFromOrg, this.packageFolder, {
-                    apiVersion: this.apiVersion,
-                    explicit: true,
-                });
+                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadataFromOrg, this.packageFolder);
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
                 callEvent(this, EVENT.RETRIEVE);
