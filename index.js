@@ -1836,7 +1836,7 @@ function downloadSObjectsData(connection, sObjects) {
                     resolve(sObjectsResult);
                     return;
                 }
-                callEvent(connection, EVENT.BEFORE_DOWNLOAD_TYPE, MetadataTypes.CUSTOM_OBJECT, sObject);
+                callEvent(connection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
                 const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
                 addProcess(connection, process);
                 const response = await ProcessHandler.runProcess(process);
@@ -1845,7 +1845,7 @@ function downloadSObjectsData(connection, sObjects) {
                     connection._percentage += connection._increment;
                     if (sObjectResult !== undefined)
                         sObjectsResult[sObject] = sObjectResult;
-                    callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
+                    callEvent(connection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
                 });
             }
             resolve(sObjectsResult);
