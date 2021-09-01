@@ -32,8 +32,10 @@ const EVENT = {
     COPY_DATA: 'copyData',
     COPY_FILE: 'copyFile',
     COMPRESS_FILE: 'compressFile',
-    BEFORE_DOWNLOAD: 'beforeDownload',
-    AFTER_DOWNLOAD: 'afterDownload',
+    BEFORE_DOWNLOAD_TYPE: 'beforeDownloadType',
+    AFTER_DOWNLOAD_TYPE: 'afterDownloadType',
+    BEFORE_DOWNLOAD_OBJECT: 'beforeDownloadSObj',
+    AFTER_DOWNLOAD_OBJECT: 'afterDownloadSObj',
     ABORT: 'abort',
 };
 
@@ -268,8 +270,8 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onBeforeDownload(callback){
-        this._event.on(EVENT.BEFORE_DOWNLOAD, callback);
+    onBeforeDownloadType(callback){
+        this._event.on(EVENT.BEFORE_DOWNLOAD_TYPE, callback);
         return this;
     }
 
@@ -279,8 +281,30 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onAfterDownload(callback){
-        this._event.on(EVENT.AFTER_DOWNLOAD, callback);
+    onAfterDownloadType(callback){
+        this._event.on(EVENT.AFTER_DOWNLOAD_TYPE, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event before download a SObject when describe SObejcts
+     * @param {Function} callback Callback function to handle progress when start download sobject
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+     onBeforeDownloadSObject(callback){
+        this._event.on(EVENT.BEFORE_DOWNLOAD_OBJECT, callback);
+        return this;
+    }
+
+    /**
+     * Method to handle the event after download a SObject when describe SObejcts
+     * @param {Function} callback Callback function to handle progress when sobject is downloaded
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onAfterDownloadSObject(callback){
+        this._event.on(EVENT.AFTER_DOWNLOAD_OBJECT, callback);
         return this;
     }
 
@@ -629,7 +653,7 @@ class Connection {
     /**
      * Method to retrieve data using the connection package file. You can choose to retrieve as Metadata API format or Source Format
      * @param {Boolean} useMetadataAPI True to use Metadata API format, false to use source format
-     * @param {String} targetDir Path to the target dir when retrieve with Metadata API Format
+     * @param {String} [targetDir] Path to the target dir when retrieve with Metadata API Format
      * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
      *  
      * @returns {Promise<RetrieveResult>} Return a promise with the RetrieveResult object with the retrieve result 
@@ -1762,7 +1786,7 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         resolve(metadata);
                         return;
                     }
-                    callEvent(connection, EVENT.BEFORE_DOWNLOAD, metadataTypeName);
+                    callEvent(connection, EVENT.BEFORE_DOWNLOAD_TYPE, metadataTypeName);
                     if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
                         const records = await connection.query(METADATA_QUERIES[metadataTypeName]);
                         if (!records || records.length === 0)
@@ -1771,13 +1795,13 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
-                        callEvent(connection, EVENT.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
+                        callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
                     } else if (NotIncludedMetadata[metadataTypeName]) {
                         const metadataType = TypesFactory.createNotIncludedMetadataType(metadataTypeName);
                         connection._percentage += connection._increment;
                         if (metadataType !== undefined && metadataType.haveChilds())
                             metadata[metadataTypeName] = metadataType;
-                        callEvent(connection, EVENT.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
+                        callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
                     } else {
                         const process = ProcessFactory.describeMetadataType(connection.usernameOrAlias, metadataTypeName, undefined, connection.apiVersion);
                         addProcess(connection, process);
@@ -1787,7 +1811,7 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                             connection._percentage += connection._increment;
                             if (metadataType !== undefined && metadataType.haveChilds())
                                 metadata[metadataTypeName] = metadataType;
-                            callEvent(connection, EVENT.AFTER_DOWNLOAD, metadataTypeName, undefined, undefined, metadataType);
+                            callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
                         });
                     }
                 } catch (error) {
@@ -1812,7 +1836,7 @@ function downloadSObjectsData(connection, sObjects) {
                     resolve(sObjectsResult);
                     return;
                 }
-                callEvent(connection, EVENT.BEFORE_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject);
+                callEvent(connection, EVENT.BEFORE_DOWNLOAD_TYPE, MetadataTypes.CUSTOM_OBJECT, sObject);
                 const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
                 addProcess(connection, process);
                 const response = await ProcessHandler.runProcess(process);
@@ -1821,7 +1845,7 @@ function downloadSObjectsData(connection, sObjects) {
                     connection._percentage += connection._increment;
                     if (sObjectResult !== undefined)
                         sObjectsResult[sObject] = sObjectResult;
-                    callEvent(connection, EVENT.AFTER_DOWNLOAD, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
+                    callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
                 });
             }
             resolve(sObjectsResult);

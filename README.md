@@ -148,13 +148,21 @@ Constructor to create a new connection object. All parameters are optional and y
 
     Method to handle the event before start compress XML File on some processes
 
-  - [**onBeforeDownload(callback)**](#onbeforedownloadcallback)
+  - [**onBeforeDownloadType(callback)**](#onbeforedownloadtypecallback)
 
     Method to handle the event before download a Metadata Type from Org on some processes
 
-  - [**onAfterDownload(callback)**](#onafterdownloadcallback)
+  - [**onAfterDownloadType(callback)**](#onafterdownloadtypecallback)
 
     Method to handle the event after download a Metadata Type from Org on some processes
+
+  - [**onBeforeDownloadSObject(callback)**](#onbeforedownloadsobjectcallback)
+
+    Method to handle the event before download a SObject when describe SObejcts
+
+  - [**onAfterDownloadSObject(callback)**](#onafterdownloadsobjectcallback)
+
+    Method to handle the event after download a SObject when describe SObejcts
 
   - [**onAbort(callback)**](#onabortcallback)
     
@@ -668,7 +676,7 @@ Returns the connection object
     const connection = new Connection();
 
     connection.onCompressFile((status) => {
-      console.log('Handling progress when copy file');
+      console.log('Handling progress when compress file');
       console.log('MetadataType => ' + status.entityType);
       console.log('MetadataObject => ' + status.entityObject);
       console.log('MetadataItem => ' + status.entityItem);
@@ -677,7 +685,7 @@ Returns the connection object
 
 ---
 
-## [**onBeforeDownload(callback)**](#onbeforedownloadcallback)
+## [**onBeforeDownloadType(callback)**](#onbeforedownloadtypecallback)
 Method to handle the event before download a Metadata Type from Org on some processes
 
 ### **Parameters:**
@@ -689,20 +697,20 @@ Returns the connection object
 - Connection
 
 ### **Examples:**
-**Handling progress on before download stage**
+**Handling progress on before download type stage**
 
     const Connection = require('@ah/connector');
 
     const connection = new Connection();
 
-    connection.onBeforeDownload((status) => {
-      console.log('Handling progress when copy file');
+    connection.onBeforeDownloadType((status) => {
+      console.log('Handling progress when describe metadata types');
       console.log('MetadataType => ' + status.entityType);
     }));
 
 ---
 
-## [**onAfterDownload(callback)**](#onafterdownloadcallback)
+## [**onAfterDownloadType(callback)**](#onafterdownloadtypecallback)
 Method to handle the event after download a Metadata Type from Org on some processes
 
 ### **Parameters:**
@@ -714,15 +722,66 @@ Returns the connection object
 - Connection
 
 ### **Examples:**
-**Handling progress on after download stage**
+**Handling progress on after download type stage**
 
     const Connection = require('@ah/connector');
 
     const connection = new Connection();
 
-    connection.onAfterDownload((status) => {
-      console.log('Handling progress when copy file');
+    connection.onAfterDownloadType((status) => {
+      console.log('Handling progress when describe metadata types');
       console.log('MetadataType => ' + status.entityType);
+      console.log('Downloaded Data => ' + status.data);
+    }));
+
+---
+
+## [**onBeforeDownloadSObject(callback)**](#onbeforedownloadsobjectcallback)
+Method to handle the event before download a SObject when describe SObejcts
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when start download sobject
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on before download sobject stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onBeforeDownloadSObject((status) => {
+      console.log('Handling progress describe sobjects');
+      console.log('SObject => ' + status.entityObject);
+    }));
+
+---
+
+## [**onAfterDownloadSObject(callback)**](#onafterdownloadsobjectcallback)
+Method to handle the event after download a SObject when describe SObejcts
+
+### **Parameters:**
+  - **callback**: Callback function to handle progress when sobject is downloaded
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on after download sobject stage**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection();
+
+    connection.onAfterDownloadSObject((status) => {
+      console.log('Handling progress describe sobjects');
+      console.log('SObject => ' + status.entityObject);
       console.log('Downloaded Data => ' + status.data);
     }));
 
