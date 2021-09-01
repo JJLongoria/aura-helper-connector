@@ -6,10 +6,16 @@ const { MetadataTypes } = require('@ah/core').Values;
 describe('Testing index.js', () => {
     test('Testing query()', async (done) => {
         const connection = new Connection('MyOrg', '50.0');
-        connection.onAfterDownload(() => {
+        connection.onAfterDownloadType(() => {
 
         });
-        connection.onBeforeDownload(() => {
+        connection.onBeforeDownloadType(() => {
+
+        });
+        connection.onAfterDownloadSObject(() => {
+
+        });
+        connection.onBeforeDownloadSObject(() => {
 
         });
         connection.onCompressFile(() => {
@@ -131,7 +137,7 @@ describe('Testing index.js', () => {
         connection.onAbort(() => {
             console.log("aborted");
         });
-        connection.onAfterDownload(() => {
+        connection.onAfterDownloadType(() => {
             connection.abortConnection();
         });
         connection.setSingleThread();
