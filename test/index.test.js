@@ -297,7 +297,7 @@ describe('Testing index.js', () => {
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
         connection.setPackageFile('./test/assets/SFDXProject/MyOrg/PROD/manifest/package.xml');
-        connection.deploy().then((status) => {
+        connection.deployPackage().then((status) => {
             done();
         }).catch((error) => {
             console.log(error);
@@ -313,7 +313,7 @@ describe('Testing index.js', () => {
         connection.setProjectFolder('./test/assets/SFDXProject/MyOrg/PROD');
         connection.setPackageFolder('./test/assets/SFDXProject/MyOrg/PROD/manifest');
         connection.setPackageFile('./test/assets/SFDXProject/MyOrg/PROD/manifest/package.xl');
-        connection.deploy().then((status) => {
+        connection.deployPackage().then((status) => {
             expect(status).toBeUndefined();
             done();
         }).catch((error) => {

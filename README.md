@@ -216,9 +216,13 @@ Constructor to create a new connection object. All parameters are optional and y
 
     Method to validate a deploy against the org using the connection package file
 
-  - [**deploy(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploytestlevel-runtests-usemetadataapi-waitminutes)
+  - [**deployPackage(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploypackagetestlevel-runtests-usemetadataapi-waitminutes)
 
     Method to deploy data to the org using the connection package file
+
+  - [**deploy(types, testLevel, runTests, waitMinutes)**](#deploytypes-testlevel-runtests-waitminutes)
+
+    Method to deploy the selected Metadata Types to the org using Source API
 
   - [**quickDeploy(deployId, useMetadataAPI)**](#quickdeploydeployid-usemetadataapi)
 
@@ -1409,7 +1413,7 @@ This method can throw the next exceptions:
     });
 ---
 
-## [**deploy(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploytestlevel-runtests-usemetadataapi-waitminutes)
+## [**deployPackage(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploypackagetestlevel-runtests-usemetadataapi-waitminutes)
 Method to deploy data to the org using the connection package file
 
 ### **Parameters:**
@@ -1459,7 +1463,7 @@ This method can throw the next exceptions:
         'ApexTextN',
     ];
 
-    connection.deploy(testLevel, runTest, true).then((deployStatus) => {
+    connection.deployPackage(testLevel, runTest, true).then((deployStatus) => {
         console.log(deployStatus);
     }).catch((error) => {
         // Handle errors
@@ -1481,7 +1485,65 @@ This method can throw the next exceptions:
         'ApexTextN',
     ];
 
-    connection.deploy(testLevel, runTest).then((deployStatus) => {
+    connection.deployPackage(testLevel, runTest).then((deployStatus) => {
+        console.log(deployStatus);
+    }).catch((error) => {
+        // Handle errors
+    });
+---
+
+
+## [**deployPackage(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploypackagetestlevel-runtests-usemetadataapi-waitminutes)
+Method to deploy data to the org using the connection package file
+
+### **Parameters:**
+  - **types**: Metadata JSON Object with the selected elements to deploy or comma separated values String with the metadata types to deploy
+    - String | Object
+  - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+    - String
+  - **runTests**: String with comma separated test names to execute or list with the test names to execute
+    - String | Array\<String\>
+  - **waitMinutes**: Number of minutes to wait for the command to complete and display results
+    - String | Number
+
+### **Return:**
+Return a promise with the DeployStatus object with the deploy status result
+- Promise\<DeployStatus\>
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
+- **DataRequiredException**: If required data is not provided
+- **OSNotSupportedException**: When run this processes with not supported operative system
+- **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
+- **DirectoryNotFoundException**: If the project folder or package folder not exists or not have access to it
+- **InvalidDirectoryPathException**: If the project folder or package folder is not a directory
+- **WrongFormatException**: If JSON Metadata Object has incorrect format
+- **InvalidFilePathException**: If the package file is not a file
+- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+
+
+### **Examples:**
+
+**Deploy data with Source format**
+
+    const Connection = require('@ah/connector');
+
+    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    
+    const types = 'CustomLabel:LabelName1, Profile:ProfileName1';
+    const testLevel = 'RunSpecifiedTests';
+    const runTest = [
+        'ApexTest1',
+        'ApexTest2',
+        'ApexText3',
+        ...,
+        ...,
+        'ApexTextN',
+    ];
+
+    connection.deploy(types, testLevel, runTest).then((deployStatus) => {
         console.log(deployStatus);
     }).catch((error) => {
         // Handle errors
