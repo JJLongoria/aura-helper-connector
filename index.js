@@ -171,10 +171,10 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onPrepare(callback){
+    onPrepare(callback) {
         this._event.on(EVENT.PREPARE, callback);
         return this;
-    } 
+    }
 
     /**
      * Method to handle the event before the create a project on some processes 
@@ -182,10 +182,10 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCreateProject(callback){
+    onCreateProject(callback) {
         this._event.on(EVENT.CREATE_PROJECT, callback);
         return this;
-    } 
+    }
 
     /**
      * Method to handle the event before start retrieve data on some processes
@@ -193,10 +193,10 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onRetrieve(callback){
+    onRetrieve(callback) {
         this._event.on(EVENT.RETRIEVE, callback);
         return this;
-    } 
+    }
 
     /**
      * Method to handle the event before start processing results on some processes
@@ -204,7 +204,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onProcess(callback){
+    onProcess(callback) {
         this._event.on(EVENT.PROCESS, callback);
         return this;
     }
@@ -215,7 +215,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onLoadingLocal(callback){
+    onLoadingLocal(callback) {
         this._event.on(EVENT.LOADING_LOCAL, callback);
         return this;
     }
@@ -226,7 +226,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onLoadingOrg(callback){
+    onLoadingOrg(callback) {
         this._event.on(EVENT.LOADING_ORG, callback);
         return this;
     }
@@ -237,7 +237,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCopyData(callback){
+    onCopyData(callback) {
         this._event.on(EVENT.COPY_DATA, callback);
         return this;
     }
@@ -248,7 +248,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCopyFile(callback){
+    onCopyFile(callback) {
         this._event.on(EVENT.COPY_FILE, callback);
         return this;
     }
@@ -259,7 +259,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCompressFile(callback){
+    onCompressFile(callback) {
         this._event.on(EVENT.COMPRESS_FILE, callback);
         return this;
     }
@@ -270,7 +270,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onBeforeDownloadType(callback){
+    onBeforeDownloadType(callback) {
         this._event.on(EVENT.BEFORE_DOWNLOAD_TYPE, callback);
         return this;
     }
@@ -281,7 +281,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onAfterDownloadType(callback){
+    onAfterDownloadType(callback) {
         this._event.on(EVENT.AFTER_DOWNLOAD_TYPE, callback);
         return this;
     }
@@ -292,7 +292,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-     onBeforeDownloadSObject(callback){
+    onBeforeDownloadSObject(callback) {
         this._event.on(EVENT.BEFORE_DOWNLOAD_OBJECT, callback);
         return this;
     }
@@ -303,7 +303,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onAfterDownloadSObject(callback){
+    onAfterDownloadSObject(callback) {
         this._event.on(EVENT.AFTER_DOWNLOAD_OBJECT, callback);
         return this;
     }
@@ -802,7 +802,7 @@ class Connection {
     /**
      * Method to deploy data to the org using the connection package file
      * @param {String} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-     * @param {(String | Array<String>)} [runTests] String with comma separated test names to execute or list with the test names to execute
+     * @param {String | Array<String>} [runTests] String with comma separated test names to execute or list with the test names to execute
      * @param {Boolean} [useMetadataAPI] True to Deploy data using Metadata API Format, false to use Source Format
      * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
      * 
@@ -819,20 +819,69 @@ class Connection {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    deploy(testLevel, runTests, useMetadataAPI, waitMinutes) {
+    deployPackage(testLevel, runTests, useMetadataAPI, waitMinutes) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
+                if (runTests)
+                    runTests = Utils.forceArray(runTests);
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
                     const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    process = ProcessFactory.mdapiDeployPackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    process = ProcessFactory.mdapiDeployPackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (runTests) ? runTests.join(',') : undefined, this.apiVersion, waitMinutes);
                 } else {
                     const packageFile = Validator.validateFilePath(this.packageFile);
-                    process = ProcessFactory.sourceDeployPackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    process = ProcessFactory.sourceDeployPackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, (runTests) ? runTests.join(',') : undefined, this.apiVersion, waitMinutes);
                 }
+                addProcess(this, process);
+                ProcessHandler.runProcess(process).then((response) => {
+                    handleResponse(response, () => {
+                        const status = (response !== undefined) ? new DeployStatus(response.result) : undefined;
+                        endOperation(this);
+                        resolve(status);
+                    });
+                }).catch((error) => {
+                    endOperation(this);
+                    reject(error);
+                });
+            } catch (error) {
+                endOperation(this);
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Method to deploy the selected Metadata Types to the org using Source API
+     * @param {String | Object} types Metadata JSON Object with the selected elements to deploy or comma separated values String with the metadata types to deploy
+     * @param {String} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {String | Array<String>} [runTests] String with comma separated test names to execute or list with the test names to execute
+     * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
+     * 
+     * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
+     * @throws {DataRequiredException} If required data is not provided
+     * @throws {OSNotSupportedException} When run this processes with not supported operative system
+     * @throws {WrongDirectoryPathException} If the project folder or package folder is not a String or can't convert to absolute path
+     * @throws {DirectoryNotFoundException} If the project folder or package folder not exists or not have access to it
+     * @throws {InvalidDirectoryPathException} If the project folder or package folder is not a directory
+     * @throws {WrongFormatException} If JSON Metadata Object has incorrect format
+     * @throws {InvalidFilePathException} If the package file is not a file
+     * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
+     */
+    deploy(types, testLevel, runTests, waitMinutes) {
+        startOperation(this);
+        resetProgress(this);
+        return new Promise((resolve, reject) => {
+            try {
+                if (runTests)
+                    runTests = Utils.forceArray(runTests);
+                let process;
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
+                process = ProcessFactory.sourceDeploy(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (runTests) ? runTests.join(',') : undefined, this.apiVersion, waitMinutes);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     handleResponse(response, () => {
@@ -1646,6 +1695,36 @@ class Connection {
 }
 module.exports = Connection;
 
+function transformMetadataTypesIntoCSV(types) {
+    if (Utils.isObject(types)) {
+        const result = [];
+        types = Validator.validateMetadataJSON(types);
+        for (const metadataTypeKey of Object.keys(types)) {
+            const metadataType = types[metadataTypeKey];
+            if (MetadataUtils.haveChilds(metadataType)) {
+                for (const metadataObjectKey of Object.keys(metadataType.childs)) {
+                    const metadataObject = metadataType.childs[metadataObjectKey];
+                    if (MetadataUtils.haveChilds(metadataObject)) {
+                        for (const metadataItemKey of Object.keys(metadataObject.childs)) {
+                            const metadataItem = metadataObject.childs[metadataItemKey];
+                            if(metadataItem.checked){
+                                result.push(metadataTypeKey + ':' + metadataObjectKey + '.' + metadataItemKey);
+                            }
+                        }
+                    } else if (metadataObject.checked) {
+                        result.push(metadataTypeKey + ':' + metadataObjectKey);
+                    }
+                }
+            } else if (metadataType.checked) {
+                result.push(metadataTypeKey);
+            }
+        }
+        return result.join(',');
+    } else {
+        return types;
+    }
+}
+
 function waitForFiles(folder) {
     return new Promise(async (resolve) => {
         let files = await FileReader.getAllFiles(folder);
@@ -1771,7 +1850,7 @@ function handleResponse(response, onSuccess) {
 }
 
 function callEvent(connection, stage, entityName, entityType, entityItem, data) {
-    connection._event.emit(stage ,new ProgressStatus(connection._increment, connection._percentage, entityName, entityType, entityItem, data));
+    connection._event.emit(stage, new ProgressStatus(connection._increment, connection._percentage, entityName, entityType, entityItem, data));
 }
 
 function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType) {
