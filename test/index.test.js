@@ -1,7 +1,7 @@
 const Connection = require('../index');
-const { FileWriter, FileReader, FileChecker } = require('@ah/core').FileSystem;
-const { MetadataType, MetadataObject, MetadataItem } = require('@ah/core').Types;
-const { MetadataTypes } = require('@ah/core').Values;
+const { FileWriter, FileReader, FileChecker } = require('@aurahelper/core').FileSystem;
+const { MetadataType, MetadataObject, MetadataItem } = require('@aurahelper/core').Types;
+const { MetadataTypes } = require('@aurahelper/core').Values;
 
 describe('Testing index.js', () => {
     test('Testing query()', async (done) => {

@@ -1,14 +1,14 @@
 const EventEmitter = require('events').EventEmitter;
-const { ProcessHandler, ProcessFactory } = require('@ah/core').ProcessManager;
-const { RetrieveStatus, DeployStatus, RetrieveResult, SFDXProjectResult, BulkStatus, AuthOrg, MetadataType, MetadataObject, ProgressStatus } = require('@ah/core').Types;
-const { OSUtils, Utils, MathUtils, StrUtils, Validator, MetadataUtils, ProjectUtils } = require('@ah/core').CoreUtils;
-const { MetadataTypes, NotIncludedMetadata, SpecialMetadata, ProgressStages } = require('@ah/core').Values;
-const { FileChecker, FileReader, FileWriter, PathUtils } = require('@ah/core').FileSystem;
-const { OperationNotAllowedException, ConnectionException } = require('@ah/core').Exceptions;
-const TypesFactory = require('@ah/metadata-factory');
-const PackageGenerator = require('@ah/package-generator');
-const XMLCompressor = require('@ah/xml-compressor');
-const { XMLParser, XMLUtils } = require('@ah/languages').XML;
+const { ProcessHandler, ProcessFactory } = require('@aurahelper/core').ProcessManager;
+const { RetrieveStatus, DeployStatus, RetrieveResult, SFDXProjectResult, BulkStatus, AuthOrg, MetadataType, MetadataObject, ProgressStatus } = require('@aurahelper/core').Types;
+const { OSUtils, Utils, MathUtils, StrUtils, Validator, MetadataUtils, ProjectUtils } = require('@aurahelper/core').CoreUtils;
+const { MetadataTypes, NotIncludedMetadata, SpecialMetadata, ProgressStages } = require('@aurahelper/core').Values;
+const { FileChecker, FileReader, FileWriter, PathUtils } = require('@aurahelper/core').FileSystem;
+const { OperationNotAllowedException, ConnectionException } = require('@aurahelper/core').Exceptions;
+const TypesFactory = require('@aurahelper/metadata-factory');
+const PackageGenerator = require('@aurahelper/package-generator');
+const XMLCompressor = require('@aurahelper/xml-compressor');
+const { XMLParser, XMLUtils } = require('@aurahelper/languages').XML;
 
 const PROJECT_NAME = 'TempProject';
 

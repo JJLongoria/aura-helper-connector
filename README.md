@@ -299,7 +299,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection username or alias**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -320,7 +320,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection api version**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -344,7 +344,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection project folder**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -368,7 +368,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection package folder (manifest folder)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -392,7 +392,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection package file (package.xml)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -415,7 +415,7 @@ Returns the connection object
 
 ### **Examples:**
 **Set Connection namespace prefix**
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -435,7 +435,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection to user multiple threads and cores**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -455,7 +455,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection to user single thread and core**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -479,7 +479,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on prepare stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -503,7 +503,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on create project stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -527,7 +527,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on retrieve stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -551,7 +551,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on process stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -575,7 +575,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on loading local stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -599,7 +599,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on loading org stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -623,7 +623,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on copy data stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -647,7 +647,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on copy file stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -675,7 +675,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on compress file stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -703,7 +703,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on before download type stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -728,7 +728,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on after download type stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -754,7 +754,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on before download sobject stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -779,7 +779,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on after download sobject stage**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -805,7 +805,7 @@ Returns the connection object
 ### **Examples:**
 **Set connection abort callback**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -825,7 +825,7 @@ Method to abort all connection running processes. When finishes call onAbort() c
 ### **Examples:**
 **Abort connection and handle on abort callback**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -852,7 +852,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get auth username to the connection**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -883,7 +883,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get server instance to the connected org**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
     
@@ -897,7 +897,7 @@ This method can throw the next exceptions:
 
 **Get server instance to another**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
@@ -924,7 +924,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get all auth org on the system**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 50);
 
@@ -965,7 +965,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Query data and handle results**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 50);
 
@@ -1001,7 +1001,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get all available Metadata types to API 45**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 45);
 
@@ -1019,7 +1019,7 @@ This method can throw the next exceptions:
 
 **Get all available Metadata types to API 51**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1062,7 +1062,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Describe all Metadata types from the connected org and org namespace**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1078,7 +1078,7 @@ This method can throw the next exceptions:
     
 **Describe all Metadata types from the connected org and all namespaces**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1094,7 +1094,7 @@ This method can throw the next exceptions:
 
 **Describe some Metadata types from the connected**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1136,7 +1136,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **List all SObjects**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1151,7 +1151,7 @@ This method can throw the next exceptions:
 
 **List custom SObjects**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1166,7 +1166,7 @@ This method can throw the next exceptions:
 
 **List standard SObjects**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1203,7 +1203,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Describe some SObjects**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1225,7 +1225,7 @@ This method can throw the next exceptions:
 
 **Describe all SObjects**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1271,7 +1271,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve data using Metadata API Format (With package.xml file on project)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1284,7 +1284,7 @@ This method can throw the next exceptions:
 
 **Retrieve data using Source Format (With package.xml file on project)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1321,7 +1321,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get a retrieve report status**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1370,7 +1370,7 @@ This method can throw the next exceptions:
 
 **Validate deployment with Metadata API format (With package.xml file on project)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1392,7 +1392,7 @@ This method can throw the next exceptions:
 
 **Validate deployment with Source format (With package.xml file on project)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1449,7 +1449,7 @@ This method can throw the next exceptions:
 
 **Deploy data with Metadata API format (With package.xml file on project)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1471,7 +1471,7 @@ This method can throw the next exceptions:
 
 **Deploy data with Source format (With package.xml file on project)**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1528,7 +1528,7 @@ This method can throw the next exceptions:
 
 **Deploy data with Source format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1578,7 +1578,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute quick deploy to Validated deploy with Metadata API format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1592,7 +1592,7 @@ This method can throw the next exceptions:
 
 **Execute quick deploy to Validated deploy with Source format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1630,7 +1630,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute deploy report to active deploy with Metadata API format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1644,7 +1644,7 @@ This method can throw the next exceptions:
 
 **Execute deploy report to active deploy with Source format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1682,7 +1682,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Cancel deploy to active deploy with Metadata API format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1696,7 +1696,7 @@ This method can throw the next exceptions:
 
 **Cancel deploy to active deploy with Source format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1738,7 +1738,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Convert Metadata API Format project to Source Format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1778,7 +1778,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Convert Source Format project to Metadata API Format**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1820,7 +1820,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Create new SFDX Project with connection project folder**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1834,7 +1834,7 @@ This method can throw the next exceptions:
 
 **Create new SFDX Project on a different connection project folder**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1872,7 +1872,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Auth new org with connection username or alias**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1884,7 +1884,7 @@ This method can throw the next exceptions:
 
 **Auth new org with different connection username or alias**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1927,7 +1927,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Export Accounts data with related contacts**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1971,7 +1971,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Import file with exported records**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2026,7 +2026,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Delete data at bulk mode**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2070,7 +2070,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute an Apex Anonymous script**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2111,7 +2111,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Load User permissions from connected org**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2160,7 +2160,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all local special Metadata Types from Org**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2172,8 +2172,8 @@ This method can throw the next exceptions:
 
 **Retrieve some local special Metadata Types from Org**
 
-    const Connection = require('@ah/connector');
-    const { Types, Values } = require('@ah/core');
+    const Connection = require('@aurahelper/connector');
+    const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
     const MetadataObject = Types.MetadataObject;
@@ -2236,7 +2236,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all mixed special Metadata Types from Org**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2248,8 +2248,8 @@ This method can throw the next exceptions:
 
 **Retrieve some mixed special Metadata Types from Org**
 
-    const Connection = require('@ah/connector');
-    const { Types, Values } = require('@ah/core');
+    const Connection = require('@aurahelper/connector');
+    const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
     const MetadataObject = Types.MetadataObject;
@@ -2312,7 +2312,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all org special Metadata Types from Org**
 
-    const Connection = require('@ah/connector');
+    const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2324,8 +2324,8 @@ This method can throw the next exceptions:
 
 **Retrieve some org special Metadata Types from Org**
 
-    const Connection = require('@ah/connector');
-    const { Types, Values } = require('@ah/core');
+    const Connection = require('@aurahelper/connector');
+    const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
     const MetadataObject = Types.MetadataObject;
