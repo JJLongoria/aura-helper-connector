@@ -164,6 +164,10 @@ Constructor to create a new connection object. All parameters are optional and y
 
     Method to handle the event after download a SObject when describe SObejcts
 
+  - [**onAfterDownloadSObject(callback)**](#onafterdownloadsobjectcallback)
+  
+    Method to handle the event after download a SObject when describe SObejcts
+
   - [**onAbort(callback)**](#onabortcallback)
     
     Method to handle the event when connection is aborted
@@ -787,6 +791,31 @@ Returns the connection object
       console.log('Handling progress describe sobjects');
       console.log('SObject => ' + status.entityObject);
       console.log('Downloaded Data => ' + status.data);
+    }));
+---
+
+## [**onErrorDownload(callback)**](#onerrordownloadcallback)
+Method to handle the event when error ocurred when download metadata
+
+### **Parameters:**
+  - **callback**: Callback function to handle error
+    - Function
+
+### **Return:**
+Returns the connection object
+- Connection
+
+### **Examples:**
+**Handling progress on error download stage**
+
+    const Connection = require('@aurahelper/connector');
+
+    const connection = new Connection();
+
+    connection.onErrorDownload((status) => {
+      console.log('Handling progress describe sobjects');
+      console.log('Metadata or SObject => ' + status.entityObject);
+      console.log('message' + status.data);
     }));
 
 ---

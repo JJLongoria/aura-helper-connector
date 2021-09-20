@@ -36,6 +36,7 @@ const EVENT = {
     AFTER_DOWNLOAD_TYPE: 'afterDownloadType',
     BEFORE_DOWNLOAD_OBJECT: 'beforeDownloadSObj',
     AFTER_DOWNLOAD_OBJECT: 'afterDownloadSObj',
+    DOWNLOAD_ERROR: 'onDownloadError',
     ABORT: 'abort',
 };
 
@@ -309,6 +310,17 @@ class Connection {
     }
 
     /**
+     * Method to handle the event when error ocurred when download metadata
+     * @param {Function} callback Callback function to handle error
+     * 
+     * @returns {Connection} Returns the connection object
+     */
+    onErrorDownload(callback) {
+        this._event.on(EVENT.DOWNLOAD_ERROR, callback);
+        return this;
+    }
+
+    /**
      * Method to handle the event when connection is aborted
      * @param {Function} callback Callback function to call when connection is aborted
      * 
@@ -557,6 +569,7 @@ class Connection {
                         this._allowConcurrence = false;
                         endOperation(this);
                         reject(error);
+                        return;
                     });
                 }
             } catch (error) {
@@ -1707,7 +1720,7 @@ function transformMetadataTypesIntoCSV(types) {
                     if (MetadataUtils.haveChilds(metadataObject)) {
                         for (const metadataItemKey of Object.keys(metadataObject.childs)) {
                             const metadataItem = metadataObject.childs[metadataItemKey];
-                            if(metadataItem.checked){
+                            if (metadataItem.checked) {
                                 result.push(metadataTypeKey + ':' + metadataObjectKey + '.' + metadataItemKey);
                             }
                         }
@@ -1894,8 +1907,9 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         });
                     }
                 } catch (error) {
-                    if (error.message.indexOf('INVALID_TYPE') === -1)
-                        throw error;
+                    callEvent(connection, EVENT.DOWNLOAD_ERROR, metadataTypeName, undefined, undefined, error.message);
+                    /*if (error.message.indexOf('INVALID_TYPE') === -1)
+                        throw error;*/
                 }
             }
             resolve(metadata);
@@ -1910,22 +1924,26 @@ function downloadSObjectsData(connection, sObjects) {
         try {
             const sObjectsResult = {};
             for (const sObject of sObjects) {
-                if (connection._abort) {
-                    endOperation(connection);
-                    resolve(sObjectsResult);
-                    return;
+                try {
+                    if (connection._abort) {
+                        endOperation(connection);
+                        resolve(sObjectsResult);
+                        return;
+                    }
+                    callEvent(connection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
+                    const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
+                    addProcess(connection, process);
+                    const response = await ProcessHandler.runProcess(process);
+                    handleResponse(response, () => {
+                        const sObjectResult = TypesFactory.createSObjectFromJSONSchema(response);
+                        connection._percentage += connection._increment;
+                        if (sObjectResult !== undefined)
+                            sObjectsResult[sObject] = sObjectResult;
+                        callEvent(connection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
+                    });
+                } catch (error) {
+                    callEvent(connection, EVENT.DOWNLOAD_ERROR, sObject, undefined, undefined, error.message);
                 }
-                callEvent(connection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
-                const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
-                addProcess(connection, process);
-                const response = await ProcessHandler.runProcess(process);
-                handleResponse(response, () => {
-                    const sObjectResult = TypesFactory.createSObjectFromJSONSchema(response);
-                    connection._percentage += connection._increment;
-                    if (sObjectResult !== undefined)
-                        sObjectsResult[sObject] = sObjectResult;
-                    callEvent(connection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
-                });
             }
             resolve(sObjectsResult);
         } catch (error) {
