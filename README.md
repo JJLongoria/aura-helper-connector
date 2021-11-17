@@ -196,7 +196,7 @@ Constructor to create a new connection object. All parameters are optional and y
     
     Method to list all Metadata Types available in the connected org (according selected API Version)
 
-  - [**describeMetadataTypes(typesOrDetails, downloadAll)**](#describemetadatatypestypesordetails-downloadall)
+  - [**describeMetadataTypes(typesOrDetails, downloadAll)**](#describemetadatatypestypesordetails-downloadall-groupglobalactions)
    
     Method to describe all or selected Metadata Types from the connected org
 
@@ -1065,7 +1065,7 @@ This method can throw the next exceptions:
         // Handle errors
     });  
 
-## [**describeMetadataTypes(typesOrDetails, downloadAll)**](#describemetadatatypestypesordetails-downloadall)
+## [**describeMetadataTypes(typesOrDetails, downloadAll, groupGlobalActions)**](#describemetadatatypestypesordetails-downloadall-groupglobalactions)
 Method to describe all or selected Metadata Types from the connected org. See [Metadata JSON Format](#metadata-file) section to understand the JSON Metadata Format
 
 ### **Parameters:**
@@ -1073,8 +1073,8 @@ Method to describe all or selected Metadata Types from the connected org. See [M
     - Arra\<String\> | Array\<MetadataDetail\>
   - **downloadAll**: true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
     - Boolean
-  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
-    - Function
+  - **groupGlobalActions**: True to group global quick actions on "GlobalActions" group, false to include as object and item
+    - Boolean
 
 ### **Return:**
 Return a promise with Metadata JSON Object with the selected Metadata Types to describe 
@@ -1215,8 +1215,6 @@ Method to describe SObject data to the specified objects
 ### **Parameters:**
   - **sObjects**: List with the object API Names to describe 
     - Array\<String\>
-  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback 
-    - Function
 
 ### **Return:**
 Return a promise with a SObjects data
@@ -2118,8 +2116,6 @@ Method to get all available user permissions from the connected org
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
     - String
-  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
-    - Function
 
 ### **Return:**
 Return a promise with the list of user permissions
@@ -2163,8 +2159,6 @@ Method to get all available user permissions from the connected org
     - Boolean
   - **sortOrder**: Compress sort order when compress files
     - String
-  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
-    - Function
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
@@ -2239,8 +2233,6 @@ Method to Retrieve mixed special types from the connected org. Mixed means that 
     - Boolean
   - **sortOrder**: Compress sort order when compress files
     - String
-  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
-    - Function
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
@@ -2315,8 +2307,6 @@ Method to Retrieve org special types from the connected org. Org means that affe
     - Boolean
   - **sortOrder**: Compress sort order when compress files
     - String
-  - **callback**: Optional callback function parameter to handle download progress. If provide function progress callback, it will be execute instead connection progress callback
-    - Function
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result

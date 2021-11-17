@@ -525,6 +525,7 @@ class Connection {
      * Method to describe all or selected Metadata Types from the connected org
      * @param {(Arra<String> | Array<MetadataDetail>)} [typesOrDetails] List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
      * @param {Boolean} [downloadAll] true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
+     * @param {Boolean} [groupGlobalActions] True to group global quick actions on "GlobalActions" group, false to include as object and item.
      * 
      * @returns {Promise<Object>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
      * 
@@ -532,7 +533,7 @@ class Connection {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    describeMetadataTypes(typesOrDetails, downloadAll) {
+    describeMetadataTypes(typesOrDetails, downloadAll, groupGlobalActions) {
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
@@ -548,7 +549,7 @@ class Connection {
                 let metadata = {};
                 const batchesToProcess = getBatches(this, metadataToProcess);
                 for (const batch of batchesToProcess) {
-                    downloadMetadata(this, batch.records, downloadAll, foldersByType).then((downloadedMetadata) => {
+                    downloadMetadata(this, batch.records, downloadAll, foldersByType, groupGlobalActions).then((downloadedMetadata) => {
                         Object.keys(downloadedMetadata).forEach(function (key) {
                             metadata[key] = downloadedMetadata[key];
                         });
@@ -1866,7 +1867,7 @@ function callEvent(connection, stage, entityName, entityType, entityItem, data) 
     connection._event.emit(stage, new ProgressStatus(connection._increment, connection._percentage, entityName, entityType, entityItem, data));
 }
 
-function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType) {
+function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType, groupGlobalActions) {
     return new Promise(async (resolve, reject) => {
         try {
             const metadata = {};
@@ -1899,7 +1900,7 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                         addProcess(connection, process);
                         const response = await ProcessHandler.runProcess(process);
                         handleResponse(response, () => {
-                            const metadataType = TypesFactory.createMetedataTypeFromResponse(metadataTypeName, response, connection.namespacePrefix, downloadAll);
+                            const metadataType = TypesFactory.createMetedataTypeFromResponse(metadataTypeName, response, connection.namespacePrefix, downloadAll, groupGlobalActions);
                             connection._percentage += connection._increment;
                             if (metadataType !== undefined && metadataType.haveChilds())
                                 metadata[metadataTypeName] = metadataType;
