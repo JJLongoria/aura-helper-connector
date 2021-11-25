@@ -41,31 +41,31 @@ The fields that start with _ are for internal use only (Does not modify this fie
 
 ### [**usernameOrAlias**](#connection-class-fields-usernameoralias)
 Username or Alias to connect with the org. The org bust be authorized in the system. 
-- String
+- `String`
 
 ### [**apiVersion**](#connection-class-fields-apiversion)
 Number API Version to connect with the org.
-- String | Number
+- `String` | `Number`
 
 ### [**projectFolder**](#connection-class-fields-projectfolder)
 Path to the local project folder
-- String
+- `String`
 
 ### [**namespacePrefix**](#connection-class-fields-namespaceprefix)
 Namespace prefix from the Org to connect
-- String
+- `String`
 
 ### [**multiThread**](#connection-class-fields-multithread)
 True to able to the connection object to use several threads and processor cores to run some processes and run faster, false to use only one thread and core.
-- Boolean
+- `Boolean`
 
 ### [**packageFolder**](#connection-class-fields-packageFolder)
 Project package folder path (manifest folder). Must be a child of Project folder
-- String
+- `String`
 
 ### [**packageFile**](#connection-class-fields-packageFile)
 Project package file path (package.xml file). Must be a child of Package folder
-- String
+- `String`
   
 </br>
 
@@ -77,13 +77,13 @@ Constructor to create a new connection object. All parameters are optional and y
 
 ### **Parameters:**
   - **usernameOrAlias**: Org Username or Alias to connect. (Must be authorized in the system)
-    - String
+    - `String`
   - **apiVersion**: API Version number to connect with salesforce
-    - String | Number
+    - `String` | `Number`
   - **projectFolder**: Path to the project root folder
-    - String
+    - `String`
   - **namespacePrefix**: Namespace prefix from the Org to connect
-    - String
+    - `String`
 
 </br>
 
@@ -303,20 +303,21 @@ Method to set the Username or Alias to connect with org
 
 ### **Parameters:**
   - **usernameOrAlias**: Org Username or Alias to connect. (Must be authorized in the system)
-    - String
+    - `String`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection username or alias**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
 
     connection.setUsernameOrAlias('MyOrg'); 
+```
 ---
 
 ## [**setApiVersion(apiVersion)**](#setapiversionapiversion)
@@ -324,15 +325,15 @@ Method to set the API Version to connect
 
 ### **Parameters:**
   - **apiVersion**: API Version number to connect with salesforce
-    - String | Number
+    - `String` | `Number`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection api version**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -341,6 +342,7 @@ Returns the connection object
 
     // Or can concatenate method calls because setters return a connection object
     connection.setUsernameOrAlias('MyOrg').setApiVersion(50); 
+```
 ---
 
 ## [**setProjectFolder(projectFolder)**](#setprojectfolderprojectfolder)
@@ -348,15 +350,15 @@ Method to set the project root folder path. When set the project root, automatic
 
 ### **Parameters:**
   - **projectFolder**: Path to the project root folder
-    - String
+    - `String`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection project folder**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -365,6 +367,7 @@ Returns the connection object
 
     // Or can concatenate method calls because setters return a connection object
     connection.setUsernameOrAlias('MyOrg').setProjectFolder('project/root/path'); 
+```
 ---
 
 ## [**setPackageFolder(packageFolder)**](#setpackagefolderpackagefolder)
@@ -372,15 +375,15 @@ Method to set the package folder path. When set the package folder, automaticall
 
 ### **Parameters:**
   - **packageFolder**: Path to the package folder
-    - String
+    - `String`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection package folder (manifest folder)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -389,6 +392,7 @@ Returns the connection object
 
     // Or can concatenate method calls because setters return a connection object
     connection.setUsernameOrAlias('MyOrg').setPackageFolder('project/root/path/manifest'); 
+```
 ---
 
 ## [**setPackageFile(packageFile)**](#setpackagefilepackagefile)
@@ -396,15 +400,15 @@ Method to set the package xml file path
 
 ### **Parameters:**
   - **packageFile**: Path to the package folder
-    - String
+    - `String`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection package file (package.xml)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -413,6 +417,7 @@ Returns the connection object
 
     // Or can concatenate method calls because setters return a connection object
     connection.setUsernameOrAlias('MyOrg').setPackageFile('project/root/path/manifest/package.xml'); 
+```
 ---
 
 ## [**setNamespacePrefix(namespacePrefix)**](#setnamespaceprefixnamespaceprefix)
@@ -420,14 +425,15 @@ Method to set the package xml file path
 
 ### **Parameters:**
   - **namespacePrefix**: Namespace prefix from the Org to connect
-    - String
+    - `String`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection namespace prefix**
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -436,6 +442,7 @@ Returns the connection object
 
     // Or can concatenate method calls because setters return a connection object
     connection.setUsernameOrAlias('MyOrg').setNamespacePrefix('orgPrefix'); 
+```
 ---
 
 ## [**setMultiThread()**](#setmultithread)
@@ -443,11 +450,11 @@ Method to able to the connection object to use several threads and processor cor
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection to user multiple threads and cores**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -456,6 +463,7 @@ Returns the connection object
 
     // Or can concatenate method calls because setters return a connection object
     connection.setUsernameOrAlias('MyOrg').setMultiThread(); 
+```
 ---
 
 ## [**setSingleThread()**](#setsinglethread)
@@ -463,11 +471,11 @@ Method to set the connection object to use only one thread and processo core to 
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set Connection to user single thread and core**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -476,6 +484,7 @@ Returns the connection object
 
     // Or can concatenate method calls because setters return a connection object
     connection.setUsernameOrAlias('MyOrg').setSingleThread(); 
+```
 ---
 
 ## [**onPrepare(callback)**](#onpreparecallback)
@@ -483,15 +492,15 @@ Method to handle the event when preparing execution of some processes
 
 ### **Parameters:**
   - **callback**: Callback function to call when connection is on prepare
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on prepare stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -499,7 +508,7 @@ Returns the connection object
     connection.onPrepare(() => {
       console.log('Handling progress on prepare');
     }));
-
+```
 ---
 
 ## [**onCreateProject(callback)**](#oncreateprojectcallback)
@@ -507,15 +516,15 @@ Method to handle the event before the create a project on some processes
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when connection will create a project
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on create project stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -523,7 +532,7 @@ Returns the connection object
     connection.onCreateProject(() => {
       console.log('Handling progress on create project');
     }));
-
+```
 ---
 
 ## [**onRetrieve(callback)**](#onretrievecallback)
@@ -531,15 +540,15 @@ Method to handle the event before start retrieve data on some processes
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when connection retrieve data
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on retrieve stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -547,7 +556,7 @@ Returns the connection object
     connection.onRetrieve(() => {
       console.log('Handling progress on create project');
     }));
-
+```
 ---
 
 ## [**onProcess(callback)**](#onprocesscallback)
@@ -555,15 +564,15 @@ Method to handle the event before start processing results on some processes
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when connection is processing results
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on process stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -571,7 +580,7 @@ Returns the connection object
     connection.onProcess(() => {
       console.log('Handling progress when process');
     }));
-
+```
 ---
 
 ## [**onLoadingLocal(callback)**](#onloadinglocalcallback)
@@ -579,15 +588,15 @@ Method to handle the event before start loading local metadata types on some pro
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when connection load metadata types from local project
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on loading local stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -595,7 +604,7 @@ Returns the connection object
     connection.onLoadingLocal(() => {
       console.log('Handling progress on loading local data');
     }));
-
+```
 ---
 
 ## [**onLoadingOrg(callback)**](#onloadingorgcallback)
@@ -603,15 +612,15 @@ Method to handle the event before start loading metadata types from org on some 
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when connection load metadata types from connected org
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on loading org stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -619,7 +628,7 @@ Returns the connection object
     connection.onLoadingOrg(() => {
       console.log('Handling progress on create project');
     }));
-
+```
 ---
 
 ## [**onCopyData(callback)**](#oncopydatacallback)
@@ -627,15 +636,15 @@ Method to handle the event before start copying files on some processes
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when connection start to copying files
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on copy data stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -643,7 +652,7 @@ Returns the connection object
     connection.onCopyData(() => {
       console.log('Handling progress when copy data');
     }));
-
+```
 ---
 
 ## [**onCopyFile(callback)**](#oncopyfilecallback)
@@ -651,15 +660,15 @@ Method to handle the event before start copying file content on some processes
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when connection star to copy a single file
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on copy file stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -671,7 +680,7 @@ Returns the connection object
       console.log('MetadataItem => ' + status.entityItem);
       console.log('file => ' + status.data);
     }));
-
+```
 ---
 
 ## [**onCompressFile(callback)**](#oncompressfilecallback)
@@ -679,15 +688,15 @@ Method to handle the event before start compress XML File on some processes
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when start compress
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on compress file stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -699,7 +708,7 @@ Returns the connection object
       console.log('MetadataItem => ' + status.entityItem);
       console.log('file => ' + status.data);
     }));
-
+```
 ---
 
 ## [**onBeforeDownloadType(callback)**](#onbeforedownloadtypecallback)
@@ -707,15 +716,15 @@ Method to handle the event before download a Metadata Type from Org on some proc
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when start download metadata type
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on before download type stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -724,7 +733,7 @@ Returns the connection object
       console.log('Handling progress when describe metadata types');
       console.log('MetadataType => ' + status.entityType);
     }));
-
+```
 ---
 
 ## [**onAfterDownloadType(callback)**](#onafterdownloadtypecallback)
@@ -732,15 +741,15 @@ Method to handle the event after download a Metadata Type from Org on some proce
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when metadata type is downloaded
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on after download type stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -750,7 +759,7 @@ Returns the connection object
       console.log('MetadataType => ' + status.entityType);
       console.log('Downloaded Data => ' + status.data);
     }));
-
+```
 ---
 
 ## [**onBeforeDownloadSObject(callback)**](#onbeforedownloadsobjectcallback)
@@ -758,15 +767,15 @@ Method to handle the event before download a SObject when describe SObejcts
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when start download sobject
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on before download sobject stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -775,7 +784,7 @@ Returns the connection object
       console.log('Handling progress describe sobjects');
       console.log('SObject => ' + status.entityObject);
     }));
-
+```
 ---
 
 ## [**onAfterDownloadSObject(callback)**](#onafterdownloadsobjectcallback)
@@ -783,15 +792,15 @@ Method to handle the event after download a SObject when describe SObejcts
 
 ### **Parameters:**
   - **callback**: Callback function to handle progress when sobject is downloaded
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on after download sobject stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -801,6 +810,7 @@ Returns the connection object
       console.log('SObject => ' + status.entityObject);
       console.log('Downloaded Data => ' + status.data);
     }));
+```
 ---
 
 ## [**onErrorDownload(callback)**](#onerrordownloadcallback)
@@ -808,15 +818,15 @@ Method to handle the event when error ocurred when download metadata
 
 ### **Parameters:**
   - **callback**: Callback function to handle error
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Handling progress on error download stage**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -826,7 +836,7 @@ Returns the connection object
       console.log('Metadata or SObject => ' + status.entityObject);
       console.log('message' + status.data);
     }));
-
+```
 ---
 
 ## [**onAbort(callback)**](#onabortabortcallback)
@@ -834,15 +844,15 @@ Method to handle the event when connection is aborted
 
 ### **Parameters:**
   - **callback**: Callback function to call when connectin is aborted
-    - Function
+    - `Function`
 
 ### **Return:**
 Returns the connection object
-- Connection
+- `Connection`
 
 ### **Examples:**
 **Set connection abort callback**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -855,6 +865,7 @@ Returns the connection object
     connection.setUsernameOrAlias('MyOrg').onAbort(() => {
 
     })); 
+```
 ---
 
 ## [**abortConnection()**](#abortconnection)
@@ -862,7 +873,7 @@ Method to abort all connection running processes. When finishes call onAbort() c
 
 ### **Examples:**
 **Abort connection and handle on abort callback**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -872,7 +883,7 @@ Method to abort all connection running processes. When finishes call onAbort() c
     }));
 
     connection.abortConnection(); 
-
+```
 ---
 
 ## [**getAuthUsername()**](#getauthusername)
@@ -880,16 +891,16 @@ Method to get the Auth Username from the org (If not found username, return the 
 
 ### **Return:**
 Return a String promise with the Username or Alias data
-- Promise\<String\>
+- `Promise<String>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
 
 ### **Examples:**
 **Get auth username to the connection**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -899,7 +910,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     }); 
-
+```
 ---
 
 ## [**getServerInstance(usernameOrAlias)**](#getserverinstanceusernameoralias)
@@ -907,20 +918,20 @@ Method to get the server instance for an username or alias (or the connection us
 
 ### **Parameters:**
   - **usernameOrAlias**: Username or alias to check. (If not provided, use usernameOrAlias from connection object)
-    - String
+    - `String`
 
 ### **Return:**
 Return a String promise with the instance URL
-- Promise\<String\>
+- `Promise<String>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
 
 ### **Examples:**
 **Get server instance to the connected org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -932,9 +943,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     }); 
-
+```
 **Get server instance to another**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection();
@@ -944,7 +955,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     }); 
-
+```
 ---
 
 ## [**listAuthOrgs()**](#listauthorgs)
@@ -952,16 +963,16 @@ Method to list all auth org on the system
 
 ### **Return:**
 Return a promise with all authorized org in the system 
-- Promise\<Array\<AuthOrg\>\>
+- `Promise<Array<AuthOrg>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
 
 ### **Examples:**
 **Get all auth org on the system**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 50);
@@ -978,6 +989,8 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     }); 
+
+```
 ---
 
 ## [**query(query, userToolingApi)**](#queryquery-usertoolingapi)
@@ -985,24 +998,24 @@ Method to execute a query to the connected org
 
 ### **Parameters:**
   - **query**: Query to execute (Required)
-    - String
+    - `String`
   - **useToolingApi**: true to use Tooling API to execute the query
-    - Boolean
+    - `Boolean`
 
 ### **Return:**
 Return a promise with the record list 
-- Promise\<Array\<Object\>\>
+- `Promise<Array<Object>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
 
 ### **Examples:**
 **Query data and handle results**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 50);
@@ -1018,7 +1031,8 @@ This method can throw the next exceptions:
         }
     }).catch((error) => {
         // Handle errors
-    }); 
+    });
+``` 
 ---
 
 ## [**listMetadataTypes()**](#listmetadatatypes)
@@ -1026,19 +1040,19 @@ Method to list all Metadata Types available in the connected org (according sele
 
 ### **Return:**
 Return a promise with the MetadataDetail objects from all available Metadata Types
-- Promise\<Array\<MetadataDetail\>\>
+- `Promise<Array<MetadataDetail>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 **Get all available Metadata types to API 45**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 45);
@@ -1054,9 +1068,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     }); 
-
+```
 **Get all available Metadata types to API 51**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1073,33 +1087,35 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });  
+```
+--- 
 
 ## [**describeMetadataTypes(typesOrDetails, downloadAll, groupGlobalActions)**](#describemetadatatypestypesordetails-downloadall-groupglobalactions)
 Method to describe all or selected Metadata Types from the connected org. See [Metadata JSON Format](#metadata-file) section to understand the JSON Metadata Format
 
 ### **Parameters:**
   - **typesOrDetails**: List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
-    - Arra\<String\> | Array\<MetadataDetail\>
+    - `Arra<String>` | `Array<MetadataDetail>`
   - **downloadAll**: true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
-    - Boolean
+    - `Boolean`
   - **groupGlobalActions**: True to group global quick actions on "GlobalActions" group, false to include as object and item
-    - Boolean
+    - `Boolean`
 
 ### **Return:**
 Return a promise with Metadata JSON Object with the selected Metadata Types to describe 
-- Promise\<Array\<Object\>\>
+- `Promise<Array<Object>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 **Describe all Metadata types from the connected org and org namespace**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1113,9 +1129,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     }); 
-    
+```
 **Describe all Metadata types from the connected org and all namespaces**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1129,9 +1145,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     }); 
-
+```
 **Describe some Metadata types from the connected**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1151,6 +1167,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**listSObjects(category)**](#listsobjectscategory)
@@ -1158,22 +1175,22 @@ Method to list all SObjects API Name by category
 
 ### **Parameters:**
   - **category**: Object Category. Values are: Standard, Custom, All. (All by default) 
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with a list with the sObject names 
-- Promise\<Array\<String\>\>
+- `Promise<Array<String>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
 
 ### **Examples:**
 **List all SObjects**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1186,9 +1203,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **List custom SObjects**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1201,9 +1218,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **List standard SObjects**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1216,29 +1233,29 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 ---
 ## [**describeSObjects(sObjects)**](#describesobjectssobjects)
 Method to describe SObject data to the specified objects
 
 ### **Parameters:**
   - **sObjects**: List with the object API Names to describe 
-    - Array\<String\>
+    - `Array<String>`
 
 ### **Return:**
 Return a promise with a SObjects data
-- Promise\<Array\<SObject\>\>
+- `Promise<Array<SObject>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
 
 ### **Examples:**
 **Describe some SObjects**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1258,9 +1275,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Describe all SObjects**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg');
@@ -1275,7 +1292,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 ---
 
 ## [**retrieve(useMetadataAPI, waitMinutes, targetDir)**](#retrieveusemetadataapi-waitminutes-targetdir)
@@ -1283,30 +1300,30 @@ Method to retrieve data using the connection package file. You can choose to ret
 
 ### **Parameters:**
   - **useMetadataAPI**: True to use Metadata API format, false to use source format 
-    - Boolean
+    - `Boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results 
-    - String | Number
+    - `String` | `Number`
   - **targetDir**: Path to the target dir when retrieve with Metadata API Format
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with the RetrieveResult object with the retrieve result 
-- Promise\<RetrieveResult\>
+- `Promise<RetrieveResult>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder or target dir is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder or target dir not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder or target dir is not a directory
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder or target dir is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder or target dir not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder or target dir is not a directory
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 **Retrieve data using Metadata API Format (With package.xml file on project)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1316,10 +1333,10 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 
 **Retrieve data using Source Format (With package.xml file on project)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1329,34 +1346,34 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 ---
 ## [**retrieveReport(retrieveId, targetDir)**](#retrievereportretrieveid-targetdir)
 Retrieve report when use Metadata API to retrieve data
 
 ### **Parameters:**
   - **retrieveId**: Retrieve Id to get the report (Required) 
-    - String
+    - `String`
   - **targetDir**: Path to the target dir (Required) 
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with the RetrieveStatus object with the retrieve status result
-- Promise\<RetrieveStatus\>
+- `Promise<RetrieveStatus>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the target dir is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the target dir not exists or not have access to it
-- **InvalidDirectoryPathException**: If the target dir is not a directory
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the target dir is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the target dir not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the target dir is not a directory
 
 ### **Examples:**
 **Get a retrieve report status**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1369,6 +1386,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**validateDeploy(testLevel, runTests, useMetadataAPI, waitMinutes)**](#validatedeploytestlevel-runtests-usemetadataapi-waitminutes)
@@ -1376,36 +1394,36 @@ Method to validate a deploy against the org using the connection package file
 
 ### **Parameters:**
   - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-    - String
+    - `String`
   - **runTests**: String with comma separated test names to execute or list with the test names to execute
-    - String | Array\<String\>
+    - `String` | `Array<String>`
   - **useMetadataAPI**: True to validate deploy using Metadata API Format, false to use Source Format
-    - Boolean
+    - `Boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - String | Number
+    - `String` | `Number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
-- Promise\<DeployStatus\>
+- `Promise<DeployStatus>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder or package folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder or package folder is not a directory
-- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the package file not exists or not have access to it
-- **InvalidFilePathException**: If the package file is not a file
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder or package folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder or package folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder or package folder is not a directory
+- **`WrongFilePathException`**: If the package file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the package file not exists or not have access to it
+- **`InvalidFilePathException`**: If the package file is not a file
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 ### **Examples:**
 
 **Validate deployment with Metadata API format (With package.xml file on project)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1425,9 +1443,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Validate deployment with Source format (With package.xml file on project)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1447,6 +1465,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**deployPackage(testLevel, runTests, useMetadataAPI, waitMinutes)**](#deploypackagetestlevel-runtests-usemetadataapi-waitminutes)
@@ -1454,37 +1473,37 @@ Method to deploy data to the org using the connection package file
 
 ### **Parameters:**
   - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-    - String
+    - `String`
   - **runTests**: String with comma separated test names to execute or list with the test names to execute
-    - String | Array\<String\>
+    - `String` | `Array<String>`
   - **useMetadataAPI**: True to validate deploy using Metadata API Format, false to use Source Format
-    - Boolean
+    - `Boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - String | Number
+    - `String` | `Number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
-- Promise\<DeployStatus\>
+- `Promise<DeployStatus>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder or package folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder or package folder is not a directory
-- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the package file not exists or not have access to it
-- **InvalidFilePathException**: If the package file is not a file
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder or package folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder or package folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder or package folder is not a directory
+- **`WrongFilePathException`**: If the package file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the package file not exists or not have access to it
+- **`InvalidFilePathException`**: If the package file is not a file
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 
 **Deploy data with Metadata API format (With package.xml file on project)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1504,9 +1523,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Deploy data with Source format (With package.xml file on project)**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1526,6 +1545,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 
@@ -1534,36 +1554,36 @@ Method to deploy data to the org using the connection package file
 
 ### **Parameters:**
   - **types**: Metadata JSON Object with the selected elements to deploy or comma separated values String with the metadata types to deploy
-    - String | Object
+    - `String` | `Object`
   - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-    - String
+    - `String`
   - **runTests**: String with comma separated test names to execute or list with the test names to execute
-    - String | Array\<String\>
+    - `String` | `Array<String>`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - String | Number
+    - `String` | `Number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
-- Promise\<DeployStatus\>
+- `Promise<DeployStatus>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder or package folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder or package folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder or package folder is not a directory
-- **WrongFormatException**: If JSON Metadata Object has incorrect format
-- **InvalidFilePathException**: If the package file is not a file
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder or package folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder or package folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder or package folder is not a directory
+- **`WrongFormatException`**: If JSON Metadata Object has incorrect format
+- **`InvalidFilePathException`**: If the package file is not a file
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 
 **Deploy data with Source format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1584,6 +1604,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**quickDeploy(deployId, useMetadataAPI)**](#quickdeploydeployid-usemetadataapi)
@@ -1591,29 +1612,29 @@ Method to execute a quick deploy when validation result is success
 
 ### **Parameters:**
   - **deployId**: Id to deploy the validated deployment (Required)
-    - String
+    - `String`
   - **useMetadataAPI**: True to execute quick deploy using Metadata API Format, false to use Source Format
-    - Boolean
+    - `Boolean`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
-- Promise\<DeployStatus\>
+- `Promise<DeployStatus>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder is not a directory
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder is not a directory
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Execute quick deploy to Validated deploy with Metadata API format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1625,9 +1646,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Execute quick deploy to Validated deploy with Source format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1639,6 +1660,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**deployReport(deployId, useMetadataAPI, waitMinutes)**](#deployreportdeployid-usemetadataapi-waitminutes)
@@ -1646,26 +1668,26 @@ Method to get the report of a running deployment
 
 ### **Parameters:**
   - **deployId**: Id to the deployment to get the report (Required)
-    - String
+    - `String`
   - **useMetadataAPI**: True to execute deploy report using Metadata API Format, false to use Source Format
-    - Boolean
+    - `Boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - String | Number
+    - `String` | `Number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
-- Promise\<DeployStatus\>
+- `Promise<DeployStatus>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
 
 ### **Examples:**
 **Execute deploy report to active deploy with Metadata API format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1677,9 +1699,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Execute deploy report to active deploy with Source format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1691,6 +1713,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**cancelDeploy(deployId, useMetadataAPI, waitMinutes)**](#canceldeploydeployid-usemetadataapi-waitminutes)
@@ -1698,26 +1721,26 @@ Method to get the cancel a running deployment
 
 ### **Parameters:**
   - **deployId**: Id to the deployment to cancel (Required)
-    - String
+    - `String`
   - **useMetadataAPI**: True to execute cancel deploy using Metadata API Format, false to use Source FormatSource Format
-    - Boolean
+    - `Boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - String | Number
+    - `String` | `Number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
-- Promise\<DeployStatus\>
+- `Promise<DeployStatus>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
 
 ### **Examples:**
 **Cancel deploy to active deploy with Metadata API format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1729,9 +1752,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Cancel deploy to active deploy with Source format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1743,6 +1766,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**convertProjectToSFDX(targetDir)**](#convertprojecttosfdxtargetdir)
@@ -1750,30 +1774,30 @@ Method to convert a Metadata API format Project to a Source format
 
 ### **Parameters:**
   - **targetDir**: Path to the target dir to save the converted project (Required)
-    - String
+    - `String`
 
 ### **Return:**
 Return an empty promise when conversion finish
-- Promise\<Any\>
+- `Promise<Any>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the package folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the package folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the package folder is not a directory
-- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the package file not exists or not have access to it
-- **InvalidFilePathException**: If the package file is not a file
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the package folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the package folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the package folder is not a directory
+- **`WrongFilePathException`**: If the package file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the package file not exists or not have access to it
+- **`InvalidFilePathException`**: If the package file is not a file
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Convert Metadata API Format project to Source Format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1783,6 +1807,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**convertProjectToMetadataAPI(targetDir)**](#convertprojecttometadataapitargetdir)
@@ -1790,30 +1815,30 @@ Method to convert a Metadata API format Project to a Source format
 
 ### **Parameters:**
   - **targetDir**: Path to the target dir to save the converted project (Required)
-    - String
+    - `String`
 
 ### **Return:**
 Return an empty promise when conversion finish
-- Promise\<Any\>
+- `Promise<Any>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the package folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the package folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the package folder is not a directory
-- **WrongFilePathException**: If the package file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the package file not exists or not have access to it
-- **InvalidFilePathException**: If the package file is not a file
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the package folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the package folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the package folder is not a directory
+- **`WrongFilePathException`**: If the package file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the package file not exists or not have access to it
+- **`InvalidFilePathException`**: If the package file is not a file
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Convert Source Format project to Metadata API Format**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1823,6 +1848,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**createSFDXProject(projectName, projectFolder, template, withManifest)**](#createsfdxprojectprojectname-projectfolder-template-withmanifest)
@@ -1830,32 +1856,32 @@ Method to create a SFDX Project. This method change the connection object projec
 
 ### **Parameters:**
   - **projectName**: Project Name to create (Required)
-    - String
+    - `String`
 - **projectFolder**: Path to save the project. If undefined use the connection project folder
-    - String
+    - `String`
 - **template**: Template to use to create the project. Empty by default
-    - String
+    - `String`
 - **withManifest**: True to create the project with manifest, false in otherwise
-    - Boolean
+    - `Boolean`
 
 
 ### **Return:**
 Return a promise with SFDXProjectResult Object with the creation result
-- Promise\<SFDXProjectResult\>
+- `Promise<SFDXProjectResult>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder is not a directory
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder is not a directory
 
 ### **Examples:**
 **Create new SFDX Project with connection project folder**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1867,9 +1893,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Create new SFDX Project on a different connection project folder**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1882,6 +1908,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**setAuthOrg(usernameOrAlias)**](#setauthorgusernameoralias)
@@ -1889,25 +1916,25 @@ Method to set an auth org in a Salesforce local project. This command set the se
 
 ### **Parameters:**
   - **usernameOrAlias**: Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
-    - String
+    - `String`
 
 ### **Return:**
 Return an empty promise when operation finish
-- Promise\<Any\>
+- `Promise<Any>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder is not a directory
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder is not a directory
 
 ### **Examples:**
 **Auth new org with connection username or alias**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1917,9 +1944,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Auth new org with different connection username or alias**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1931,6 +1958,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**exportTreeData(query, outputPath, prefix)**](#exporttreedataquery-outputpath-prefix)
@@ -1938,31 +1966,31 @@ Method to export data in a tree format from the connected org
 
 ### **Parameters:**
   - **query**: Query to extract the data (Required)
-    - String
+    - `String`
   - **outputPath**: Path to the folder to (Required)
-    - String
+    - `String`
   - **prefix**: Prefix to add to the created files
-    - String
+    - `String`
 
 ### **Return:**
 Return an array with the extrated data information
-- Promise\<Array\<Object\>\>
+- `Promise<Array<Object>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the output folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the output folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the output folder is not a directory
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the output folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the output folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the output folder is not a directory
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Export Accounts data with related contacts**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -1979,6 +2007,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**importTreeData(file)**](#importtreedatafile)
@@ -1986,27 +2015,27 @@ Method to import data in a tree format into the connected org
 
 ### **Parameters:**
   - **file**: Path to the file to import (Required)
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with an object with the ok result and errors on insert
-- Promise\<Object\>
+- `Promise<Object>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongFilePathException**: If the file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the file not exists or not have access to it
-- **InvalidFilePathException**: If the file is not a directory
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongFilePathException`**: If the file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the file not exists or not have access to it
+- **`InvalidFilePathException`**: If the file is not a directory
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Import file with exported records**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -2028,6 +2057,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**bulkDelete(csvfile, sObject)**](#bulkDeletecsvfile-sObject)
@@ -2035,33 +2065,33 @@ Method to delete data on bulk mode
 
 ### **Parameters:**
   - **csvfile**: Path to the CSV file with the ids to delete (Required)
-    - String
+    - `String`
   - **sObject**: Records SObject API Name (Required)
-    - String
+    - `String`
 
 
 ### **Return:**
 Return a promise with an array with BulkStatus objects with the delete result
-- Promise\<Array\<BulkStatus\>\>
+- `Promise<Array<BulkStatus>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder is not a directory
-- **WrongFilePathException**: If the csv file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the csv file not exists or not have access to it
-- **InvalidFilePathException**: If the csv file is not a directory
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder is not a directory
+- **`WrongFilePathException`**: If the csv file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the csv file not exists or not have access to it
+- **`InvalidFilePathException`**: If the csv file is not a directory
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Delete data at bulk mode**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -2075,6 +2105,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**executeApexAnonymous(scriptfile)**](#executeapexanonymousscriptfile)
@@ -2082,30 +2113,30 @@ Method to execute an Apex script file on Anonymous context
 
 ### **Parameters:**
   - **scriptfile**: Path to the script file (Required)
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with the execution log as String
-- Promise\<String\>
+- `Promise<String>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the project folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the project folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the project folder is not a directory
-- **WrongFilePathException**: If the script file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the script file not exists or not have access to it
-- **InvalidFilePathException**: If the script file is not a directory
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the project folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the project folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the project folder is not a directory
+- **`WrongFilePathException`**: If the script file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the script file not exists or not have access to it
+- **`InvalidFilePathException`**: If the script file is not a directory
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Execute an Apex Anonymous script**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -2117,6 +2148,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**loadUserPermissions(tmpFolder)**](#loaduserpermissionstmpfolder)
@@ -2124,27 +2156,27 @@ Method to get all available user permissions from the connected org
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with the list of user permissions
-- Promise\<Array\<String\>\>
+- `Promise<Array<String>>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the temp folder is not a directory
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the temp folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the temp folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the temp folder is not a directory
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Load User permissions from connected org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -2154,6 +2186,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder)**](#retrievelocalspecialtypestmpfolder-types-compress-sortorder)
@@ -2161,37 +2194,37 @@ Method to get all available user permissions from the connected org
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - String
+    - `String`
   - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-    - Object
+    - `Object`
   - **compress**: true to compress affected files, false in otherwise
-    - Boolean
+    - `Boolean`
   - **sortOrder**: Compress sort order when compress files
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
-- Promise\<RetrieveResult\>
+- `Promise<RetrieveResult>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the temp folder is not a directory
-- **WrongFilePathException**: If the types file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the types file not exists or not have access to it
-- **InvalidFilePathException**: If the types file is not a file
-- **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the temp folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the temp folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the temp folder is not a directory
+- **`WrongFilePathException`**: If the types file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the types file not exists or not have access to it
+- **`InvalidFilePathException`**: If the types file is not a file
+- **`WrongFormatException`**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Retrieve all local special Metadata Types from Org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -2201,9 +2234,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Retrieve some local special Metadata Types from Org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
@@ -2226,6 +2259,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder)**](#retrievemixedspecialtypestmpfolder-types-downloadall-compress-sortorder)
@@ -2233,39 +2267,39 @@ Method to Retrieve mixed special types from the connected org. Mixed means that 
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - String
+    - `String`
   - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-    - Object
+    - `Object`
   - **downloadAll**: true to compress affected files, false in otherwise
-    - Boolean
+    - `Boolean`
   - **compress**: true to download all related data from any namespace, false to downlaod only the org namespace data
-    - Boolean
+    - `Boolean`
   - **sortOrder**: Compress sort order when compress files
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
-- Promise\<RetrieveResult\>
+- `Promise<RetrieveResult>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the temp folder is not a directory
-- **WrongFilePathException**: If the types file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the types file not exists or not have access to it
-- **InvalidFilePathException**: If the types file is not a file
-- **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the temp folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the temp folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the temp folder is not a directory
+- **`WrongFilePathException`**: If the types file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the types file not exists or not have access to it
+- **`InvalidFilePathException`**: If the types file is not a file
+- **`WrongFormatException`**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Retrieve all mixed special Metadata Types from Org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -2275,9 +2309,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Retrieve some mixed special Metadata Types from Org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
@@ -2300,6 +2334,7 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
+```
 ---
 
 ## [**retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder)**](#retrieveorgspecialtypestmpfolder-types-downloadall-compress-sortorder)
@@ -2307,39 +2342,39 @@ Method to Retrieve org special types from the connected org. Org means that affe
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - String
+    - `String`
   - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-    - Object
+    - `Object`
   - **downloadAll**: true to compress affected files, false in otherwise
-    - Boolean
+    - `Boolean`
   - **compress**: true to download all related data from any namespace, false to downlaod only the org namespace data
-    - Boolean
+    - `Boolean`
   - **sortOrder**: Compress sort order when compress files
-    - String
+    - `String`
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
-- Promise\<RetrieveResult\>
+- `Promise<RetrieveResult>`
 
 ### **Throws:**
 This method can throw the next exceptions:
 
-- **ConnectionException**: If run other connection process when has one process running or Connection Return an error 
-- **DataRequiredException**: If required data is not provided
-- **OSNotSupportedException**: When run this processes with not supported operative system
-- **WrongDirectoryPathException**: If the temp folder is not a String or can't convert to absolute path
-- **DirectoryNotFoundException**: If the temp folder not exists or not have access to it
-- **InvalidDirectoryPathException**: If the temp folder is not a directory
-- **WrongFilePathException**: If the types file is not a String or can't convert to absolute path
-- **FileNotFoundException**: If the types file not exists or not have access to it
-- **InvalidFilePathException**: If the types file is not a file
-- **WrongFormatException**: If types object or file is not a JSON file or not have the correct Metadata JSON format
-- **WrongDatatypeException**: If the api version is not a Number or String. Can be undefined
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+- **`DataRequiredException`**: If required data is not provided
+- **`OSNotSupportedException`**: When run this processes with not supported operative system
+- **`WrongDirectoryPathException`**: If the temp folder is not a String or can't convert to absolute path
+- **`DirectoryNotFoundException`**: If the temp folder not exists or not have access to it
+- **`InvalidDirectoryPathException`**: If the temp folder is not a directory
+- **`WrongFilePathException`**: If the types file is not a String or can't convert to absolute path
+- **`FileNotFoundException`**: If the types file not exists or not have access to it
+- **`InvalidFilePathException`**: If the types file is not a file
+- **`WrongFormatException`**: If types object or file is not a JSON file or not have the correct Metadata JSON format
+- **`WrongDatatypeException`**: If the api version is not a Number or String. Can be undefined
 
 
 ### **Examples:**
 **Retrieve all org special Metadata Types from Org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
@@ -2349,9 +2384,9 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 **Retrieve some org special Metadata Types from Org**
-
+```javascript
     const Connection = require('@aurahelper/connector');
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
@@ -2374,11 +2409,11 @@ This method can throw the next exceptions:
     }).catch((error) => {
         // Handle errors
     });
-
+```
 # [**Metadata JSON Format**](#metadata-file)
 
 The Metadata JSON Format used by Aura Helper Framework and modules have the next structure. Some fields are required and the datatypes checked to ensure the correct file structure. 
-
+```json
     {
         "MetadataAPIName": {
             "name": "MetadataAPIName",                                  // Required (String). Contains the Metadata Type API Name (like object Key)
@@ -2413,9 +2448,9 @@ The Metadata JSON Format used by Aura Helper Framework and modules have the next
             }
         }
     }
-
+```
 ### **Example**:
-
+```json
     {
         "CustomObject": {
             "name": "CustomObject",
@@ -2482,3 +2517,4 @@ The Metadata JSON Format used by Aura Helper Framework and modules have the next
             }
         }
     }
+```
