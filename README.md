@@ -1,4 +1,13 @@
 # **Aura Helper Connector Module**
+
+[![Version](https://img.shields.io/npm/v/@aurahelper/connector?logo=npm)](https://www.npmjs.com/package/@aurahelper/connector)
+[![Total Downloads](https://img.shields.io/npm/dt/@aurahelper/connector?logo=npm)](https://www.npmjs.com/package/@aurahelper/connector)
+[![Downloads/Month](https://img.shields.io/npm/dm/@aurahelper/connector?logo=npm)](https://www.npmjs.com/package/@aurahelper/connector)
+[![Issues](https://img.shields.io/github/issues/jjlongoria/aura-helper-connector)](https://github.com/JJLongoria/aura-helper-connector/issues)
+[![Known Vulnerabilities](https://snyk.io/test/github/JJLongoria/aura-helper-connector/badge.svg)](https://snyk.io/test/github/JJLongoria/aura-helper-connector)
+[![Code Size](https://img.shields.io/github/languages/code-size/jjlongoria/aura-helper-connector)](https://github.com/JJLongoria/aura-helper-connector)
+[![License](https://img.shields.io/github/license/jjlongoria/aura-helper-connector?logo=github)](https://github.com/JJLongoria/aura-helper-connector/blob/master/LICENSE)
+
 Module to connect with Salesforce to list or describe metadata types, list or describe all SObjects, make queries, create SFDX Project, validate, deploy or retrieve in SFDX and Metadata API Formats, export and import data and much more. Is used to Aura Helper and Aura Helper CLI to support salesfore conections.
 
 ---
