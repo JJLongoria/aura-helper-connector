@@ -1,7 +1,7 @@
 {
   "name": "@aurahelper/connector",
   "productName": "Aura Helper SalesForce Metadata Connector",
-  "version": "1.1.2",
+  "version": "2.0.0",
   "description": "Powerfull Libraries to connect with Salesforce to list, describe, deploy or retrieve metadata types. Also can describe SObjects, Create Projects, Authorize Orgs, Execute Queries, Export or Import Data... To the correct work of this library, you need to have SFDX CLI installed in your system.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
