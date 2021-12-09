@@ -563,7 +563,7 @@ export class Connection {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    describeMetadataTypes(typesOrDetails: string[] | MetadataDetail[], downloadAll?: boolean, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
+    describeMetadataTypes(typesOrDetails?: string[] | MetadataDetail[], downloadAll?: boolean, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
         startOperation(this);
         resetProgress(this);
         return new Promise<{ [key: string]: MetadataType }>(async (resolve, reject) => {
@@ -2133,7 +2133,7 @@ function calculateIncrement(objects: string[]) {
     return MathUtils.round(100 / objects.length, 2);
 }
 
-function getMetadataTypeNames(typesOrDetails: string[] | MetadataDetail[]) {
+function getMetadataTypeNames(typesOrDetails?: string[] | MetadataDetail[]) {
     const result = [];
     if (typesOrDetails !== undefined) {
         const objectsToProcess = Utils.forceArray(typesOrDetails);
