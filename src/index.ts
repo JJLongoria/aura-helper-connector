@@ -1,28 +1,32 @@
-const EventEmitter = require('events').EventEmitter;
-const { ProcessHandler, ProcessFactory } = require('@aurahelper/core').ProcessManager;
-const { RetrieveStatus, DeployStatus, RetrieveResult, SFDXProjectResult, BulkStatus, AuthOrg, MetadataType, MetadataObject, ProgressStatus } = require('@aurahelper/core').Types;
-const { OSUtils, Utils, MathUtils, StrUtils, Validator, MetadataUtils, ProjectUtils } = require('@aurahelper/core').CoreUtils;
-const { MetadataTypes, NotIncludedMetadata, SpecialMetadata, ProgressStages } = require('@aurahelper/core').Values;
-const { FileChecker, FileReader, FileWriter, PathUtils } = require('@aurahelper/core').FileSystem;
-const { OperationNotAllowedException, ConnectionException } = require('@aurahelper/core').Exceptions;
-const TypesFactory = require('@aurahelper/metadata-factory');
-const PackageGenerator = require('@aurahelper/package-generator');
-const XMLCompressor = require('@aurahelper/xml-compressor');
-const { XMLParser, XMLUtils } = require('@aurahelper/languages').XML;
+import EventEmitter from "events";
+import { MetadataFactory } from '@aurahelper/metadata-factory';
+import { PackageGenerator } from '@aurahelper/package-generator';
+import { XMLCompressor } from '@aurahelper/xml-compressor';
+import { XML } from '@aurahelper/languages';
+import { AuthOrg, BulkStatus, ConnectionException, CoreUtils, DataRequiredException, DeployStatus, ExportTreeDataResult, ImportTreeDataResult, FileChecker, FileReader, FileWriter, MetadataDetail, MetadataType, MetadataTypes, NotIncludedMetadata, OperationNotAllowedException, PathUtils, Process, ProcessFactory, ProcessHandler, ProgressStatus, RetrieveResult, RetrieveStatus, SFDXProjectResult, SObject, SpecialMetadata, ImportTreeDataResponse, MetadataObject } from "@aurahelper/core";
+const XMLParser = XML.XMLParser;
+const XMLUtils = XML.XMLUtils;
+const Validator = CoreUtils.Validator;
+const StrUtils = CoreUtils.StrUtils;
+const OSUtils = CoreUtils.OSUtils;
+const Utils = CoreUtils.Utils;
+const MathUtils = CoreUtils.MathUtils;
+const MetadataUtils = CoreUtils.MetadataUtils;
+const ProjectUtils = CoreUtils.ProjectUtils;
 
-const PROJECT_NAME = 'TempProject';
+const PROJECT_NAME: string = 'TempProject';
 
-const METADATA_QUERIES = {
+const METADATA_QUERIES: { [key: string]: string } = {
     Report: 'Select Id, DeveloperName, NamespacePrefix, FolderName from Report',
     Dashboard: 'Select Id, DeveloperName, NamespacePrefix, FolderId from Dashboard',
     Document: 'Select Id, DeveloperName, NamespacePrefix, FolderId from Document',
     EmailTemplate: 'Select Id, DeveloperName, NamespacePrefix, FolderId FROM EmailTemplate'
-}
-const SUBFOLDER_BY_METADATA_TYPE = {
+};
+const SUBFOLDER_BY_METADATA_TYPE: { [key: string]: string } = {
     RecordType: 'recordTypes'
-}
+};
 
-const EVENT = {
+const EVENT: { [key: string]: string } = {
     PREPARE: 'preapre',
     CREATE_PROJECT: 'createProject',
     RETRIEVE: 'retrieve',
@@ -49,16 +53,31 @@ const EVENT = {
  * 
  * All connection methods return a Promise with the associated data to the processes. 
  */
-class Connection {
+export class Connection {
+
+    usernameOrAlias?: string;
+    apiVersion?: string | number;
+    projectFolder?: string;
+    namespacePrefix?: string;
+    multiThread: boolean;
+    packageFolder?: string;
+    packageFile?: string;
+    _processes: { [key: string]: Process };
+    _inProgress: boolean;
+    _percentage: number;
+    _increment: number;
+    _abort: boolean;
+    _allowConcurrence: boolean;
+    _event: EventEmitter;
 
     /**
      * Constructor to create a new connection object
-     * @param {String} [usernameOrAlias] Org Username or Alias to connect. (Must be authorized in the system)
-     * @param {(String | Number)} [apiVersion] API Version number to connect with salesforce
-     * @param {String} [projectFolder] Path to the project root folder
-     * @param {String} [namespacePrefix] Namespace prefix from the Org to connect
+     * @param {string} [usernameOrAlias] Org Username or Alias to connect. (Must be authorized in the system)
+     * @param {string | number} [apiVersion] API Version number to connect with salesforce
+     * @param {string} [projectFolder] Path to the project root folder
+     * @param {string} [namespacePrefix] Namespace prefix from the Org to connect
      */
-    constructor(usernameOrAlias, apiVersion, projectFolder, namespacePrefix) {
+    constructor(usernameOrAlias?: string, apiVersion?: string | number, projectFolder?: string, namespacePrefix?: string) {
         this.usernameOrAlias = usernameOrAlias;
         this.apiVersion = apiVersion;
         this.projectFolder = (projectFolder !== undefined) ? PathUtils.getAbsolutePath(projectFolder) : projectFolder;
@@ -79,33 +98,33 @@ class Connection {
 
     /**
      * Method to set the Username or Alias to connect with org
-     * @param {String} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
+     * @param {string} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
      * 
      * @returns {Connection} Returns the connection object
      */
-    setUsernameOrAlias(usernameOrAlias) {
+    setUsernameOrAlias(usernameOrAlias: string): Connection {
         this.usernameOrAlias = usernameOrAlias;
         return this;
     }
 
     /**
      * Method to set the API Version to connect
-     * @param {String | Number} apiVersion API Version number to connect with salesforce
+     * @param {string | number} apiVersion API Version number to connect with salesforce
      * 
      * @returns {Connection} Returns the connection object
      */
-    setApiVersion(apiVersion) {
+    setApiVersion(apiVersion: string | number): Connection {
         this.apiVersion = apiVersion;
         return this;
     }
 
     /**
      * Method to set the project root folder path. When set the project root, automatically set the packageFolder and packageFile to their respective paths
-     * @param {String} projectFolder Path to the project root folder
+     * @param {string} projectFolder Path to the project root folder
      * 
      * @returns {Connection} Returns the connection object
      */
-    setProjectFolder(projectFolder) {
+    setProjectFolder(projectFolder: string): Connection {
         this.projectFolder = (projectFolder !== undefined) ? PathUtils.getAbsolutePath(projectFolder) : projectFolder;
         this.packageFolder = this.projectFolder + '/manifest';
         this.packageFile = this.projectFolder + '/manifest/package.xml';
@@ -114,11 +133,11 @@ class Connection {
 
     /**
      * Method to set the package folder path. When set the package folder, automatically set packageFile to the respective path
-     * @param {String} packageFile Path to the package folder
+     * @param {string} packageFile Path to the package folder
      * 
      * @returns {Connection} Returns the connection object
      */
-    setPackageFolder(packageFolder) {
+    setPackageFolder(packageFolder: string): Connection {
         this.packageFolder = (packageFolder !== undefined) ? PathUtils.getAbsolutePath(packageFolder) : packageFolder;
         this.packageFile = this.projectFolder + '/manifest/package.xml';
         return this;
@@ -126,22 +145,22 @@ class Connection {
 
     /**
      * Method to set the package xml file path
-     * @param {String} packageFile Path to the package file
+     * @param {string} packageFile Path to the package file
      * 
      * @returns {Connection} Returns the connection object
      */
-    setPackageFile(packageFile) {
+    setPackageFile(packageFile: string): Connection {
         this.packageFile = (packageFile !== undefined) ? PathUtils.getAbsolutePath(packageFile) : packageFile;
         return this;
     }
 
     /**
      * Method to set the Org namespace prefix
-     * @param {String} namespacePrefix Namespace prefix from the Org to connect
+     * @param {string} namespacePrefix Namespace prefix from the Org to connect
      * 
      * @returns {Connection} Returns the connection object
      */
-    setNamespacePrefix(namespacePrefix) {
+    setNamespacePrefix(namespacePrefix: string): Connection {
         this.namespacePrefix = (namespacePrefix !== undefined) ? namespacePrefix : '';
         return this;
     }
@@ -151,7 +170,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    setMultiThread() {
+    setMultiThread(): Connection {
         this.multiThread = true;
         return this;
     }
@@ -161,7 +180,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    setSingleThread() {
+    setSingleThread(): Connection {
         this.multiThread = false;
         return this;
     }
@@ -172,7 +191,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onPrepare(callback) {
+    onPrepare(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.PREPARE, callback);
         return this;
     }
@@ -183,7 +202,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCreateProject(callback) {
+    onCreateProject(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.CREATE_PROJECT, callback);
         return this;
     }
@@ -194,7 +213,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onRetrieve(callback) {
+    onRetrieve(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.RETRIEVE, callback);
         return this;
     }
@@ -205,7 +224,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onProcess(callback) {
+    onProcess(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.PROCESS, callback);
         return this;
     }
@@ -216,7 +235,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onLoadingLocal(callback) {
+    onLoadingLocal(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.LOADING_LOCAL, callback);
         return this;
     }
@@ -227,7 +246,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onLoadingOrg(callback) {
+    onLoadingOrg(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.LOADING_ORG, callback);
         return this;
     }
@@ -238,7 +257,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCopyData(callback) {
+    onCopyData(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.COPY_DATA, callback);
         return this;
     }
@@ -249,7 +268,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCopyFile(callback) {
+    onCopyFile(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.COPY_FILE, callback);
         return this;
     }
@@ -260,7 +279,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onCompressFile(callback) {
+    onCompressFile(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.COMPRESS_FILE, callback);
         return this;
     }
@@ -271,7 +290,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onBeforeDownloadType(callback) {
+    onBeforeDownloadType(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.BEFORE_DOWNLOAD_TYPE, callback);
         return this;
     }
@@ -282,7 +301,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onAfterDownloadType(callback) {
+    onAfterDownloadType(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.AFTER_DOWNLOAD_TYPE, callback);
         return this;
     }
@@ -293,7 +312,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onBeforeDownloadSObject(callback) {
+    onBeforeDownloadSObject(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.BEFORE_DOWNLOAD_OBJECT, callback);
         return this;
     }
@@ -304,7 +323,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onAfterDownloadSObject(callback) {
+    onAfterDownloadSObject(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.AFTER_DOWNLOAD_OBJECT, callback);
         return this;
     }
@@ -315,7 +334,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onErrorDownload(callback) {
+    onErrorDownload(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.DOWNLOAD_ERROR, callback);
         return this;
     }
@@ -326,7 +345,7 @@ class Connection {
      * 
      * @returns {Connection} Returns the connection object
      */
-    onAbort(callback) {
+    onAbort(callback: () => void) {
         this._event.on(EVENT.ABORT, callback);
         return this;
     }
@@ -334,7 +353,7 @@ class Connection {
     /**
      * Method to abort all connection running processes. When finishes call onAbort() callback
      */
-    abortConnection() {
+    abortConnection(): void {
         this._abort = true;
         killProcesses(this);
         this._event.emit(EVENT.ABORT);
@@ -343,29 +362,34 @@ class Connection {
     /**
      * Method to get the Auth Username from the org (If not found username, return the Alias)
      * 
-     * @returns {Promise<String>} Return a String promise with the Username or Alias data
+     * @returns {Promise<string | undefined>} Return a String promise with the Username or Alias data
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    getAuthUsername() {
+    getAuthUsername(): Promise<string | undefined> {
         startOperation(this);
-        return new Promise(async (resolve, reject) => {
+        return new Promise<string | undefined>(async (resolve, reject) => {
             try {
                 this._allowConcurrence = true;
                 const authOrgs = await this.listAuthOrgs();
                 let username;
                 if (authOrgs && authOrgs.length > 0) {
-                    const defaultUsername = this.usernameOrAlias || ProjectUtils.getOrgAlias(this.projectFolder);
-                    for (const authOrg of authOrgs) {
-                        if (defaultUsername.indexOf('@') !== -1) {
-                            if (authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim())
+                    const defaultUsername = this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFilePath(this.projectFolder));
+                    if (defaultUsername) {
+                        for (const authOrg of authOrgs) {
+                            if (defaultUsername.indexOf('@') !== -1) {
+                                if (authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
+                                    username = authOrg.username;
+                                }
+                            } else {
+                                if (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
+                                    username = authOrg.username;
+                                }
+                            }
+                            if (!username && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()))) {
                                 username = authOrg.username;
-                        } else {
-                            if (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim())
-                                username = authOrg.username;
+                            }
                         }
-                        if (!username && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim())))
-                            username = authOrg.username;
                     }
                     this._allowConcurrence = false;
                     endOperation(this);
@@ -385,21 +409,21 @@ class Connection {
 
     /**
      * Method to get the server instance for an username or alias (or the connection username or alias)
-     * @param {String} [usernameOrAlias] Username or alias to check. (If not provided, use usernameOrAlias from connection object)
+     * @param {string} [usernameOrAlias] Username or alias to check. (If not provided, use usernameOrAlias from connection object)
      * 
-     * @returns {Promise<String>} Return a String promise with the instance URL
+     * @returns {Promise<string | undefined>} Return a String promise with the instance URL
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    getServerInstance(usernameOrAlias) {
+    getServerInstance(usernameOrAlias?: string): Promise<string | undefined> {
         usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
         startOperation(this);
-        return new Promise(async (resolve, reject) => {
+        return new Promise<string | undefined>(async (resolve, reject) => {
             try {
                 this._allowConcurrence = true;
                 const authOrgs = await this.listAuthOrgs();
                 let inbstanceUrl;
-                if (authOrgs && authOrgs.length > 0) {
+                if (usernameOrAlias && authOrgs && authOrgs.length > 0) {
                     for (const authOrg of authOrgs) {
                         if ((usernameOrAlias.indexOf('@') !== -1 && authOrg.username === usernameOrAlias) || (usernameOrAlias.indexOf('@') === -1 && authOrg.alias === usernameOrAlias)) {
                             inbstanceUrl = authOrg.instanceUrl;
@@ -425,18 +449,18 @@ class Connection {
     /**
      * Method to list all auth org on the system
      * 
-     * @returns {Promise<Array<AuthOrg>>} Return a promise with all authorized org in the system 
+     * @returns {Promise<AuthOrg[]>} Return a promise with all authorized org in the system 
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    listAuthOrgs() {
+    listAuthOrgs(): Promise<AuthOrg[]> {
         startOperation(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<AuthOrg[]>((resolve, reject) => {
             try {
                 const process = ProcessFactory.listAuthOurgs();
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         const orgs = (response !== undefined) ? response.result : undefined;
                         const authOrgs = createAuthOrgs(orgs);
                         endOperation(this);
@@ -455,23 +479,26 @@ class Connection {
 
     /**
      * Method to execute a query to the connected org
-     * @param {String} query Query to execute (Required)
-     * @param {Boolean} [useToolingApi] true to use Tooling API to execute the query
+     * @param {string} query Query to execute (Required)
+     * @param {boolean} [useToolingApi] true to use Tooling API to execute the query
      * 
-     * @returns {Promise<Array<Object>>} Return a promise with the record list 
+     * @returns {Promise<any[]>} Return a promise with the record list 
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    query(query, useToolingApi) {
+    query(query: string, useToolingApi?: boolean): Promise<any[]> {
         startOperation(this);
         return new Promise((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 const process = ProcessFactory.query(this.usernameOrAlias, query, useToolingApi);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         const records = (response !== undefined) ? Utils.forceArray(response.result.records) : [];
                         endOperation(this);
                         resolve(records);
@@ -490,23 +517,26 @@ class Connection {
     /**
      * Method to list all Metadata Types available in the connected org (according selected API Version)
      * 
-     * @returns {Promise<Array<MetadataDetail>>} Return a promise with the MetadataDetail objects from all available Metadata Types
+     * @returns {Promise<MetadataDetail[]>} Return a promise with the MetadataDetail objects from all available Metadata Types
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    listMetadataTypes() {
+    listMetadataTypes(): Promise<MetadataDetail[]> {
         startOperation(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<MetadataDetail[]>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 const process = ProcessFactory.listMetadataTypes(this.usernameOrAlias, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         const objects = (response !== undefined) ? response.result.metadataObjects : undefined;
-                        const metadataDetails = TypesFactory.createMetadataDetails(objects);
+                        const metadataDetails = MetadataFactory.createMetadataDetails(objects);
                         endOperation(this);
                         resolve(metadataDetails);
                     });
@@ -523,21 +553,24 @@ class Connection {
 
     /**
      * Method to describe all or selected Metadata Types from the connected org
-     * @param {(Arra<String> | Array<MetadataDetail>)} [typesOrDetails] List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
-     * @param {Boolean} [downloadAll] true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
-     * @param {Boolean} [groupGlobalActions] True to group global quick actions on "GlobalActions" group, false to include as object and item.
+     * @param {string[] | MetadataDetail[]} [typesOrDetails] List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
+     * @param {boolean} [downloadAll] true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
+     * @param {boolean} [groupGlobalActions] True to group global quick actions on "GlobalActions" group, false to include as object and item.
      * 
-     * @returns {Promise<Object>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
+     * @returns {Promise<{ [key: string]: MetadataType }>} Return a promise with Metadata JSON Object with the selected Metadata Types to describe
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    describeMetadataTypes(typesOrDetails, downloadAll, groupGlobalActions) {
+    describeMetadataTypes(typesOrDetails: string[] | MetadataDetail[], downloadAll?: boolean, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
         startOperation(this);
         resetProgress(this);
-        return new Promise(async (resolve, reject) => {
+        return new Promise<{ [key: string]: MetadataType }>(async (resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 this._allowConcurrence = true;
                 const metadataToProcess = getMetadataTypeNames(typesOrDetails);
                 this._increment = calculateIncrement(metadataToProcess);
@@ -546,7 +579,7 @@ class Connection {
                 if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
                     foldersByType = await getFoldersByType(this);
                 }
-                let metadata = {};
+                let metadata: { [key: string]: MetadataType } = {};
                 const batchesToProcess = getBatches(this, metadataToProcess);
                 for (const batch of batchesToProcess) {
                     downloadMetadata(this, batch.records, downloadAll, foldersByType, groupGlobalActions).then((downloadedMetadata) => {
@@ -556,8 +589,9 @@ class Connection {
                         batch.completed = true;
                         let nCompleted = 0;
                         for (const resultBatch of batchesToProcess) {
-                            if (resultBatch.completed)
+                            if (resultBatch.completed) {
                                 nCompleted++;
+                            }
                         }
                         if (nCompleted === batchesToProcess.length) {
                             metadata = MetadataUtils.orderMetadata(metadata);
@@ -583,23 +617,26 @@ class Connection {
 
     /**
      * Method to list all SObjects API Name by category
-     * @param {String} [category] Object Category. Values are: Standard, Custom, All. (All by default) 
+     * @param {string} [category] Object Category. Values are: Standard, Custom, All. (All by default) 
      * 
-     * @returns {Promise<Array<String>>} Return a promise with a list with the sObject names 
+     * @returns {Promise<string[]>} Return a promise with a list with the sObject names 
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    listSObjects(category) {
+    listSObjects(category?: string) {
         startOperation(this);
         return new Promise((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 const process = ProcessFactory.listSObjects(this.usernameOrAlias, category, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         const objects = (response !== undefined) ? response.result : [];
                         endOperation(this);
                         resolve(objects);
@@ -617,23 +654,26 @@ class Connection {
 
     /**
      * Method to describe SObject data to the specified objects
-     * @param {Array<String>} sObjects List with the object API Names to describe
+     * @param {string | string[]} sObjects List with the object API Names to describe
      * 
-     * @returns {Promise<Array<SObject>>} Return a promise with a SObjects data
+     * @returns {Promise<{ [key: string]: SObject }>} Return a promise with a SObjects data
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    describeSObjects(sObjects) {
+    describeSObjects(sObjects: string | string[]): Promise<{ [key: string]: SObject }> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<{ [key: string]: SObject }>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
+                sObjects = Utils.forceArray(sObjects);
                 this._increment = calculateIncrement(sObjects);
                 callEvent(this, EVENT.PREPARE);
-                let resultObjects = {};
-                sObjects = Utils.forceArray(sObjects);
+                let resultObjects: { [key: string]: SObject } = {};
                 const batchesToProcess = getBatches(this, sObjects);
                 for (const batch of batchesToProcess) {
                     downloadSObjectsData(this, batch.records).then((downloadedSObjects) => {
@@ -643,8 +683,9 @@ class Connection {
                         batch.completed = true;
                         let nCompleted = 0;
                         for (const resultBatch of batchesToProcess) {
-                            if (resultBatch.completed)
+                            if (resultBatch.completed) {
                                 nCompleted++;
+                            }
                         }
                         if (nCompleted === batchesToProcess.length) {
                             resultObjects = MetadataUtils.orderSObjects(resultObjects);
@@ -666,9 +707,9 @@ class Connection {
 
     /**
      * Method to retrieve data using the connection package file. You can choose to retrieve as Metadata API format or Source Format
-     * @param {Boolean} useMetadataAPI True to use Metadata API format, false to use source format
-     * @param {String} [targetDir] Path to the target dir when retrieve with Metadata API Format
-     * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
+     * @param {boolean} useMetadataAPI True to use Metadata API format, false to use source format
+     * @param {string} [targetDir] Path to the target dir when retrieve with Metadata API Format
+     * @param {string | number} [waitMinutes] Number of minutes to wait for the command to complete and display results
      *  
      * @returns {Promise<RetrieveResult>} Return a promise with the RetrieveResult object with the retrieve result 
      * 
@@ -680,11 +721,14 @@ class Connection {
      * @throws {InvalidDirectoryPathException} If the project folder or target dir is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieve(useMetadataAPI, targetDir, waitMinutes) {
+    retrieve(useMetadataAPI: boolean, targetDir?: string, waitMinutes?: string | number): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<RetrieveResult>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
@@ -697,8 +741,8 @@ class Connection {
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, async () => {
-                        const status = (response !== undefined) ? new RetrieveResult(response.result) : undefined;
+                    this.handleResponse(response, async () => {
+                        const status = new RetrieveResult(response.result);
                         endOperation(this);
                         resolve(status);
                     });
@@ -715,8 +759,8 @@ class Connection {
 
     /**
      * Retrieve report when use Metadata API to retrieve data
-     * @param {String} retrieveId Retrieve Id to get the report (Required)
-     * @param {String} targetDir Path to the target dir (Required)
+     * @param {string} retrieveId Retrieve Id to get the report (Required)
+     * @param {string} targetDir Path to the target dir (Required)
      * 
      * @returns {Promise<RetrieveStatus>} Return a promise with the RetrieveStatus object with the retrieve status result
      * 
@@ -727,25 +771,28 @@ class Connection {
      * @throws {DirectoryNotFoundException} If the target dir not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the target dir is not a directory
      */
-    retrieveReport(retrieveId, targetDir) {
+    retrieveReport(retrieveId: string, targetDir: string): Promise<RetrieveStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<RetrieveStatus>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 this._allowConcurrence = true;
                 targetDir = Validator.validateFolderPath(targetDir);
                 let process = ProcessFactory.mdapiRetrieveReport(this.usernameOrAlias, retrieveId, targetDir);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
-                        const status = (response !== undefined) ? new RetrieveStatus(response.result) : undefined;
+                    this.handleResponse(response, () => {
+                        const status = new RetrieveStatus(response.result);
                         this._allowConcurrence = false;
                         endOperation(this);
                         resolve(status);
                     });
                 }).catch((error) => {
                     this._allowConcurrence = false;
-                    if (error.message && error.message.indexOf('Retrieve result has been deleted') != -1) {
+                    if (error.message && error.message.indexOf('Retrieve result has been deleted') !== -1) {
                         resolve(new RetrieveStatus(retrieveId, 'Succeeded', true, true));
                     }
                     endOperation(this);
@@ -761,10 +808,10 @@ class Connection {
 
     /**
      * Method to validate a deploy against the org using the connection package file
-     * @param {String} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-     * @param {(String | Array<String>)} [runTests] String with comma separated test names to execute or list with the test names to execute
-     * @param {Boolean} [useMetadataAPI] True to validate deploy using Metadata API Format, false to use Source Format
-     * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
+     * @param {string} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {string | string[]} [runTests] String with comma separated test names to execute or list with the test names to execute
+     * @param {boolean} [useMetadataAPI] True to validate deploy using Metadata API Format, false to use Source Format
+     * @param {string | number} [waitMinutes] Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -779,13 +826,17 @@ class Connection {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    validateDeploy(testLevel, runTests, useMetadataAPI, waitMinutes) {
+    validateDeploy(testLevel?: string, runTests?: string | string[], useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
-            if (runTests && Array.isArray(runTests))
+        return new Promise<DeployStatus>((resolve, reject) => {
+            if (runTests && Array.isArray(runTests)) {
                 runTests = runTests.join(',');
+            }
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
@@ -797,8 +848,8 @@ class Connection {
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
-                        const validationId = (response !== undefined) ? new DeployStatus(response.result) : undefined;
+                    this.handleResponse(response, () => {
+                        const validationId = new DeployStatus(response.result);
                         endOperation(this);
                         resolve(validationId);
                     });
@@ -815,10 +866,10 @@ class Connection {
 
     /**
      * Method to deploy data to the org using the connection package file
-     * @param {String} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-     * @param {String | Array<String>} [runTests] String with comma separated test names to execute or list with the test names to execute
-     * @param {Boolean} [useMetadataAPI] True to Deploy data using Metadata API Format, false to use Source Format
-     * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
+     * @param {string} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {string | string[]} [runTests] String with comma separated test names to execute or list with the test names to execute
+     * @param {boolean} [useMetadataAPI] True to Deploy data using Metadata API Format, false to use Source Format
+     * @param {string | number} [waitMinutes] Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -833,26 +884,28 @@ class Connection {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    deployPackage(testLevel, runTests, useMetadataAPI, waitMinutes) {
+    deployPackage(testLevel?: string, runTests?: string | string[], useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<DeployStatus>((resolve, reject) => {
             try {
-                if (runTests)
-                    runTests = Utils.forceArray(runTests);
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
+                const testsToRun = Utils.forceArray(runTests);
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
                     const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    process = ProcessFactory.mdapiDeployPackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (runTests) ? runTests.join(',') : undefined, this.apiVersion, waitMinutes);
+                    process = ProcessFactory.mdapiDeployPackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
                 } else {
                     const packageFile = Validator.validateFilePath(this.packageFile);
-                    process = ProcessFactory.sourceDeployPackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, (runTests) ? runTests.join(',') : undefined, this.apiVersion, waitMinutes);
+                    process = ProcessFactory.sourceDeployPackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
-                        const status = (response !== undefined) ? new DeployStatus(response.result) : undefined;
+                    this.handleResponse(response, () => {
+                        const status = new DeployStatus(response.result);
                         endOperation(this);
                         resolve(status);
                     });
@@ -869,10 +922,10 @@ class Connection {
 
     /**
      * Method to deploy the selected Metadata Types to the org using Source API
-     * @param {String | Object} types Metadata JSON Object with the selected elements to deploy or comma separated values String with the metadata types to deploy
-     * @param {String} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
+     * @param {string | string[] | { [key: string]: MetadataType }} types Metadata JSON Object with the selected elements to deploy or comma separated values String with the metadata types to deploy to array with Metadata names to deploy
+     * @param {string} [testLevel] Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
      * @param {String | Array<String>} [runTests] String with comma separated test names to execute or list with the test names to execute
-     * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
+     * @param {string | number} [waitMinutes] Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -886,20 +939,22 @@ class Connection {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    deploy(types, testLevel, runTests, waitMinutes) {
+    deploy(types: string | string[] | { [key: string]: MetadataType }, testLevel?: string, runTests?: string | string[], waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<DeployStatus>((resolve, reject) => {
             try {
-                if (runTests)
-                    runTests = Utils.forceArray(runTests);
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
+                const testsToRun = Utils.forceArray(runTests);
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                process = ProcessFactory.sourceDeploy(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (runTests) ? runTests.join(',') : undefined, this.apiVersion, waitMinutes);
+                process = ProcessFactory.sourceDeploy(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
-                        const status = (response !== undefined) ? new DeployStatus(response.result) : undefined;
+                    this.handleResponse(response, () => {
+                        const status = new DeployStatus(response.result);
                         endOperation(this);
                         resolve(status);
                     });
@@ -916,8 +971,8 @@ class Connection {
 
     /**
      * Method to execute a quick deploy when validation result is success
-     * @param {String} deployId Id to deploy the validated deployment (Required)
-     * @param {Boolean} [useMetadataAPI] True to execute quick deploy using Metadata API Format, false to use Source Format
+     * @param {string} deployId Id to deploy the validated deployment (Required)
+     * @param {boolean} [useMetadataAPI] True to execute quick deploy using Metadata API Format, false to use Source Format
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -929,11 +984,14 @@ class Connection {
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    quickDeploy(deployId, useMetadataAPI) {
+    quickDeploy(deployId: string, useMetadataAPI?: boolean): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<DeployStatus>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
@@ -943,8 +1001,8 @@ class Connection {
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
-                        const status = (response !== undefined) ? new DeployStatus(response.result) : undefined;
+                    this.handleResponse(response, () => {
+                        const status = new DeployStatus(response.result);
                         endOperation(this);
                         resolve(status);
                     });
@@ -961,9 +1019,9 @@ class Connection {
 
     /**
      * Method to get the report of a running deployment
-     * @param {String} deployId Id to the deployment to get the report (Required)
-     * @param {Boolean} [useMetadataAPI] True to execute deploy report using Metadata API Format, false to use Source Format
-     * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
+     * @param {string} deployId Id to the deployment to get the report (Required)
+     * @param {boolean} [useMetadataAPI] True to execute deploy report using Metadata API Format, false to use Source Format
+     * @param {string | number} [waitMinutes] Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -971,11 +1029,14 @@ class Connection {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    deployReport(deployId, useMetadataAPI, waitMinutes) {
+    deployReport(deployId: string, useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<DeployStatus>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 this._allowConcurrence = true;
                 let process;
                 if (useMetadataAPI) {
@@ -985,9 +1046,9 @@ class Connection {
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         this._allowConcurrence = false;
-                        const status = (response !== undefined) ? new DeployStatus(response.result) : undefined;
+                        const status = new DeployStatus(response.result);
                         endOperation(this);
                         resolve(status);
                     });
@@ -1006,9 +1067,9 @@ class Connection {
 
     /**
      * Method to get the cancel a running deployment
-     * @param {String} deployId Id to the deployment to cancel (Required)
-     * @param {Boolean} [useMetadataAPI] True to execute cancel deploy using Metadata API Format, false to use Source Format
-     * @param {(String | Number)} [waitMinutes] Number of minutes to wait for the command to complete and display results
+     * @param {string} deployId Id to the deployment to cancel (Required)
+     * @param {boolean} [useMetadataAPI] True to execute cancel deploy using Metadata API Format, false to use Source Format
+     * @param {string | number} [waitMinutes] Number of minutes to wait for the command to complete and display results
      * 
      * @returns {Promise<DeployStatus>} Return a promise with the DeployStatus object with the deploy status result 
      * 
@@ -1016,11 +1077,14 @@ class Connection {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    cancelDeploy(deployId, useMetadataAPI, waitMinutes) {
+    cancelDeploy(deployId: string, useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<DeployStatus>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 let process;
                 if (useMetadataAPI) {
                     process = ProcessFactory.mdapiCancelDeploy(this.usernameOrAlias, deployId, waitMinutes);
@@ -1029,8 +1093,8 @@ class Connection {
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
-                        const status = (response !== undefined) ? new DeployStatus(response.result) : undefined;
+                    this.handleResponse(response, () => {
+                        const status = new DeployStatus(response.result);
                         endOperation(this);
                         resolve(status);
                     });
@@ -1047,9 +1111,9 @@ class Connection {
 
     /**
      * Method to convert a Metadata API format Project to a Source format
-     * @param {String} targetDir Path to the target dir to save the converted project (Required)
+     * @param {string} targetDir Path to the target dir to save the converted project (Required)
      * 
-     * @returns {Promise<Any>} Return an empty promise when conversion finish 
+     * @returns {Promise<void>} Return an empty promise when conversion finish 
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
@@ -1062,10 +1126,10 @@ class Connection {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    convertProjectToSFDX(targetDir) {
+    convertProjectToSFDX(targetDir: string): Promise<void> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             try {
                 const packageFile = Validator.validateFilePath(this.packageFile);
                 const packageFolder = Validator.validateFolderPath(this.packageFolder);
@@ -1073,7 +1137,7 @@ class Connection {
                 let process = ProcessFactory.convertToSFDX(packageFolder, packageFile, targetDir, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         endOperation(this);
                         resolve();
                     });
@@ -1090,9 +1154,9 @@ class Connection {
 
     /**
      * Method to convert a Source format Project to a Metadata API format
-     * @param {String} targetDir Path to the target dir to save the converted project (Required)
+     * @param {string} targetDir Path to the target dir to save the converted project (Required)
      * 
-     * @returns {Promise<Any>} Return an empty promise when conversion finish 
+     * @returns {Promise<void>} Return an empty promise when conversion finish 
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
@@ -1105,17 +1169,17 @@ class Connection {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    convertProjectToMetadataAPI(targetDir) {
+    convertProjectToMetadataAPI(targetDir: string): Promise<void> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             try {
                 const packageFile = Validator.validateFilePath(this.packageFile);
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 let process = ProcessFactory.convertToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         endOperation(this);
                         resolve();
                     });
@@ -1132,10 +1196,10 @@ class Connection {
 
     /**
      * Method to create a SFDX Project. This method change the connection object project folder, package folder and package file values when project is created
-     * @param {String} projectName Project Name to create (Required)
-     * @param {String} [projectFolder] Path to save the project. If undefined use the connection project folder
-     * @param {String} [template] Template to use to create the project. Empty by default
-     * @param {Boolean} [withManifest] True to create the project with manifest, false in otherwise
+     * @param {string} projectName Project Name to create (Required)
+     * @param {string} [projectFolder] Path to save the project. If undefined use the connection project folder
+     * @param {string} [template] Template to use to create the project. Empty by default
+     * @param {boolean} [withManifest] True to create the project with manifest, false in otherwise
      * 
      * @returns {Promise<SFDXProjectResult>} Return a promise with SFDXProjectResult Object with the creation result
      * 
@@ -1146,22 +1210,22 @@ class Connection {
      * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
      */
-    createSFDXProject(projectName, projectFolder, template, withManifest) {
+    createSFDXProject(projectName: string, projectFolder?: string, template?: string, withManifest?: boolean) {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
-                projectFolder = Validator.validateFolderPath(projectFolder || this.projectFolder);
-                let process = ProcessFactory.createSFDXProject(projectName, projectFolder, template, this.namespacePrefix, withManifest);
+                let projectFolderRes = Validator.validateFolderPath(projectFolder || this.projectFolder);
+                let process = ProcessFactory.createSFDXProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         const result = (response !== undefined) ? new SFDXProjectResult(response.result) : undefined;
-                        projectFolder = StrUtils.replace(projectFolder, '\\', '/');
-                        this.setProjectFolder(projectFolder + '/' + projectName);
+                        projectFolderRes = StrUtils.replace(projectFolderRes, '\\', '/');
+                        this.setProjectFolder(projectFolderRes + '/' + projectName);
                         if (withManifest) {
-                            this.setPackageFolder(projectFolder + '/' + projectName + '/manifest');
-                            this.setPackageFile(projectFolder + '/' + projectName + '/manifest/package.xml');
+                            this.setPackageFolder(projectFolderRes + '/' + projectName + '/manifest');
+                            this.setPackageFile(projectFolderRes + '/' + projectName + '/manifest/package.xml');
                         }
                         endOperation(this);
                         resolve(result);
@@ -1179,9 +1243,9 @@ class Connection {
 
     /**
      * Method to set an auth org in a Salesforce local project. This command set the selected username or Alias to the connection object when authorize an org.
-     * @param {String} [usernameOrAlias] Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
+     * @param {string} [usernameOrAlias] Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
      * 
-     * @returns {Promise<Any>} Return an empty promise when operation finish
+     * @returns {Promise<void>} Return an empty promise when operation finish
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
@@ -1190,16 +1254,20 @@ class Connection {
      * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
      */
-    setAuthOrg(usernameOrAlias) {
+    setAuthOrg(usernameOrAlias?: string): Promise<void> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             try {
+                const userNameRes = usernameOrAlias || this.usernameOrAlias;
+                if (!userNameRes) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                let process = ProcessFactory.setAuthOrg(usernameOrAlias || this.usernameOrAlias, projectFolder);
+                let process = ProcessFactory.setAuthOrg(userNameRes, projectFolder);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         this.usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
                         endOperation(this);
                         resolve();
@@ -1217,11 +1285,11 @@ class Connection {
 
     /**
      * Method to export data in a tree format from the connected org
-     * @param {String} query Query to extract the data (Required)
-     * @param {String} outputPath Path to the folder to (Required)
-     * @param {String} [prefix] Prefix to add to the created files
+     * @param {string} query Query to extract the data (Required)
+     * @param {string} outputPath Path to the folder to (Required)
+     * @param {string} [prefix] Prefix to add to the created files
      * 
-     * @returns {Promise<Array<Object>>} Return an array with the extrated data information
+     * @returns {Promise<ExportTreeDataResult[]>} Return an array with the extrated data information
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
@@ -1231,16 +1299,19 @@ class Connection {
      * @throws {InvalidDirectoryPathException} If the output folder is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    exportTreeData(query, outputPath, prefix) {
+    exportTreeData(query: string, outputPath: string, prefix?: string): Promise<ExportTreeDataResult[]> {
         startOperation(this);
         resetProgress(this);
         return new Promise((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 outputPath = Validator.validateFolderPath(outputPath);
                 let process = ProcessFactory.exportTreeData(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         endOperation(this);
                         resolve(processExportTreeDataOut(response));
                     });
@@ -1257,9 +1328,9 @@ class Connection {
 
     /**
      * Method to import data in a tree format into the connected org
-     * @param {String} file Path to the file to import (Required)
+     * @param {string} file Path to the file to import (Required)
      * 
-     * @returns {Promise<Object>} Return a promise with an object with the ok result and errors on insert
+     * @returns {Promise<ImportTreeDataResponse>} Return a promise with an object with the ok result and errors on insert
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
@@ -1269,17 +1340,20 @@ class Connection {
      * @throws {InvalidFilePathException} If the file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    importTreeData(file) {
+    importTreeData(file: string): Promise<ImportTreeDataResponse> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<ImportTreeDataResponse>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 file = Validator.validateFilePath(file);
                 let process = ProcessFactory.importTreeData(this.usernameOrAlias, file, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     if (response.status === 0) {
-                        let results = [];
+                        let results: ImportTreeDataResult[] = [];
                         for (let insertResult of response.result) {
                             results.push({
                                 refId: '@' + insertResult.refId,
@@ -1312,10 +1386,10 @@ class Connection {
 
     /**
      * Method to delete data on bulk mode
-     * @param {String} csvfile Path to the CSV file with the ids to delete (Required)
-     * @param {String} sObject Records SObject API Name (Required)
+     * @param {string} csvfile Path to the CSV file with the ids to delete (Required)
+     * @param {string} sObject Records SObject API Name (Required)
      *  
-     * @returns {Promise<Array<BulkStatus>>} Return a promise with an array with BulkStatus objects with the delete result
+     * @returns {Promise<BulkStatus[]>} Return a promise with an array with BulkStatus objects with the delete result
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
@@ -1328,17 +1402,20 @@ class Connection {
      * @throws {InvalidFilePathException} If the csv file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    bulkDelete(csvfile, sObject) {
+    bulkDelete(csvfile: string, sObject: string): Promise<BulkStatus[]> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<BulkStatus[]>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 csvfile = Validator.validateFilePath(csvfile);
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 let process = ProcessFactory.bulkDelete(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         const bulkStatus = [];
                         for (const result of response.result) {
                             bulkStatus.push(new BulkStatus(result));
@@ -1359,9 +1436,9 @@ class Connection {
 
     /**
      * Method to execute an Apex script file on Anonymous context
-     * @param {String} scriptfile Path to the script file (Required)
+     * @param {string} scriptfile Path to the script file (Required)
      *
-     * @returns {Promise<String>} Return a promise with the execution log as String
+     * @returns {Promise<string>} Return a promise with the execution log as String
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error  
      * @throws {DataRequiredException} If required data is not provided
@@ -1374,17 +1451,20 @@ class Connection {
      * @throws {InvalidFilePathException} If the script file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    executeApexAnonymous(scriptfile) {
+    executeApexAnonymous(scriptfile: string): Promise<string> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
             try {
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 scriptfile = Validator.validateFilePath(scriptfile);
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 let process = ProcessFactory.executeApexAnonymous(this.usernameOrAlias, scriptfile, projectFolder, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
-                    handleResponse(response, () => {
+                    this.handleResponse(response, () => {
                         endOperation(this);
                         resolve(response);
                     });
@@ -1401,9 +1481,9 @@ class Connection {
 
     /**
      * Method to get all available user permissions from the connected org
-     * @param {String} tmpFolder Temporal folder to save support files (Required)
+     * @param {string} tmpFolder Temporal folder to save support files (Required)
      * 
-     * @returns {Promise<Array<String>>} Return a promise with the list of user permissions
+     * @returns {Promise<string[]>} Return a promise with the list of user permissions
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      * @throws {DataRequiredException} If required data is not provided
@@ -1413,21 +1493,28 @@ class Connection {
      * @throws {InvalidDirectoryPathException} If the temp folder is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    loadUserPermissions(tmpFolder) {
+    loadUserPermissions(tmpFolder: string): Promise<string[]> {
         startOperation(this);
         resetProgress(this);
         return new Promise(async (resolve, reject) => {
             try {
+                if (!this.packageFolder) {
+                    throw new DataRequiredException('packageFolder');
+                }
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                const originalProjectFolder = this.projectFolder;
+                const originalProjectFolder = Validator.validateFilePath(this.projectFolder);
                 callEvent(this, EVENT.PREPARE);
                 this._allowConcurrence = true;
-                const metadata = {};
+                const metadata: { [key: string]: MetadataType } = {};
                 const metadataType = new MetadataType(MetadataTypes.PROFILE, true);
                 metadataType.childs["Admin"] = new MetadataObject("Admin", true);
                 metadata[MetadataTypes.PROFILE] = metadataType;
-                if (FileChecker.isExists(tmpFolder))
+                if (FileChecker.isExists(tmpFolder)) {
                     FileWriter.delete(tmpFolder);
+                }
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
@@ -1461,10 +1548,10 @@ class Connection {
 
     /**
      * Method to Retrieve local special types from the connected org
-     * @param {String} tmpFolder Temporal folder to save support files (Required)
-     * @param {Object} [types] Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-     * @param {Boolean} [compress] true to compress affected files, false in otherwise
-     * @param {String} [sortOrder] Compress sort order when compress files
+     * @param {string} tmpFolder Temporal folder to save support files (Required)
+     * @param {string | { [key: string]: MetadataType }} [types] Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
+     * @param {boolean} [compress] true to compress affected files, false in otherwise
+     * @param {string} [sortOrder] Compress sort order when compress files
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1480,24 +1567,34 @@ class Connection {
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieveLocalSpecialTypes(tmpFolder, types, compress, sortOrder) {
+    retrieveLocalSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise(async (resolve, reject) => {
+        return new Promise<RetrieveResult>(async (resolve, reject) => {
             try {
+                if (!this.projectFolder) {
+                    throw new DataRequiredException('projectFolder');
+                }
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
+                let typesToRetrieve: { [key: string]: MetadataType } | undefined;
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if (types)
-                    types = Validator.validateMetadataJSON(types);
+                if (types) {
+                    typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
+                }
                 const originalProjectFolder = this.projectFolder;
                 callEvent(this, EVENT.PREPARE);
-                const dataToRetrieve = [];
+                const dataToRetrieve: string[] = [];
                 Object.keys(SpecialMetadata).forEach(function (key) {
-                    if (!types || types[key]) {
-                        if (!dataToRetrieve.includes(key))
+                    if (!typesToRetrieve || typesToRetrieve[key]) {
+                        if (!dataToRetrieve.includes(key)) {
                             dataToRetrieve.push(key);
+                        }
                         for (let child of SpecialMetadata[key]) {
-                            if (!dataToRetrieve.includes(child))
+                            if (!dataToRetrieve.includes(child)) {
                                 dataToRetrieve.push(child);
+                            }
                         }
                     }
                 });
@@ -1506,27 +1603,33 @@ class Connection {
                 this._increment = calculateIncrement(metadataToProcess);
                 callEvent(this, EVENT.LOADING_LOCAL);
                 const metadataDetails = await this.listMetadataTypes();
-                const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
-                const metadataFromFileSystem = TypesFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
-                const metadata = {};
+                const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
+                const metadataFromFileSystem = MetadataFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
+                const metadata: { [key: string]: MetadataType } = {};
                 for (const type of dataToRetrieve) {
-                    if (metadataFromFileSystem[type])
+                    if (metadataFromFileSystem[type]) {
                         metadata[type] = metadataFromFileSystem[type];
+                    }
                 }
                 MetadataUtils.checkAll(metadata);
-                if (FileChecker.isExists(tmpFolder))
+                if (FileChecker.isExists(tmpFolder)) {
                     FileWriter.delete(tmpFolder);
+                }
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
+                if (this.packageFolder) {
+                    const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
+                }
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
                 callEvent(this, EVENT.RETRIEVE);
                 const retrieveOut = await this.retrieve(false);
                 waitForFiles(this.projectFolder);
                 callEvent(this, EVENT.COPY_DATA);
-                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromFileSystem, compress, sortOrder);
+                if (typesToRetrieve) {
+                    copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadataFromFileSystem, compress, sortOrder);
+                }
                 //callProgressCalback(this, EVENT.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
@@ -1543,11 +1646,11 @@ class Connection {
 
     /**
      * Method to Retrieve mixed special types from the connected org. Mixed means that only affect the Metadata Types on your project folder, but download all related data from this types from your org (and not only the local data)
-     * @param {String} tmpFolder Temporal folder to save support files (Required)
+     * @param {string} tmpFolder Temporal folder to save support files (Required)
      * @param {Object} [types] Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-     * @param {Boolean} [downloadAll] true to download all related data from any namespace, false to downlaod only the org namespace data
-     * @param {Boolean} [compress] true to compress affected files, false in otherwise
-     * @param {String} [sortOrder] Compress sort order when compress files
+     * @param {boolean} [downloadAll] true to download all related data from any namespace, false to downlaod only the org namespace data
+     * @param {boolean} [compress] true to compress affected files, false in otherwise
+     * @param {string} [sortOrder] Compress sort order when compress files
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1563,24 +1666,34 @@ class Connection {
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieveMixedSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
+    retrieveMixedSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, downloadAll?: boolean, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise(async (resolve, reject) => {
+        return new Promise<RetrieveResult>(async (resolve, reject) => {
             try {
+                if (!this.projectFolder) {
+                    throw new DataRequiredException('projectFolder');
+                }
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
+                let typesToRetrieve: { [key: string]: MetadataType } | undefined;
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if (types)
-                    types = Validator.validateMetadataJSON(types);
+                if (types) {
+                    typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
+                }
                 const originalProjectFolder = this.projectFolder;
                 callEvent(this, EVENT.PREPARE);
-                const dataToRetrieve = [];
+                const dataToRetrieve: string[] = [];
                 Object.keys(SpecialMetadata).forEach(function (key) {
-                    if (!types || types[key]) {
-                        if (!dataToRetrieve.includes(key))
+                    if (!typesToRetrieve || typesToRetrieve[key]) {
+                        if (!dataToRetrieve.includes(key)) {
                             dataToRetrieve.push(key);
+                        }
                         for (let child of SpecialMetadata[key]) {
-                            if (!dataToRetrieve.includes(child))
+                            if (!dataToRetrieve.includes(child)) {
                                 dataToRetrieve.push(child);
+                            }
                         }
                     }
                 });
@@ -1589,31 +1702,37 @@ class Connection {
                 this._increment = calculateIncrement(metadataToProcess);
                 callEvent(this, EVENT.LOADING_LOCAL);
                 const metadataDetails = await this.listMetadataTypes();
-                const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
-                const metadataFromFileSystem = TypesFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
-                let metadata = {};
+                const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
+                const metadataFromFileSystem = MetadataFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
+                let metadata: { [key: string]: MetadataType } = {};
                 for (const type of dataToRetrieve) {
-                    if (metadataFromFileSystem[type])
+                    if (metadataFromFileSystem[type]) {
                         metadata[type] = metadataFromFileSystem[type];
+                    }
                 }
                 callEvent(this, EVENT.LOADING_ORG);
                 const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
                 this._allowConcurrence = true;
                 metadata = MetadataUtils.combineMetadata(metadata, metadataFromOrg);
                 MetadataUtils.checkAll(metadata);
-                if (FileChecker.isExists(tmpFolder))
+                if (FileChecker.isExists(tmpFolder)) {
                     FileWriter.delete(tmpFolder);
+                }
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
+                if (this.packageFolder) {
+                    const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
+                }
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
                 callEvent(this, EVENT.RETRIEVE);
                 const retrieveOut = await this.retrieve(false);
                 waitForFiles(this.projectFolder);
                 callEvent(this, EVENT.COPY_DATA);
-                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadata, compress, sortOrder);
+                if (typesToRetrieve) {
+                    copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadata, compress, sortOrder);
+                }
                 //callProgressCalback(this, EVENT.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
@@ -1630,11 +1749,11 @@ class Connection {
 
     /**
      * Method to Retrieve org special types from the connected org. Org means that affect all Metadata types stored in your org not on your local project.
-     * @param {String} tmpFolder Temporal folder to save support files (Required)
+     * @param {string} tmpFolder Temporal folder to save support files (Required)
      * @param {Object} [types] Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-     * @param {Boolean} [downloadAll] true to download all related data from any namespace, false to downlaod only the org namespace data
-     * @param {Boolean} [compress] true to compress affected files, false in otherwise
-     * @param {String} [sortOrder] Compress sort order when compress files
+     * @param {boolean} [downloadAll] true to download all related data from any namespace, false to downlaod only the org namespace data
+     * @param {boolean} [compress] true to compress affected files, false in otherwise
+     * @param {string} [sortOrder] Compress sort order when compress files
      * 
      * @returns {Promise<RetrieveResult>} Return a promise with a RetrieveResult with the retrieve result
      * 
@@ -1650,24 +1769,34 @@ class Connection {
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieveOrgSpecialTypes(tmpFolder, types, downloadAll, compress, sortOrder) {
+    retrieveOrgSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, downloadAll?: boolean, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise(async (resolve, reject) => {
+        return new Promise<RetrieveResult>(async (resolve, reject) => {
             try {
+                if (!this.projectFolder) {
+                    throw new DataRequiredException('projectFolder');
+                }
+                if (!this.usernameOrAlias) {
+                    throw new DataRequiredException('usernameOrAlias');
+                }
+                let typesToRetrieve: { [key: string]: MetadataType } | undefined;
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if (types)
-                    types = Validator.validateMetadataJSON(types);
+                if (types) {
+                    typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
+                }
                 const originalProjectFolder = this.projectFolder;
                 callEvent(this, EVENT.PREPARE);
-                const dataToRetrieve = [];
+                const dataToRetrieve: string[] = [];
                 Object.keys(SpecialMetadata).forEach(function (key) {
-                    if (!types || types[key]) {
-                        if (!dataToRetrieve.includes(key))
+                    if (!typesToRetrieve || typesToRetrieve[key]) {
+                        if (!dataToRetrieve.includes(key)) {
                             dataToRetrieve.push(key);
+                        }
                         for (let child of SpecialMetadata[key]) {
-                            if (!dataToRetrieve.includes(child))
+                            if (!dataToRetrieve.includes(child)) {
                                 dataToRetrieve.push(child);
+                            }
                         }
                     }
                 });
@@ -1676,23 +1805,28 @@ class Connection {
                 this._increment = calculateIncrement(metadataToProcess);
                 callEvent(this, EVENT.LOADING_ORG);
                 const metadataDetails = await this.listMetadataTypes();
-                const folderMetadataMap = TypesFactory.createFolderMetadataMap(metadataDetails);
+                const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
                 const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
                 this._allowConcurrence = true;
                 MetadataUtils.checkAll(metadataFromOrg);
-                if (FileChecker.isExists(tmpFolder))
+                if (FileChecker.isExists(tmpFolder)){
                     FileWriter.delete(tmpFolder);
+                }
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadataFromOrg, this.packageFolder);
+                if(this.packageFolder){
+                    const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadataFromOrg, this.packageFolder);
+                }
                 FileWriter.delete(this.projectFolder + '/.forceignore');
                 const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
                 callEvent(this, EVENT.RETRIEVE);
                 const retrieveOut = await this.retrieve(false);
                 waitForFiles(this.projectFolder);
                 callEvent(this, EVENT.COPY_DATA);
-                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, types, metadataFromOrg, compress, sortOrder);
+                if(typesToRetrieve){
+                    copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadataFromOrg, compress, sortOrder);
+                }
                 //callProgressCalback(this, EVENT.CLEANING);
                 //FileWriter.delete(tmpFolder);
                 restoreOriginalProjectData(this, originalProjectFolder);
@@ -1706,13 +1840,30 @@ class Connection {
             }
         });
     }
-}
-module.exports = Connection;
 
-function transformMetadataTypesIntoCSV(types) {
-    if (Utils.isObject(types)) {
+    handleResponse(response: any, onSuccess: () => void) {
+        if (response !== undefined) {
+            if (typeof response === 'object') {
+                if (response.status === 0) {
+                    onSuccess.call(this);
+                } else {
+                    throw new ConnectionException(response.message);
+                }
+            } else {
+                onSuccess.call(this);
+            }
+        } else {
+            response = {
+                result: {}
+            };
+            onSuccess.call(this);
+        }
+    }
+}
+
+function transformMetadataTypesIntoCSV(types: string | string[] | { [key: string]: MetadataType }): string {
+    if (!Array.isArray(types) && typeof types === 'object') {
         const result = [];
-        types = Validator.validateMetadataJSON(types);
         for (const metadataTypeKey of Object.keys(types)) {
             const metadataType = types[metadataTypeKey];
             if (MetadataUtils.haveChilds(metadataType)) {
@@ -1734,47 +1885,51 @@ function transformMetadataTypesIntoCSV(types) {
             }
         }
         return result.join(',');
-    } else {
-        return types;
+    } else if (typeof types !== 'string') {
+        return types.join(',');
     }
+    return types;
 }
 
-function waitForFiles(folder) {
-    return new Promise(async (resolve) => {
+function waitForFiles(folder: string): Promise<void> {
+    return new Promise<void>(async (resolve) => {
         let files = await FileReader.getAllFiles(folder);
-        while (files.length == 0) {
+        while (files.length === 0) {
             files = await FileReader.getAllFiles(folder);
         }
         resolve();
     });
 }
 
-function restoreOriginalProjectData(connection, originalProjectFolder) {
+function restoreOriginalProjectData(connection: Connection, originalProjectFolder: string) {
     connection.setProjectFolder(originalProjectFolder);
     connection.setPackageFolder(originalProjectFolder + '/manifest');
     connection.setPackageFile(originalProjectFolder + '/manifest/package.xml');
 }
 
-function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, metadataTypes, compress, compressOrder) {
+function copyMetadataFiles(connection: Connection, targetProject: string, folderMetadataMap: { [key: string]: MetadataDetail }, types: { [key: string]: MetadataType }, metadataTypes: { [key: string]: MetadataType }, compress?: boolean, compressOrder?: string) {
     const path = connection.projectFolder;
     for (const folder of (Object.keys(folderMetadataMap))) {
         const metadataDetail = folderMetadataMap[folder];
         const metadataTypeName = metadataDetail.xmlName;
-        if (!SpecialMetadata[metadataTypeName] || !metadataTypes[metadataTypeName])
+        if (!SpecialMetadata[metadataTypeName] || !metadataTypes[metadataTypeName]) {
             continue;
-        const haveTypesToCopy = !Utils.isNull(types);
+        }
+        const haveTypesToCopy = types !== undefined;
         const typeToCopy = haveTypesToCopy ? types[metadataTypeName] : undefined;
-        if (haveTypesToCopy && !typeToCopy)
+        if (haveTypesToCopy && !typeToCopy) {
             continue;
+        }
         const metadataType = metadataTypes[metadataTypeName];
-        if (!metadataType.haveChilds())
+        if (!metadataType.hasChilds()) {
             continue;
+        }
         for (const metadataObjectName of Object.keys(metadataType.getChilds())) {
-            const objectToCopy = (Utils.isNull(typeToCopy) || !MetadataUtils.haveChilds(typeToCopy)) ? undefined : typeToCopy.childs[metadataObjectName];
+            const objectToCopy = (!typeToCopy || !typeToCopy.hasChilds()) ? undefined : typeToCopy.childs[metadataObjectName];
             const metadataObject = metadataType.getChild(metadataObjectName);
-            if (metadataObject.haveChilds()) {
+            if (metadataObject?.hasChilds()) {
                 for (const metadataItemName of Object.keys(metadataObject.getChilds())) {
-                    const itemToCopy = (Utils.isNull(objectToCopy) || !MetadataUtils.haveChilds(objectToCopy)) ? undefined : objectToCopy.childs[metadataItemName];
+                    const itemToCopy = (!objectToCopy || !objectToCopy.hasChilds()) ? undefined : objectToCopy.childs[metadataItemName];
                     if (!haveTypesToCopy || (typeToCopy && typeToCopy.checked) || (objectToCopy && objectToCopy.checked) || (itemToCopy && itemToCopy.checked)) {
                         let subPath;
                         let fileName = metadataItemName + '.' + metadataDetail.suffix + '-meta.xml';
@@ -1788,8 +1943,9 @@ function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, 
                         let targetFolder = PathUtils.getDirname(targetFile);
                         if (FileChecker.isExists(sourceFile)) {
                             callEvent(connection, EVENT.COPY_FILE, metadataTypeName, metadataObjectName, metadataItemName, targetFile);
-                            if (!FileChecker.isExists(targetFolder))
+                            if (!FileChecker.isExists(targetFolder)) {
                                 FileWriter.createFolderSync(targetFolder);
+                            }
                             FileWriter.createFileSync(targetFile, FileReader.readFileSync(sourceFile));
                             if (compress) {
                                 callEvent(connection, EVENT.COMPRESS_FILE, metadataTypeName, metadataObjectName, metadataItemName, targetFile);
@@ -1803,17 +1959,18 @@ function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, 
                     let subPath;
                     let fileName = metadataObjectName + '.' + metadataDetail.suffix + '-meta.xml';
                     if (metadataTypeName === MetadataTypes.CUSTOM_OBJECT) {
-                        subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + metadataObjectName + '/' + fileName
+                        subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + metadataObjectName + '/' + fileName;
                     } else {
-                        subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + fileName
+                        subPath = '/force-app/main/default/' + metadataDetail.directoryName + '/' + fileName;
                     }
                     let sourceFile = path + '/' + subPath;
                     let targetFile = targetProject + subPath;
                     let targetFolder = PathUtils.getDirname(targetFile);
                     if (FileChecker.isExists(sourceFile)) {
                         callEvent(connection, EVENT.COPY_FILE, metadataTypeName, metadataObjectName, undefined, targetFile);
-                        if (!FileChecker.isExists(targetFolder))
+                        if (!FileChecker.isExists(targetFolder)) {
                             FileWriter.createFolderSync(targetFolder);
+                        }
                         FileWriter.createFileSync(targetFile, FileReader.readFileSync(sourceFile));
                         if (compress) {
                             callEvent(connection, EVENT.COMPRESS_FILE, metadataTypeName, metadataObjectName, undefined, targetFile);
@@ -1826,12 +1983,12 @@ function copyMetadataFiles(connection, targetProject, folderMetadataMap, types, 
     }
 }
 
-function processExportTreeDataOut(response) {
+function processExportTreeDataOut(response: string): ExportTreeDataResult[] {
     let outData = StrUtils.replace(response, '\n', '').split(',');
-    let dataToReturn = [];
+    let dataToReturn: ExportTreeDataResult[] = [];
     for (let data of outData) {
         let splits = data.split(" ");
-        let nRecords = splits[1];
+        let nRecords = Number(splits[1]);
         let file = PathUtils.getBasename(splits[splits.length - 1]);
         dataToReturn.push(
             {
@@ -1844,33 +2001,14 @@ function processExportTreeDataOut(response) {
     return dataToReturn;
 }
 
-function handleResponse(response, onSuccess) {
-    if (response !== undefined) {
-        if (typeof response === 'object') {
-            if (response.status === 0) {
-                onSuccess.call(this);
-            } else {
-                throw new ConnectionException(response.message);
-            }
-        } else {
-            onSuccess.call(this);
-        }
-    } else {
-        response = {
-            result: {}
-        }
-        onSuccess.call(this);
-    }
-}
-
-function callEvent(connection, stage, entityName, entityType, entityItem, data) {
+function callEvent(connection: Connection, stage: string, entityName?: string, entityType?: string, entityItem?: string, data?: any) {
     connection._event.emit(stage, new ProgressStatus(connection._increment, connection._percentage, entityName, entityType, entityItem, data));
 }
 
-function downloadMetadata(connection, metadataToDownload, downloadAll, foldersByType, groupGlobalActions) {
-    return new Promise(async (resolve, reject) => {
+function downloadMetadata(connection: Connection, metadataToDownload: string[], downloadAll?: boolean, foldersByType?: { [key: string]: any[] }, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
+    return new Promise<{ [key: string]: MetadataType }>(async (resolve, reject) => {
         try {
-            const metadata = {};
+            const metadata: { [key: string]: MetadataType } = {};
             for (const metadataTypeName of metadataToDownload) {
                 try {
                     if (connection._abort) {
@@ -1882,33 +2020,38 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
                     callEvent(connection, EVENT.BEFORE_DOWNLOAD_TYPE, metadataTypeName);
                     if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
                         const records = await connection.query(METADATA_QUERIES[metadataTypeName]);
-                        if (!records || records.length === 0)
+                        if (!records || records.length === 0) {
                             continue;
-                        const metadataType = TypesFactory.createMetadataTypeFromRecords(metadataTypeName, records, foldersByType, connection.namespacePrefix, downloadAll);
+                        }
+                        const metadataType = MetadataFactory.createMetadataTypeFromRecords(metadataTypeName, records, foldersByType, connection.namespacePrefix, downloadAll);
                         connection._percentage += connection._increment;
-                        if (metadataType !== undefined && metadataType.haveChilds())
+                        if (metadataType !== undefined && metadataType.hasChilds()) {
                             metadata[metadataTypeName] = metadataType;
+                        }
                         callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
                     } else if (NotIncludedMetadata[metadataTypeName]) {
-                        const metadataType = TypesFactory.createNotIncludedMetadataType(metadataTypeName);
+                        const metadataType = MetadataFactory.createNotIncludedMetadataType(metadataTypeName);
                         connection._percentage += connection._increment;
-                        if (metadataType !== undefined && metadataType.haveChilds())
+                        if (metadataType !== undefined && metadataType.hasChilds()) {
                             metadata[metadataTypeName] = metadataType;
+                        }
                         callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
-                    } else {
+                    } else if (connection.usernameOrAlias) {
                         const process = ProcessFactory.describeMetadataType(connection.usernameOrAlias, metadataTypeName, undefined, connection.apiVersion);
                         addProcess(connection, process);
                         const response = await ProcessHandler.runProcess(process);
-                        handleResponse(response, () => {
-                            const metadataType = TypesFactory.createMetedataTypeFromResponse(metadataTypeName, response, connection.namespacePrefix, downloadAll, groupGlobalActions);
+                        connection.handleResponse(response, () => {
+                            const metadataType = MetadataFactory.createMetedataTypeFromResponse(metadataTypeName, response, connection.namespacePrefix, downloadAll, groupGlobalActions);
                             connection._percentage += connection._increment;
-                            if (metadataType !== undefined && metadataType.haveChilds())
+                            if (metadataType !== undefined && metadataType.hasChilds()) {
                                 metadata[metadataTypeName] = metadataType;
+                            }
                             callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
                         });
                     }
                 } catch (error) {
-                    callEvent(connection, EVENT.DOWNLOAD_ERROR, metadataTypeName, undefined, undefined, error.message);
+                    const err = error as Error;
+                    callEvent(connection, EVENT.DOWNLOAD_ERROR, metadataTypeName, undefined, undefined, err.message);
                     /*if (error.message.indexOf('INVALID_TYPE') === -1)
                         throw error;*/
                 }
@@ -1920,30 +2063,34 @@ function downloadMetadata(connection, metadataToDownload, downloadAll, foldersBy
     });
 }
 
-function downloadSObjectsData(connection, sObjects) {
-    return new Promise(async (resolve, reject) => {
+function downloadSObjectsData(connection: Connection, sObjects: string[]): Promise<{ [key: string]: SObject }> {
+    return new Promise<{ [key: string]: SObject }>(async (resolve, reject) => {
         try {
-            const sObjectsResult = {};
-            for (const sObject of sObjects) {
-                try {
-                    if (connection._abort) {
-                        endOperation(connection);
-                        resolve(sObjectsResult);
-                        return;
+            const sObjectsResult: { [key: string]: SObject } = {};
+            if (connection.usernameOrAlias) {
+                for (const sObject of sObjects) {
+                    try {
+                        if (connection._abort) {
+                            endOperation(connection);
+                            resolve(sObjectsResult);
+                            return;
+                        }
+                        callEvent(connection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
+                        const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
+                        addProcess(connection, process);
+                        const response = await ProcessHandler.runProcess(process);
+                        connection.handleResponse(response, () => {
+                            const sObjectResult = MetadataFactory.createSObjectFromJSONSchema(response);
+                            connection._percentage += connection._increment;
+                            if (sObjectResult !== undefined) {
+                                sObjectsResult[sObject] = sObjectResult;
+                            }
+                            callEvent(connection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
+                        });
+                    } catch (error) {
+                        const err = error as Error;
+                        callEvent(connection, EVENT.DOWNLOAD_ERROR, sObject, undefined, undefined, err.message);
                     }
-                    callEvent(connection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
-                    const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
-                    addProcess(connection, process);
-                    const response = await ProcessHandler.runProcess(process);
-                    handleResponse(response, () => {
-                        const sObjectResult = TypesFactory.createSObjectFromJSONSchema(response);
-                        connection._percentage += connection._increment;
-                        if (sObjectResult !== undefined)
-                            sObjectsResult[sObject] = sObjectResult;
-                        callEvent(connection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
-                    });
-                } catch (error) {
-                    callEvent(connection, EVENT.DOWNLOAD_ERROR, sObject, undefined, undefined, error.message);
                 }
             }
             resolve(sObjectsResult);
@@ -1953,19 +2100,19 @@ function downloadSObjectsData(connection, sObjects) {
     });
 }
 
-function getBatches(connection, objects) {
+function getBatches(connection: Connection, objects: string[]) {
     const nBatches = (connection.multiThread) ? OSUtils.getAvailableCPUs() : 1;
     const recordsPerBatch = Math.ceil(objects.length / nBatches);
-    const batches = [];
+    const batches: BatchData[] = [];
     let counter = 0;
-    let batch;
+    let batch: BatchData | undefined;
     for (const object of objects) {
         if (!batch) {
             batch = {
                 batchId: 'Bacth_' + counter,
                 records: [],
                 completed: false
-            }
+            };
             counter++;
         }
         if (batch) {
@@ -1976,16 +2123,17 @@ function getBatches(connection, objects) {
             }
         }
     }
-    if (batch)
+    if (batch){
         batches.push(batch);
+    }
     return batches;
 }
 
-function calculateIncrement(objects) {
+function calculateIncrement(objects: string[]) {
     return MathUtils.round(100 / objects.length, 2);
 }
 
-function getMetadataTypeNames(typesOrDetails) {
+function getMetadataTypeNames(typesOrDetails: string[] | MetadataDetail[]) {
     const result = [];
     if (typesOrDetails !== undefined) {
         const objectsToProcess = Utils.forceArray(typesOrDetails);
@@ -2003,7 +2151,7 @@ function getMetadataTypeNames(typesOrDetails) {
     return result;
 }
 
-function getFoldersByType(connection) {
+function getFoldersByType(connection: Connection): Promise<{ [key: string]: any[] }> {
     return new Promise((resolve, reject) => {
         const query = 'Select Id, Name, DeveloperName, NamespacePrefix, Type FROM Folder';
         try {
@@ -2014,10 +2162,11 @@ function getFoldersByType(connection) {
                 return;
             }
             connection.query(query).then((records) => {
-                let result = {};
+                let result: { [key: string]: any[] } = {};
                 for (const folder of records) {
-                    if (!result[folder.Type])
+                    if (!result[folder.Type]) {
                         result[folder.Type] = [];
+                    }
                     result[folder.Type].push(folder);
                 }
                 resolve(result);
@@ -2030,12 +2179,12 @@ function getFoldersByType(connection) {
     });
 }
 
-function resetProgress(connection) {
+function resetProgress(connection: Connection): void {
     connection._percentage = 0;
     connection._increment = 0;
 }
 
-function killProcesses(connection) {
+function killProcesses(connection: Connection): void {
     if (connection._processes && Object.keys(connection._processes).length > 0) {
         for (let process of Object.keys(connection._processes)) {
             killProcess(connection, connection._processes[process]);
@@ -2043,35 +2192,37 @@ function killProcesses(connection) {
     }
 }
 
-function killProcess(connection, process) {
+function killProcess(connection: Connection, process: Process): void {
     process.kill();
     delete connection._processes[process.name];
 }
 
-function startOperation(connection) {
+function startOperation(connection: Connection): void {
     if (!connection._allowConcurrence) {
-        if (connection._inProgress)
+        if (connection._inProgress) {
             throw new OperationNotAllowedException('Connection in use. Abort the current operation to execute other.');
+        }
         connection._abort = false;
         connection._inProgress = true;
         connection._processes = {};
     }
 }
 
-function endOperation(connection) {
+function endOperation(connection: Connection): void {
     if (!connection._allowConcurrence) {
         connection._inProgress = false;
         connection._processes = {};
     }
 }
 
-function addProcess(connection, process) {
-    if (connection._processes === undefined)
+function addProcess(connection: Connection, process: Process): void {
+    if (connection._processes === undefined) {
         connection._processes = {};
+    }
     connection._processes[process.name] = process;
 }
 
-function createAuthOrgs(orgs) {
+function createAuthOrgs(orgs: any | any[]): AuthOrg[] {
     const authOrgs = [];
     if (orgs !== undefined) {
         orgs = Utils.forceArray(orgs);
@@ -2080,4 +2231,10 @@ function createAuthOrgs(orgs) {
         }
     }
     return authOrgs;
+}
+
+interface BatchData {
+    batchId: string;
+    records: string[];
+    completed: boolean;
 }
