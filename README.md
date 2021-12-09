@@ -41,31 +41,31 @@ The fields that start with _ are for internal use only (Does not modify this fie
 
 ### [**usernameOrAlias**](#connection-class-fields-usernameoralias)
 Username or Alias to connect with the org. The org bust be authorized in the system. 
-- `String`
+- `string`
 
 ### [**apiVersion**](#connection-class-fields-apiversion)
 Number API Version to connect with the org.
-- `String` | `Number`
+- `string` | `number`
 
 ### [**projectFolder**](#connection-class-fields-projectfolder)
 Path to the local project folder
-- `String`
+- `string`
 
 ### [**namespacePrefix**](#connection-class-fields-namespaceprefix)
 Namespace prefix from the Org to connect
-- `String`
+- `string`
 
 ### [**multiThread**](#connection-class-fields-multithread)
 True to able to the connection object to use several threads and processor cores to run some processes and run faster, false to use only one thread and core.
-- `Boolean`
+- `boolean`
 
 ### [**packageFolder**](#connection-class-fields-packageFolder)
 Project package folder path (manifest folder). Must be a child of Project folder
-- `String`
+- `string`
 
 ### [**packageFile**](#connection-class-fields-packageFile)
 Project package file path (package.xml file). Must be a child of Package folder
-- `String`
+- `string`
   
 </br>
 
@@ -77,13 +77,13 @@ Constructor to create a new connection object. All parameters are optional and y
 
 ### **Parameters:**
   - **usernameOrAlias**: Org Username or Alias to connect. (Must be authorized in the system)
-    - `String`
+    - `string`
   - **apiVersion**: API Version number to connect with salesforce
-    - `String` | `Number`
+    - `string` | `number`
   - **projectFolder**: Path to the project root folder
-    - `String`
+    - `string`
   - **namespacePrefix**: Namespace prefix from the Org to connect
-    - `String`
+    - `string`
 
 </br>
 
@@ -303,7 +303,7 @@ Method to set the Username or Alias to connect with org
 
 ### **Parameters:**
   - **usernameOrAlias**: Org Username or Alias to connect. (Must be authorized in the system)
-    - `String`
+    - `string`
 
 ### **Return:**
 Returns the connection object
@@ -312,7 +312,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection username or alias**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -325,7 +325,7 @@ Method to set the API Version to connect
 
 ### **Parameters:**
   - **apiVersion**: API Version number to connect with salesforce
-    - `String` | `Number`
+    - `string` | `number`
 
 ### **Return:**
 Returns the connection object
@@ -334,7 +334,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection api version**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -350,7 +350,7 @@ Method to set the project root folder path. When set the project root, automatic
 
 ### **Parameters:**
   - **projectFolder**: Path to the project root folder
-    - `String`
+    - `string`
 
 ### **Return:**
 Returns the connection object
@@ -359,7 +359,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection project folder**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -375,7 +375,7 @@ Method to set the package folder path. When set the package folder, automaticall
 
 ### **Parameters:**
   - **packageFolder**: Path to the package folder
-    - `String`
+    - `string`
 
 ### **Return:**
 Returns the connection object
@@ -384,7 +384,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection package folder (manifest folder)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -400,7 +400,7 @@ Method to set the package xml file path
 
 ### **Parameters:**
   - **packageFile**: Path to the package folder
-    - `String`
+    - `string`
 
 ### **Return:**
 Returns the connection object
@@ -409,7 +409,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection package file (package.xml)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -425,7 +425,7 @@ Method to set the package xml file path
 
 ### **Parameters:**
   - **namespacePrefix**: Namespace prefix from the Org to connect
-    - `String`
+    - `string`
 
 ### **Return:**
 Returns the connection object
@@ -434,7 +434,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection namespace prefix**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -455,7 +455,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection to user multiple threads and cores**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -476,7 +476,7 @@ Returns the connection object
 ### **Examples:**
 **Set Connection to user single thread and core**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -501,7 +501,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on prepare stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -525,7 +525,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on create project stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -549,7 +549,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on retrieve stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -573,7 +573,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on process stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -597,7 +597,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on loading local stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -621,7 +621,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on loading org stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -645,7 +645,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on copy data stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -669,7 +669,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on copy file stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -697,7 +697,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on compress file stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -725,7 +725,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on before download type stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -750,7 +750,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on after download type stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -776,7 +776,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on before download sobject stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -801,7 +801,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on after download sobject stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -827,7 +827,7 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on error download stage**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -853,7 +853,7 @@ Returns the connection object
 ### **Examples:**
 **Set connection abort callback**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -874,7 +874,7 @@ Method to abort all connection running processes. When finishes call onAbort() c
 ### **Examples:**
 **Abort connection and handle on abort callback**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -891,7 +891,7 @@ Method to get the Auth Username from the org (If not found username, return the 
 
 ### **Return:**
 Return a String promise with the Username or Alias data
-- `Promise<String>`
+- `Promise<string>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -901,7 +901,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get auth username to the connection**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -918,11 +918,11 @@ Method to get the server instance for an username or alias (or the connection us
 
 ### **Parameters:**
   - **usernameOrAlias**: Username or alias to check. (If not provided, use usernameOrAlias from connection object)
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a String promise with the instance URL
-- `Promise<String>`
+- `Promise<string>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -932,7 +932,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get server instance to the connected org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
     
@@ -946,7 +946,7 @@ This method can throw the next exceptions:
 ```
 **Get server instance to another**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection();
 
@@ -963,7 +963,7 @@ Method to list all auth org on the system
 
 ### **Return:**
 Return a promise with all authorized org in the system 
-- `Promise<Array<AuthOrg>>`
+- `Promise<AuthOrg[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -973,7 +973,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get all auth org on the system**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 50);
 
@@ -998,13 +998,13 @@ Method to execute a query to the connected org
 
 ### **Parameters:**
   - **query**: Query to execute (Required)
-    - `String`
+    - `string`
   - **useToolingApi**: true to use Tooling API to execute the query
-    - `Boolean`
+    - `boolean`
 
 ### **Return:**
 Return a promise with the record list 
-- `Promise<Array<Object>>`
+- `Promise<any[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1016,7 +1016,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Query data and handle results**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 50);
 
@@ -1040,7 +1040,7 @@ Method to list all Metadata Types available in the connected org (according sele
 
 ### **Return:**
 Return a promise with the MetadataDetail objects from all available Metadata Types
-- `Promise<Array<MetadataDetail>>`
+- `Promise<MetadataDetail[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1053,7 +1053,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get all available Metadata types to API 45**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 45);
 
@@ -1071,7 +1071,7 @@ This method can throw the next exceptions:
 ```
 **Get all available Metadata types to API 51**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1095,15 +1095,15 @@ Method to describe all or selected Metadata Types from the connected org. See [M
 
 ### **Parameters:**
   - **typesOrDetails**: List of Metadata Type API Names or Metadata Details to describe (undefined to describe all metadata types)
-    - `Arra<String>` | `Array<MetadataDetail>`
+    - `string[]` | `MetadataDetail[]`
   - **downloadAll**: true to download all Metadata Types from the connected org, false to download only the org namespace Metadata Types
-    - `Boolean`
+    - `boolean`
   - **groupGlobalActions**: True to group global quick actions on "GlobalActions" group, false to include as object and item
-    - `Boolean`
+    - `boolean`
 
 ### **Return:**
 Return a promise with Metadata JSON Object with the selected Metadata Types to describe 
-- `Promise<Array<Object>>`
+- `Promise<{ [key: string]: MetadataType }>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1116,7 +1116,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Describe all Metadata types from the connected org and org namespace**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1132,7 +1132,7 @@ This method can throw the next exceptions:
 ```
 **Describe all Metadata types from the connected org and all namespaces**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1148,7 +1148,7 @@ This method can throw the next exceptions:
 ```
 **Describe some Metadata types from the connected**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1175,11 +1175,11 @@ Method to list all SObjects API Name by category
 
 ### **Parameters:**
   - **category**: Object Category. Values are: Standard, Custom, All. (All by default) 
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with a list with the sObject names 
-- `Promise<Array<String>>`
+- `Promise<string[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1191,7 +1191,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **List all SObjects**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1206,7 +1206,7 @@ This method can throw the next exceptions:
 ```
 **List custom SObjects**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1221,7 +1221,7 @@ This method can throw the next exceptions:
 ```
 **List standard SObjects**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1240,11 +1240,11 @@ Method to describe SObject data to the specified objects
 
 ### **Parameters:**
   - **sObjects**: List with the object API Names to describe 
-    - `Array<String>`
+    - `string[]`
 
 ### **Return:**
 Return a promise with a SObjects data
-- `Promise<Array<SObject>>`
+- `Promise<SObject[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1256,7 +1256,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Describe some SObjects**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1278,7 +1278,7 @@ This method can throw the next exceptions:
 ```
 **Describe all SObjects**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg');
     connection.setApiVersion(51);
@@ -1300,11 +1300,11 @@ Method to retrieve data using the connection package file. You can choose to ret
 
 ### **Parameters:**
   - **useMetadataAPI**: True to use Metadata API format, false to use source format 
-    - `Boolean`
+    - `boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results 
-    - `String` | `Number`
+    - `string` | `number`
   - **targetDir**: Path to the target dir when retrieve with Metadata API Format
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with the RetrieveResult object with the retrieve result 
@@ -1324,7 +1324,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve data using Metadata API Format (With package.xml file on project)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1337,7 +1337,7 @@ This method can throw the next exceptions:
 
 **Retrieve data using Source Format (With package.xml file on project)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1353,9 +1353,9 @@ Retrieve report when use Metadata API to retrieve data
 
 ### **Parameters:**
   - **retrieveId**: Retrieve Id to get the report (Required) 
-    - `String`
+    - `string`
   - **targetDir**: Path to the target dir (Required) 
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with the RetrieveStatus object with the retrieve status result
@@ -1374,7 +1374,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get a retrieve report status**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1394,13 +1394,13 @@ Method to validate a deploy against the org using the connection package file
 
 ### **Parameters:**
   - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-    - `String`
+    - `string`
   - **runTests**: String with comma separated test names to execute or list with the test names to execute
-    - `String` | `Array<String>`
+    - `string` | `string[]`
   - **useMetadataAPI**: True to validate deploy using Metadata API Format, false to use Source Format
-    - `Boolean`
+    - `boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - `String` | `Number`
+    - `string` | `number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
@@ -1424,7 +1424,7 @@ This method can throw the next exceptions:
 
 **Validate deployment with Metadata API format (With package.xml file on project)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1446,7 +1446,7 @@ This method can throw the next exceptions:
 ```
 **Validate deployment with Source format (With package.xml file on project)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1473,13 +1473,13 @@ Method to deploy data to the org using the connection package file
 
 ### **Parameters:**
   - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-    - `String`
+    - `string`
   - **runTests**: String with comma separated test names to execute or list with the test names to execute
-    - `String` | `Array<String>`
+    - `string` | `string[]`
   - **useMetadataAPI**: True to validate deploy using Metadata API Format, false to use Source Format
-    - `Boolean`
+    - `boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - `String` | `Number`
+    - `string` | `number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
@@ -1504,7 +1504,7 @@ This method can throw the next exceptions:
 
 **Deploy data with Metadata API format (With package.xml file on project)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1526,7 +1526,7 @@ This method can throw the next exceptions:
 ```
 **Deploy data with Source format (With package.xml file on project)**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1554,13 +1554,13 @@ Method to deploy data to the org using the connection package file
 
 ### **Parameters:**
   - **types**: Metadata JSON Object with the selected elements to deploy or comma separated values String with the metadata types to deploy
-    - `String` | `Object`
+    - `string` | `{ [key: string]: MetadataType }`
   - **testLevel**: Level of deployment tests to run. Values are 'NoTestRun', 'RunSpecifiedTests', 'RunLocalTests', 'RunAllTestsInOrg'
-    - `String`
+    - `string`
   - **runTests**: String with comma separated test names to execute or list with the test names to execute
-    - `String` | `Array<String>`
+    - `string` | `string[]`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - `String` | `Number`
+    - `string` | `number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
@@ -1584,7 +1584,7 @@ This method can throw the next exceptions:
 
 **Deploy data with Source format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1612,9 +1612,9 @@ Method to execute a quick deploy when validation result is success
 
 ### **Parameters:**
   - **deployId**: Id to deploy the validated deployment (Required)
-    - `String`
+    - `string`
   - **useMetadataAPI**: True to execute quick deploy using Metadata API Format, false to use Source Format
-    - `Boolean`
+    - `boolean`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
@@ -1635,7 +1635,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute quick deploy to Validated deploy with Metadata API format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1649,7 +1649,7 @@ This method can throw the next exceptions:
 ```
 **Execute quick deploy to Validated deploy with Source format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1668,11 +1668,11 @@ Method to get the report of a running deployment
 
 ### **Parameters:**
   - **deployId**: Id to the deployment to get the report (Required)
-    - `String`
+    - `string`
   - **useMetadataAPI**: True to execute deploy report using Metadata API Format, false to use Source Format
-    - `Boolean`
+    - `boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - `String` | `Number`
+    - `string` | `number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
@@ -1688,7 +1688,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute deploy report to active deploy with Metadata API format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1702,7 +1702,7 @@ This method can throw the next exceptions:
 ```
 **Execute deploy report to active deploy with Source format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1721,11 +1721,11 @@ Method to get the cancel a running deployment
 
 ### **Parameters:**
   - **deployId**: Id to the deployment to cancel (Required)
-    - `String`
+    - `string`
   - **useMetadataAPI**: True to execute cancel deploy using Metadata API Format, false to use Source FormatSource Format
-    - `Boolean`
+    - `boolean`
   - **waitMinutes**: Number of minutes to wait for the command to complete and display results
-    - `String` | `Number`
+    - `string` | `number`
 
 ### **Return:**
 Return a promise with the DeployStatus object with the deploy status result
@@ -1741,7 +1741,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Cancel deploy to active deploy with Metadata API format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
     
@@ -1755,7 +1755,7 @@ This method can throw the next exceptions:
 ```
 **Cancel deploy to active deploy with Source format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1774,11 +1774,11 @@ Method to convert a Metadata API format Project to a Source format
 
 ### **Parameters:**
   - **targetDir**: Path to the target dir to save the converted project (Required)
-    - `String`
+    - `string`
 
 ### **Return:**
 Return an empty promise when conversion finish
-- `Promise<Any>`
+- `Promise<void>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1798,7 +1798,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Convert Metadata API Format project to Source Format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1815,11 +1815,11 @@ Method to convert a Metadata API format Project to a Source format
 
 ### **Parameters:**
   - **targetDir**: Path to the target dir to save the converted project (Required)
-    - `String`
+    - `string`
 
 ### **Return:**
 Return an empty promise when conversion finish
-- `Promise<Any>`
+- `Promise<void>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1839,7 +1839,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Convert Source Format project to Metadata API Format**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1856,13 +1856,13 @@ Method to create a SFDX Project. This method change the connection object projec
 
 ### **Parameters:**
   - **projectName**: Project Name to create (Required)
-    - `String`
+    - `string`
 - **projectFolder**: Path to save the project. If undefined use the connection project folder
-    - `String`
+    - `string`
 - **template**: Template to use to create the project. Empty by default
-    - `String`
+    - `string`
 - **withManifest**: True to create the project with manifest, false in otherwise
-    - `Boolean`
+    - `boolean`
 
 
 ### **Return:**
@@ -1882,7 +1882,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Create new SFDX Project with connection project folder**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1896,7 +1896,7 @@ This method can throw the next exceptions:
 ```
 **Create new SFDX Project on a different connection project folder**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1916,11 +1916,11 @@ Method to set an auth org in a Salesforce local project. This command set the se
 
 ### **Parameters:**
   - **usernameOrAlias**: Username or alias to auth. (Must be authorized in the system). If undefined use the connection username or alias
-    - `String`
+    - `string`
 
 ### **Return:**
 Return an empty promise when operation finish
-- `Promise<Any>`
+- `Promise<void>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1935,7 +1935,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Auth new org with connection username or alias**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1947,7 +1947,7 @@ This method can throw the next exceptions:
 ```
 **Auth new org with different connection username or alias**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -1966,15 +1966,15 @@ Method to export data in a tree format from the connected org
 
 ### **Parameters:**
   - **query**: Query to extract the data (Required)
-    - `String`
+    - `string`
   - **outputPath**: Path to the folder to (Required)
-    - `String`
+    - `string`
   - **prefix**: Prefix to add to the created files
-    - `String`
+    - `string`
 
 ### **Return:**
 Return an array with the extrated data information
-- `Promise<Array<Object>>`
+- `Promise<ExportTreeDataResult[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1991,7 +1991,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Export Accounts data with related contacts**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2015,11 +2015,11 @@ Method to import data in a tree format into the connected org
 
 ### **Parameters:**
   - **file**: Path to the file to import (Required)
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with an object with the ok result and errors on insert
-- `Promise<Object>`
+- `Promise<ImportTreeDataResponse>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -2036,7 +2036,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Import file with exported records**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2065,14 +2065,14 @@ Method to delete data on bulk mode
 
 ### **Parameters:**
   - **csvfile**: Path to the CSV file with the ids to delete (Required)
-    - `String`
+    - `string`
   - **sObject**: Records SObject API Name (Required)
-    - `String`
+    - `string`
 
 
 ### **Return:**
 Return a promise with an array with BulkStatus objects with the delete result
-- `Promise<Array<BulkStatus>>`
+- `Promise<BulkStatus[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -2092,7 +2092,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Delete data at bulk mode**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2113,11 +2113,11 @@ Method to execute an Apex script file on Anonymous context
 
 ### **Parameters:**
   - **scriptfile**: Path to the script file (Required)
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with the execution log as String
-- `Promise<String>`
+- `Promise<string>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -2137,7 +2137,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute an Apex Anonymous script**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2156,11 +2156,11 @@ Method to get all available user permissions from the connected org
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with the list of user permissions
-- `Promise<Array<String>>`
+- `Promise<string[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -2177,7 +2177,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Load User permissions from connected org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2194,13 +2194,13 @@ Method to get all available user permissions from the connected org
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - `String`
+    - `string`
   - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-    - `Object`
+    - `string` | `{ [key: string]: MetadataType }`
   - **compress**: true to compress affected files, false in otherwise
-    - `Boolean`
+    - `boolean`
   - **sortOrder**: Compress sort order when compress files
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
@@ -2225,7 +2225,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all local special Metadata Types from Org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2237,7 +2237,7 @@ This method can throw the next exceptions:
 ```
 **Retrieve some local special Metadata Types from Org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
@@ -2267,15 +2267,15 @@ Method to Retrieve mixed special types from the connected org. Mixed means that 
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - `String`
+    - `string`
   - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-    - `Object`
+    - `string` | `{ [key: string]: MetadataType }`
   - **downloadAll**: true to compress affected files, false in otherwise
-    - `Boolean`
+    - `boolean`
   - **compress**: true to download all related data from any namespace, false to downlaod only the org namespace data
-    - `Boolean`
+    - `boolean`
   - **sortOrder**: Compress sort order when compress files
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
@@ -2300,7 +2300,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all mixed special Metadata Types from Org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2312,7 +2312,7 @@ This method can throw the next exceptions:
 ```
 **Retrieve some mixed special Metadata Types from Org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
@@ -2342,15 +2342,15 @@ Method to Retrieve org special types from the connected org. Org means that affe
 
 ### **Parameters:**
   - **tmpFolder**: Temporal folder to save support files (Required)
-    - `String`
+    - `string`
   - **types**: Metadata JSON Object or Metadata JSON File with the specific types to retrieve. Undefined to retrieve all special types
-    - `Object`
+    - `string` | `{ [key: string]: MetadataType }`
   - **downloadAll**: true to compress affected files, false in otherwise
-    - `Boolean`
+    - `boolean`
   - **compress**: true to download all related data from any namespace, false to downlaod only the org namespace data
-    - `Boolean`
+    - `boolean`
   - **sortOrder**: Compress sort order when compress files
-    - `String`
+    - `string`
 
 ### **Return:**
 Return a promise with a RetrieveResult with the retrieve result
@@ -2375,7 +2375,7 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all org special Metadata Types from Org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
 
     const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
 
@@ -2387,7 +2387,7 @@ This method can throw the next exceptions:
 ```
 **Retrieve some org special Metadata Types from Org**
 ```javascript
-    const Connection = require('@aurahelper/connector');
+    import { Connection } from '@aurahelper/connector';
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;

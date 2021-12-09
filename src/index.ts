@@ -374,7 +374,7 @@ export class Connection {
                 const authOrgs = await this.listAuthOrgs();
                 let username;
                 if (authOrgs && authOrgs.length > 0) {
-                    const defaultUsername = this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFilePath(this.projectFolder));
+                    const defaultUsername = this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFolderPath(this.projectFolder));
                     if (defaultUsername) {
                         for (const authOrg of authOrgs) {
                             if (defaultUsername.indexOf('@') !== -1) {
@@ -626,9 +626,9 @@ export class Connection {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    listSObjects(category?: string) {
+    listSObjects(category?: string): Promise<string[]> {
         startOperation(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<string[]>((resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
@@ -1210,17 +1210,17 @@ export class Connection {
      * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
      */
-    createSFDXProject(projectName: string, projectFolder?: string, template?: string, withManifest?: boolean) {
+    createSFDXProject(projectName: string, projectFolder?: string, template?: string, withManifest?: boolean): Promise<SFDXProjectResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
+        return new Promise<SFDXProjectResult>((resolve, reject) => {
             try {
                 let projectFolderRes = Validator.validateFolderPath(projectFolder || this.projectFolder);
                 let process = ProcessFactory.createSFDXProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
-                        const result = (response !== undefined) ? new SFDXProjectResult(response.result) : undefined;
+                        const result = new SFDXProjectResult(response.result);
                         projectFolderRes = StrUtils.replace(projectFolderRes, '\\', '/');
                         this.setProjectFolder(projectFolderRes + '/' + projectName);
                         if (withManifest) {
@@ -1505,7 +1505,7 @@ export class Connection {
                     throw new DataRequiredException('usernameOrAlias');
                 }
                 tmpFolder = Validator.validateFolderPath(tmpFolder);
-                const originalProjectFolder = Validator.validateFilePath(this.projectFolder);
+                const originalProjectFolder = Validator.validateFolderPath(this.projectFolder);
                 callEvent(this, EVENT.PREPARE);
                 this._allowConcurrence = true;
                 const metadata: { [key: string]: MetadataType } = {};
