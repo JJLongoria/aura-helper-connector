@@ -33,7 +33,7 @@
     "Apex",
     "force.com",
     "DevOps",
-		"devops",
+    "devops",
     "Metadata Connector",
     "Salesforce Connector",
     "Describe Metadata",
@@ -49,15 +49,16 @@
     "url": "https://github.com/JJLongoria/aura-helper-connector"
   },
   "bugs": {
-		"url": "https://github.com/JJLongoria/aura-helper-connector/issues",
-		"email": "juanjoselongoria@gmail.com"
-	},
+    "url": "https://github.com/JJLongoria/aura-helper-connector/issues",
+    "email": "juanjoselongoria@gmail.com"
+  },
   "dependencies": {
     "@aurahelper/core": "file:../ah-core",
-    "@aurahelper/package-generator": "file:../ah-package-generator",
     "@aurahelper/languages": "file:../ah-languages",
     "@aurahelper/metadata-factory": "file:../ah-metadata-factory",
-    "@aurahelper/xml-compressor": "file:../ah-xml-compressor"
+    "@aurahelper/package-generator": "file:../ah-package-generator",
+    "@aurahelper/xml-compressor": "file:../ah-xml-compressor",
+    "@salesforce/core": "^2.31.1"
   },
   "devDependencies": {
     "@types/jest": "^27.0.3",
