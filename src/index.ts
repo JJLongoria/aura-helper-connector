@@ -1,4 +1,5 @@
 import EventEmitter from "events";
+import { AuthInfo, Messages, SfdxError } from '@salesforce/core';
 import { MetadataFactory } from '@aurahelper/metadata-factory';
 import { PackageGenerator } from '@aurahelper/package-generator';
 import { XMLCompressor } from '@aurahelper/xml-compressor';
@@ -370,8 +371,7 @@ export class Connection {
         startOperation(this);
         return new Promise<string | undefined>(async (resolve, reject) => {
             try {
-                this._allowConcurrence = true;
-                const authOrgs = await this.listAuthOrgs();
+                const authOrgs = await AuthInfo.listAllAuthorizations();
                 let username;
                 if (authOrgs && authOrgs.length > 0) {
                     const defaultUsername = this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFolderPath(this.projectFolder));
@@ -391,16 +391,13 @@ export class Connection {
                             }
                         }
                     }
-                    this._allowConcurrence = false;
                     endOperation(this);
                     resolve(username);
                 } else {
-                    this._allowConcurrence = false;
                     endOperation(this);
                     resolve(undefined);
                 }
             } catch (error) {
-                this._allowConcurrence = false;
                 endOperation(this);
                 reject(error);
             }
@@ -421,7 +418,7 @@ export class Connection {
         return new Promise<string | undefined>(async (resolve, reject) => {
             try {
                 this._allowConcurrence = true;
-                const authOrgs = await this.listAuthOrgs();
+                const authOrgs = await AuthInfo.listAllAuthorizations();
                 let inbstanceUrl;
                 if (usernameOrAlias && authOrgs && authOrgs.length > 0) {
                     for (const authOrg of authOrgs) {
@@ -457,15 +454,15 @@ export class Connection {
         startOperation(this);
         return new Promise<AuthOrg[]>((resolve, reject) => {
             try {
-                const process = ProcessFactory.listAuthOurgs();
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const orgs = (response !== undefined) ? response.result : undefined;
-                        const authOrgs = createAuthOrgs(orgs);
-                        endOperation(this);
-                        resolve(authOrgs);
-                    });
+                AuthInfo.listAllAuthorizations().then((orgs) => {
+                    const authOrgs: AuthOrg[] = [];
+                    if (orgs) {
+                        for (const org of orgs) {
+                            authOrgs.push(new AuthOrg(org));
+                        }
+                    }
+                    endOperation(this);
+                    resolve(authOrgs);
                 }).catch((error) => {
                     endOperation(this);
                     reject(error);
@@ -1809,13 +1806,13 @@ export class Connection {
                 const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
                 this._allowConcurrence = true;
                 MetadataUtils.checkAll(metadataFromOrg);
-                if (FileChecker.isExists(tmpFolder)){
+                if (FileChecker.isExists(tmpFolder)) {
                     FileWriter.delete(tmpFolder);
                 }
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                if(this.packageFolder){
+                if (this.packageFolder) {
                     const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadataFromOrg, this.packageFolder);
                 }
                 FileWriter.delete(this.projectFolder + '/.forceignore');
@@ -1824,7 +1821,7 @@ export class Connection {
                 const retrieveOut = await this.retrieve(false);
                 waitForFiles(this.projectFolder);
                 callEvent(this, EVENT.COPY_DATA);
-                if(typesToRetrieve){
+                if (typesToRetrieve) {
                     copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadataFromOrg, compress, sortOrder);
                 }
                 //callProgressCalback(this, EVENT.CLEANING);
@@ -2123,7 +2120,7 @@ function getBatches(connection: Connection, objects: string[]) {
             }
         }
     }
-    if (batch){
+    if (batch) {
         batches.push(batch);
     }
     return batches;
