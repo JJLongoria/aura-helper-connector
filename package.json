@@ -53,11 +53,11 @@
     "email": "juanjoselongoria@gmail.com"
   },
   "dependencies": {
-    "@aurahelper/core": "file:../ah-core",
-    "@aurahelper/languages": "file:../ah-languages",
-    "@aurahelper/metadata-factory": "file:../ah-metadata-factory",
-    "@aurahelper/package-generator": "file:../ah-package-generator",
-    "@aurahelper/xml-compressor": "file:../ah-xml-compressor",
+    "@aurahelper/core": "^2.0.0",
+    "@aurahelper/languages": "^2.0.0",
+    "@aurahelper/metadata-factory": "^2.0.0",
+    "@aurahelper/package-generator": "^2.0.0",
+    "@aurahelper/xml-compressor": "^2.0.0",
     "@salesforce/core": "^2.31.1"
   },
   "devDependencies": {
@@ -65,6 +65,7 @@
     "@types/node": "^12.12.47",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
+    "@types/jsforce": "^1.9.29",
     "eslint": "^8.3.0",
     "jest": "^27.4.3",
     "ts-jest": "^27.0.7",
