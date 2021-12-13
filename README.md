@@ -185,13 +185,17 @@ Constructor to create a new connection object. All parameters are optional and y
 
     Method to abort all connection running processes. When finishes call onAbort() callback
 
-  - [**getAuthUsername()**](#getauthusername)
+  - [**getAuthUsername(usernameOrAlias)**](#getauthusernameusernameOrAlias)
    
-    Method to get the Auth Username from the org (If not found username, return the Alias)
+    Method to get the username from an authorized org using a username or alias, or using connection username or alias, or using project auth org username or alias 
 
   - [**getServerInstance(usernameOrAlias)**](#getserverinstanceusernameoralias)
    
-    Method to get the server instance for an username or alias (or the connection username or alias)
+    Method to get the server instance using a username or alias, or using connection username or alias, or using project auth org username or alias 
+
+  - [**getAuthOrg(usernameOrAlias)**](#getauthorgusernameoralias)
+   
+    Method to get the auth org data using a username or alias, or using connection username or alias, or using project auth org username or alias
 
   - [**listAuthOrgs()**](#listauthorgs)
    
@@ -312,9 +316,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection username or alias**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setUsernameOrAlias('MyOrg'); 
 ```
@@ -334,9 +338,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection api version**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setApiVersion(50);
 
@@ -359,9 +363,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection project folder**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setProjectFolder('project/root/path');
 
@@ -384,9 +388,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection package folder (manifest folder)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setPackageFolder('project/root/path/manifest');
 
@@ -409,9 +413,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection package file (package.xml)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setPackageFile('project/root/path/manifest/package.xml');
 
@@ -434,9 +438,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection namespace prefix**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setNamespacePrefix('orgPrefix');
 
@@ -455,9 +459,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection to user multiple threads and cores**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setMultiThread();
 
@@ -476,9 +480,9 @@ Returns the connection object
 ### **Examples:**
 **Set Connection to user single thread and core**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.setSingleThread();
 
@@ -501,9 +505,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on prepare stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onPrepare(() => {
       console.log('Handling progress on prepare');
@@ -525,9 +529,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on create project stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onCreateProject(() => {
       console.log('Handling progress on create project');
@@ -549,9 +553,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on retrieve stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onRetrieve(() => {
       console.log('Handling progress on create project');
@@ -573,9 +577,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on process stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onProcess(() => {
       console.log('Handling progress when process');
@@ -597,9 +601,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on loading local stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onLoadingLocal(() => {
       console.log('Handling progress on loading local data');
@@ -621,9 +625,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on loading org stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onLoadingOrg(() => {
       console.log('Handling progress on create project');
@@ -645,9 +649,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on copy data stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onCopyData(() => {
       console.log('Handling progress when copy data');
@@ -669,9 +673,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on copy file stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onCopyFile((status) => {
       console.log('Handling progress when copy file');
@@ -697,9 +701,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on compress file stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onCompressFile((status) => {
       console.log('Handling progress when compress file');
@@ -725,9 +729,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on before download type stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onBeforeDownloadType((status) => {
       console.log('Handling progress when describe metadata types');
@@ -750,9 +754,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on after download type stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onAfterDownloadType((status) => {
       console.log('Handling progress when describe metadata types');
@@ -776,9 +780,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on before download sobject stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onBeforeDownloadSObject((status) => {
       console.log('Handling progress describe sobjects');
@@ -801,9 +805,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on after download sobject stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onAfterDownloadSObject((status) => {
       console.log('Handling progress describe sobjects');
@@ -827,9 +831,9 @@ Returns the connection object
 ### **Examples:**
 **Handling progress on error download stage**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onErrorDownload((status) => {
       console.log('Handling progress describe sobjects');
@@ -853,9 +857,9 @@ Returns the connection object
 ### **Examples:**
 **Set connection abort callback**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onAbort(() => {
 
@@ -874,9 +878,9 @@ Method to abort all connection running processes. When finishes call onAbort() c
 ### **Examples:**
 **Abort connection and handle on abort callback**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.onAbort(() => {
         // Execute when abortConnection() finish and kill all running processes
@@ -886,8 +890,12 @@ Method to abort all connection running processes. When finishes call onAbort() c
 ```
 ---
 
-## [**getAuthUsername()**](#getauthusername)
-Method to get the Auth Username from the org (If not found username, return the Alias)
+## [**getAuthUsername(usernameOrAlias)**](#getauthusernameusernameOrAlias)
+Method to get the username from an authorized org using a username or alias, or using connection username or alias, or using project auth org username or alias 
+
+### **Parameters:**
+  - **usernameOrAlias**: Username or alias to get auth username
+    - `string`
 
 ### **Return:**
 Return a String promise with the Username or Alias data
@@ -899,13 +907,42 @@ This method can throw the next exceptions:
 - **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
 
 ### **Examples:**
-**Get auth username to the connection**
+**Get auth username from the connection project**
+If connection has not username or alias defined and not provide it to the method, get the auth username from the project
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector(undefined, 50, 'path/to/project/root');
 
     connection.getAuthUsername().then((username) => {
+        console.log(username);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+```
+
+**Get auth username from connection alias**
+If connection has username and not alias provided to the method, get username from connection username or alias
+```javascript
+    import { SFConnector } from '@aurahelper/connector';
+
+    const connection = new SFConnector('OrgAlias', 50, 'path/to/project/root');
+
+    connection.getAuthUsername().then((username) => {
+        console.log(username);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+```
+
+**Get auth username for any alias**
+To get the username for any authorized alias, provide it to the method
+```javascript
+    import { SFConnector } from '@aurahelper/connector';
+
+    const connection = new SFConnector('OrgAlias', 50, 'path/to/project/root');
+
+    connection.getAuthUsername('OtherOrgAlias').then((username) => {
         console.log(username);
     }).catch((error) => {
         // Handle errors
@@ -914,10 +951,10 @@ This method can throw the next exceptions:
 ---
 
 ## [**getServerInstance(usernameOrAlias)**](#getserverinstanceusernameoralias)
-Method to get the server instance for an username or alias (or the connection username or alias)
+Method to get the server instance using a username or alias, or using connection username or alias, or using project auth org username or alias 
 
 ### **Parameters:**
-  - **usernameOrAlias**: Username or alias to check. (If not provided, use usernameOrAlias from connection object)
+  - **usernameOrAlias**: Username or alias to get the server instance
     - `string`
 
 ### **Return:**
@@ -932,9 +969,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get server instance to the connected org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
     
     connection.setUsernameOrAlias('MyOrg');
 
@@ -946,12 +983,72 @@ This method can throw the next exceptions:
 ```
 **Get server instance to another**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection();
+    const connection = new SFConnector();
 
     connection.getServerInstance('MyOrg2').then((inbstanceUrl) => {
         console.log(inbstanceUrl);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+```
+---
+
+## [**getAuthOrg(usernameOrAlias)**](#getauthorgusernameoralias)
+Method to get the server instance using a username or alias, or using connection username or alias, or using project auth org username or alias 
+
+### **Parameters:**
+  - **usernameOrAlias**: Username or alias to get the auth org data
+    - `string`
+
+### **Return:**
+Return a promise with Auth Org data or undefined if not exists
+- `Promise<AuthOrg | undefined>`
+
+### **Throws:**
+This method can throw the next exceptions:
+
+- **`ConnectionException`**: If run other connection process when has one process running or Connection Return an error 
+
+### **Examples:**
+**Get auth org from the connection project**
+If connection has not username or alias defined and not provide it to the method, get the auth org data from the project
+```javascript
+    import { SFConnector } from '@aurahelper/connector';
+
+    const connection = new SFConnector(undefined, 50, 'path/to/project/root');
+
+    connection.getAuthOrg().then((authOrg) => {
+        console.log(authOrg);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+```
+
+**Get auth org from connection alias**
+If connection has username and not alias provided to the method, get auth org data from connection username or alias
+```javascript
+    import { SFConnector } from '@aurahelper/connector';
+
+    const connection = new SFConnector('OrgAlias', 50, 'path/to/project/root');
+
+    connection.getAuthOrg().then((authOrg) => {
+        console.log(authOrg);
+    }).catch((error) => {
+        // Handle errors
+    }); 
+```
+
+**Get auth org for any alias**
+To get the auth org data for any authorized alias, provide it to the method
+```javascript
+    import { SFConnector } from '@aurahelper/connector';
+
+    const connection = new SFConnector('OrgAlias', 50, 'path/to/project/root');
+
+    connection.getAuthOrg('OtherOrgAlias').then((authOrg) => {
+        console.log(authOrg);
     }).catch((error) => {
         // Handle errors
     }); 
@@ -973,9 +1070,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get all auth org on the system**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 50);
+    const connection = new SFConnector('MyOrg', 50);
 
     connection.listAuthOrgs().then((authOrgs) => {
         for(const org of authOrgs){
@@ -1016,9 +1113,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Query data and handle results**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 50);
+    const connection = new SFConnector('MyOrg', 50);
 
     const query = 'Select Id, Name, Phone, CustomField__c from Account where Name != null';
 
@@ -1053,9 +1150,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get all available Metadata types to API 45**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 45);
+    const connection = new SFConnector('MyOrg', 45);
 
     connection.listMetadataTypes().then((metadataDetails) => {
         for(const detail of metadataDetails){
@@ -1071,9 +1168,9 @@ This method can throw the next exceptions:
 ```
 **Get all available Metadata types to API 51**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     connection.listMetadataTypes().then((metadataDetails) => {
@@ -1116,9 +1213,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Describe all Metadata types from the connected org and org namespace**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     connection.describeMetadataTypes().then((metadataTypes) => {
@@ -1132,9 +1229,9 @@ This method can throw the next exceptions:
 ```
 **Describe all Metadata types from the connected org and all namespaces**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     connection.describeMetadataTypes(undefined, true).then((metadataTypes) => {
@@ -1148,9 +1245,9 @@ This method can throw the next exceptions:
 ```
 **Describe some Metadata types from the connected**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     const types = [
@@ -1191,9 +1288,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **List all SObjects**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     connection.listSObjects().then((objectNames) => {
@@ -1206,9 +1303,9 @@ This method can throw the next exceptions:
 ```
 **List custom SObjects**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     connection.listSObjects('custom').then((objectNames) => {
@@ -1221,9 +1318,9 @@ This method can throw the next exceptions:
 ```
 **List standard SObjects**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     connection.listSObjects('standard').then((objectNames) => {
@@ -1256,9 +1353,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Describe some SObjects**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     const objects = [
@@ -1278,9 +1375,9 @@ This method can throw the next exceptions:
 ```
 **Describe all SObjects**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg');
+    const connection = new SFConnector('MyOrg');
     connection.setApiVersion(51);
 
     const allSObjects = await connection.listSObjects();
@@ -1324,9 +1421,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve data using Metadata API Format (With package.xml file on project)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     connection.retrieve(true, 'path/to/target/dir').then((retrieveResult) => {
         console.log(retrieveResult);
@@ -1337,9 +1434,9 @@ This method can throw the next exceptions:
 
 **Retrieve data using Source Format (With package.xml file on project)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     connection.retrieve().then((retrieveResult) => {
         console.log(retrieveResult);
@@ -1374,9 +1471,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Get a retrieve report status**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const retrieveId = '';
     const targetDir = 'path/to/target/retrieve/dir';
@@ -1424,9 +1521,9 @@ This method can throw the next exceptions:
 
 **Validate deployment with Metadata API format (With package.xml file on project)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const testLevel = 'RunSpecifiedTests';
     const runTest = [
@@ -1446,9 +1543,9 @@ This method can throw the next exceptions:
 ```
 **Validate deployment with Source format (With package.xml file on project)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const testLevel = 'RunSpecifiedTests';
     const runTest = [
@@ -1504,9 +1601,9 @@ This method can throw the next exceptions:
 
 **Deploy data with Metadata API format (With package.xml file on project)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const testLevel = 'RunSpecifiedTests';
     const runTest = [
@@ -1526,9 +1623,9 @@ This method can throw the next exceptions:
 ```
 **Deploy data with Source format (With package.xml file on project)**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const testLevel = 'RunSpecifiedTests';
     const runTest = [
@@ -1584,9 +1681,9 @@ This method can throw the next exceptions:
 
 **Deploy data with Source format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const types = 'CustomLabel:LabelName1, Profile:ProfileName1';
     const testLevel = 'RunSpecifiedTests';
@@ -1635,9 +1732,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute quick deploy to Validated deploy with Metadata API format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const deployId = '00X213as2984';
 
@@ -1649,9 +1746,9 @@ This method can throw the next exceptions:
 ```
 **Execute quick deploy to Validated deploy with Source format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const deployId = '00X213as2984';
 
@@ -1688,9 +1785,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute deploy report to active deploy with Metadata API format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const deployId = '00X213as2984';
 
@@ -1702,9 +1799,9 @@ This method can throw the next exceptions:
 ```
 **Execute deploy report to active deploy with Source format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const deployId = '00X213as2984';
 
@@ -1741,9 +1838,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Cancel deploy to active deploy with Metadata API format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     
     const deployId = '00X213as2984';
 
@@ -1755,9 +1852,9 @@ This method can throw the next exceptions:
 ```
 **Cancel deploy to active deploy with Source format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const deployId = '00X213as2984';
 
@@ -1798,9 +1895,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Convert Metadata API Format project to Source Format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     connection.convertProjectToSFDX('path/to/folder/to/save/project').then(() => {
         // Conversion finished
@@ -1839,9 +1936,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Convert Source Format project to Metadata API Format**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     connection.convertProjectToMetadataAPI('path/to/folder/to/save/project').then(() => {
         // Conversion finished
@@ -1882,9 +1979,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Create new SFDX Project with connection project folder**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const projectName = 'NEW SFDX Project';
 
@@ -1896,9 +1993,9 @@ This method can throw the next exceptions:
 ```
 **Create new SFDX Project on a different connection project folder**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const projectName = 'NEW SFDX Project';
     const projectFolder = 'path/to/project/folder';
@@ -1935,9 +2032,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Auth new org with connection username or alias**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     connection.setAuthOrg().then(() => {
         // Org set
@@ -1947,9 +2044,9 @@ This method can throw the next exceptions:
 ```
 **Auth new org with different connection username or alias**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const usernameOrAlias = 'MyOrg2';
 
@@ -1991,9 +2088,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Export Accounts data with related contacts**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const query = 'Select Id, Name, Phone, (Select Id, Name, Phone from Contacts) from Account where Name != null';
     const outputPath = 'path/to/save/the/result';
@@ -2036,9 +2133,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Import file with exported records**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const fileToImport = 'path/to/file/to/import.json';
 
@@ -2092,9 +2189,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Delete data at bulk mode**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const csvFile = 'path/to/csv/file/to/delete.csv';
 
@@ -2137,9 +2234,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Execute an Apex Anonymous script**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     const scriptFile = 'path/to/csv/file/to/delete.csv';
 
@@ -2177,9 +2274,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Load User permissions from connected org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     connection.loadUserPermissions('path/to/temporal/folder').then((permissions) => {
         console.log(permissions);
@@ -2225,9 +2322,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all local special Metadata Types from Org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     connection.retrieveLocalSpecialTypes('path/to/temporal/folder').then((result) => {
         console.log(result);
@@ -2237,7 +2334,7 @@ This method can throw the next exceptions:
 ```
 **Retrieve some local special Metadata Types from Org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
@@ -2245,7 +2342,7 @@ This method can throw the next exceptions:
     const MetadataItem = Types.MetadataItem;
 
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     const types: {};
     types[MetadataTypes.CUSTOM_APPLICATION] = new MetadataType(MetadataTypes.CUSTOM_APPLICATION, true); // set to true Metadata Type to ignore all custom application
     types[MetadataTypes.PERMISSION_SET] = new MetadataType(MetadataTypes.PERMISSION_SET, false);    // set to false Metadata Type to ignore some permission sets 
@@ -2300,9 +2397,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all mixed special Metadata Types from Org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     connection.retrieveMixedSpecialTypes('path/to/temporal/folder').then((result) => {
         console.log(result);
@@ -2312,7 +2409,7 @@ This method can throw the next exceptions:
 ```
 **Retrieve some mixed special Metadata Types from Org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
@@ -2320,7 +2417,7 @@ This method can throw the next exceptions:
     const MetadataItem = Types.MetadataItem;
 
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     const types: {};
     types[MetadataTypes.CUSTOM_APPLICATION] = new MetadataType(MetadataTypes.CUSTOM_APPLICATION, true); // set to true Metadata Type to ignore all custom application
     types[MetadataTypes.PERMISSION_SET] = new MetadataType(MetadataTypes.PERMISSION_SET, false);    // set to false Metadata Type to ignore some permission sets 
@@ -2375,9 +2472,9 @@ This method can throw the next exceptions:
 ### **Examples:**
 **Retrieve all org special Metadata Types from Org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
 
     connection.retrieveOrgSpecialTypes('path/to/temporal/folder').then((result) => {
         console.log(result);
@@ -2387,7 +2484,7 @@ This method can throw the next exceptions:
 ```
 **Retrieve some org special Metadata Types from Org**
 ```javascript
-    import { Connection } from '@aurahelper/connector';
+    import { SFConnector } from '@aurahelper/connector';
     const { Types, Values } = require('@aurahelper/core');
     const MetadataTypes = Values.MetadataTypes;
     const MetadataType = Types.MetadataType;
@@ -2395,7 +2492,7 @@ This method can throw the next exceptions:
     const MetadataItem = Types.MetadataItem;
 
 
-    const connection = new Connection('MyOrg', 51, 'path/to/project/folder');
+    const connection = new SFConnector('MyOrg', 51, 'path/to/project/folder');
     const types: {};
     types[MetadataTypes.CUSTOM_APPLICATION] = new MetadataType(MetadataTypes.CUSTOM_APPLICATION, true); // set to true Metadata Type to ignore all custom application
     types[MetadataTypes.PERMISSION_SET] = new MetadataType(MetadataTypes.PERMISSION_SET, false);    // set to false Metadata Type to ignore some permission sets 

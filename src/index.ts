@@ -1,10 +1,11 @@
 import EventEmitter from "events";
-import { AuthInfo, Messages, SfdxError } from '@salesforce/core';
+import { AuthInfo, Connection } from '@salesforce/core';
 import { MetadataFactory } from '@aurahelper/metadata-factory';
 import { PackageGenerator } from '@aurahelper/package-generator';
 import { XMLCompressor } from '@aurahelper/xml-compressor';
 import { XML } from '@aurahelper/languages';
 import { AuthOrg, BulkStatus, ConnectionException, CoreUtils, DataRequiredException, DeployStatus, ExportTreeDataResult, ImportTreeDataResult, FileChecker, FileReader, FileWriter, MetadataDetail, MetadataType, MetadataTypes, NotIncludedMetadata, OperationNotAllowedException, PathUtils, Process, ProcessFactory, ProcessHandler, ProgressStatus, RetrieveResult, RetrieveStatus, SFDXProjectResult, SObject, SpecialMetadata, ImportTreeDataResponse, MetadataObject } from "@aurahelper/core";
+import { ListMetadataQuery } from "jsforce";
 const XMLParser = XML.XMLParser;
 const XMLUtils = XML.XMLUtils;
 const Validator = CoreUtils.Validator;
@@ -54,7 +55,7 @@ const EVENT: { [key: string]: string } = {
  * 
  * All connection methods return a Promise with the associated data to the processes. 
  */
-export class Connection {
+export class SFConnector {
 
     usernameOrAlias?: string;
     apiVersion?: string | number;
@@ -101,9 +102,9 @@ export class Connection {
      * Method to set the Username or Alias to connect with org
      * @param {string} usernameOrAlias Org Username or Alias to connect. (Must be authorized in the system)
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setUsernameOrAlias(usernameOrAlias: string): Connection {
+    setUsernameOrAlias(usernameOrAlias: string): SFConnector {
         this.usernameOrAlias = usernameOrAlias;
         return this;
     }
@@ -112,9 +113,9 @@ export class Connection {
      * Method to set the API Version to connect
      * @param {string | number} apiVersion API Version number to connect with salesforce
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setApiVersion(apiVersion: string | number): Connection {
+    setApiVersion(apiVersion: string | number): SFConnector {
         this.apiVersion = apiVersion;
         return this;
     }
@@ -123,9 +124,9 @@ export class Connection {
      * Method to set the project root folder path. When set the project root, automatically set the packageFolder and packageFile to their respective paths
      * @param {string} projectFolder Path to the project root folder
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setProjectFolder(projectFolder: string): Connection {
+    setProjectFolder(projectFolder: string): SFConnector {
         this.projectFolder = (projectFolder !== undefined) ? PathUtils.getAbsolutePath(projectFolder) : projectFolder;
         this.packageFolder = this.projectFolder + '/manifest';
         this.packageFile = this.projectFolder + '/manifest/package.xml';
@@ -136,9 +137,9 @@ export class Connection {
      * Method to set the package folder path. When set the package folder, automatically set packageFile to the respective path
      * @param {string} packageFile Path to the package folder
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setPackageFolder(packageFolder: string): Connection {
+    setPackageFolder(packageFolder: string): SFConnector {
         this.packageFolder = (packageFolder !== undefined) ? PathUtils.getAbsolutePath(packageFolder) : packageFolder;
         this.packageFile = this.projectFolder + '/manifest/package.xml';
         return this;
@@ -148,9 +149,9 @@ export class Connection {
      * Method to set the package xml file path
      * @param {string} packageFile Path to the package file
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setPackageFile(packageFile: string): Connection {
+    setPackageFile(packageFile: string): SFConnector {
         this.packageFile = (packageFile !== undefined) ? PathUtils.getAbsolutePath(packageFile) : packageFile;
         return this;
     }
@@ -159,9 +160,9 @@ export class Connection {
      * Method to set the Org namespace prefix
      * @param {string} namespacePrefix Namespace prefix from the Org to connect
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setNamespacePrefix(namespacePrefix: string): Connection {
+    setNamespacePrefix(namespacePrefix: string): SFConnector {
         this.namespacePrefix = (namespacePrefix !== undefined) ? namespacePrefix : '';
         return this;
     }
@@ -169,9 +170,9 @@ export class Connection {
     /**
      * Method to able to the connection object to use several threads and processor cores to run some processes and run faster
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setMultiThread(): Connection {
+    setMultiThread(): SFConnector {
         this.multiThread = true;
         return this;
     }
@@ -179,9 +180,9 @@ export class Connection {
     /**
      * Method to set the connection object to use only one thread and processo core to all processes
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
-    setSingleThread(): Connection {
+    setSingleThread(): SFConnector {
         this.multiThread = false;
         return this;
     }
@@ -190,7 +191,7 @@ export class Connection {
      * Method to handle the event when preparing execution of some processes
      * @param {Function} callback Callback function to call when connection is on prepare
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onPrepare(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.PREPARE, callback);
@@ -201,7 +202,7 @@ export class Connection {
      * Method to handle the event before the create a project on some processes 
      * @param {Function} callback Callback function to handle progress when connection will create a project
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onCreateProject(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.CREATE_PROJECT, callback);
@@ -212,7 +213,7 @@ export class Connection {
      * Method to handle the event before start retrieve data on some processes
      * @param {Function} callback Callback function to handle progress when connection retrieve data
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onRetrieve(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.RETRIEVE, callback);
@@ -223,7 +224,7 @@ export class Connection {
      * Method to handle the event before start processing results on some processes
      * @param {Function} callback Callback function to handle progress when connection is processing results
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onProcess(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.PROCESS, callback);
@@ -234,7 +235,7 @@ export class Connection {
      * Method to handle the event before start loading local metadata types on some processes
      * @param {Function} callback Callback function to handle progress when connection load metadata types from local project
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onLoadingLocal(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.LOADING_LOCAL, callback);
@@ -245,7 +246,7 @@ export class Connection {
      * Method to handle the event before start loading metadata types from org on some processes
      * @param {Function} callback Callback function to handle progress when connection load metadata types from connected org
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onLoadingOrg(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.LOADING_ORG, callback);
@@ -256,7 +257,7 @@ export class Connection {
      * Method to handle the event before start copying files on some processes
      * @param {Function} callback Callback function to handle progress when connection start to copying files
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onCopyData(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.COPY_DATA, callback);
@@ -267,7 +268,7 @@ export class Connection {
      * Method to handle the event before start copying file content on some processes
      * @param {Function} callback Callback function to handle progress when connection star to copy a single file
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onCopyFile(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.COPY_FILE, callback);
@@ -278,7 +279,7 @@ export class Connection {
      * Method to handle the event before start compress XML File on some processes
      * @param {Function} callback Callback function to handle progress when start compress
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onCompressFile(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.COMPRESS_FILE, callback);
@@ -289,7 +290,7 @@ export class Connection {
      * Method to handle the event before download a Metadata Type from Org on some processes
      * @param {Function} callback Callback function to handle progress when start download metadata type
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onBeforeDownloadType(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.BEFORE_DOWNLOAD_TYPE, callback);
@@ -300,7 +301,7 @@ export class Connection {
      * Method to handle the event after download a Metadata Type from Org on some processes
      * @param {Function} callback Callback function to handle progress when metadata type is downloaded
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onAfterDownloadType(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.AFTER_DOWNLOAD_TYPE, callback);
@@ -311,7 +312,7 @@ export class Connection {
      * Method to handle the event before download a SObject when describe SObejcts
      * @param {Function} callback Callback function to handle progress when start download sobject
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onBeforeDownloadSObject(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.BEFORE_DOWNLOAD_OBJECT, callback);
@@ -322,7 +323,7 @@ export class Connection {
      * Method to handle the event after download a SObject when describe SObejcts
      * @param {Function} callback Callback function to handle progress when sobject is downloaded
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onAfterDownloadSObject(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.AFTER_DOWNLOAD_OBJECT, callback);
@@ -333,7 +334,7 @@ export class Connection {
      * Method to handle the event when error ocurred when download metadata
      * @param {Function} callback Callback function to handle error
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onErrorDownload(callback: (status: ProgressStatus) => void) {
         this._event.on(EVENT.DOWNLOAD_ERROR, callback);
@@ -344,7 +345,7 @@ export class Connection {
      * Method to handle the event when connection is aborted
      * @param {Function} callback Callback function to call when connection is aborted
      * 
-     * @returns {Connection} Returns the connection object
+     * @returns {SFConnector} Returns the connection object
      */
     onAbort(callback: () => void) {
         this._event.on(EVENT.ABORT, callback);
@@ -361,52 +362,27 @@ export class Connection {
     }
 
     /**
-     * Method to get the Auth Username from the org (If not found username, return the Alias)
+     * Method to get the username from an authorized org using a username or alias, or using connection username or alias, or using project auth org username or alias 
+     * @param {string} [usernameOrAlias] Username or alias to get auth username
      * 
      * @returns {Promise<string | undefined>} Return a String promise with the Username or Alias data
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    getAuthUsername(): Promise<string | undefined> {
-        startOperation(this);
+    getAuthUsername(usernameOrAlias?: string): Promise<string | undefined> {
+        usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
         return new Promise<string | undefined>(async (resolve, reject) => {
-            try {
-                const authOrgs = await AuthInfo.listAllAuthorizations();
-                let username;
-                if (authOrgs && authOrgs.length > 0) {
-                    const defaultUsername = this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFolderPath(this.projectFolder));
-                    if (defaultUsername) {
-                        for (const authOrg of authOrgs) {
-                            if (defaultUsername.indexOf('@') !== -1) {
-                                if (authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
-                                    username = authOrg.username;
-                                }
-                            } else {
-                                if (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
-                                    username = authOrg.username;
-                                }
-                            }
-                            if (!username && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()))) {
-                                username = authOrg.username;
-                            }
-                        }
-                    }
-                    endOperation(this);
-                    resolve(username);
-                } else {
-                    endOperation(this);
-                    resolve(undefined);
-                }
-            } catch (error) {
-                endOperation(this);
+            this.getAuthOrg(usernameOrAlias).then((authOrg) => {
+                resolve(authOrg ? authOrg.username : undefined);
+            }).catch((error) => {
                 reject(error);
-            }
+            });
         });
     }
 
     /**
-     * Method to get the server instance for an username or alias (or the connection username or alias)
-     * @param {string} [usernameOrAlias] Username or alias to check. (If not provided, use usernameOrAlias from connection object)
+     * Method to get the server instance using a username or alias, or using connection username or alias, or using project auth org username or alias 
+     * @param {string} [usernameOrAlias] Username or alias to get the server instance
      * 
      * @returns {Promise<string | undefined>} Return a String promise with the instance URL
      * 
@@ -414,30 +390,55 @@ export class Connection {
      */
     getServerInstance(usernameOrAlias?: string): Promise<string | undefined> {
         usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
-        startOperation(this);
-        return new Promise<string | undefined>(async (resolve, reject) => {
+        return new Promise<string | undefined>((resolve, reject) => {
+            this.getAuthOrg(usernameOrAlias).then((authOrg) => {
+                resolve(authOrg ? authOrg.instanceUrl : undefined);
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * Method to get the auth org data using a username or alias, or using connection username or alias, or using project auth org username or alias 
+     * @param {string} [usernameOrAlias] Username or alias to get the auth org data
+     * 
+     * @returns {Promise<AuthOrg | undefined>} Return a promise with Auth Org data or undefined if not exists
+     * 
+     * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
+     */
+    getAuthOrg(usernameOrAlias?: string): Promise<AuthOrg | undefined> {
+        usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
+        return new Promise<AuthOrg | undefined>((resolve, reject) => {
             try {
-                this._allowConcurrence = true;
-                const authOrgs = await AuthInfo.listAllAuthorizations();
-                let inbstanceUrl;
-                if (usernameOrAlias && authOrgs && authOrgs.length > 0) {
-                    for (const authOrg of authOrgs) {
-                        if ((usernameOrAlias.indexOf('@') !== -1 && authOrg.username === usernameOrAlias) || (usernameOrAlias.indexOf('@') === -1 && authOrg.alias === usernameOrAlias)) {
-                            inbstanceUrl = authOrg.instanceUrl;
-                            break;
+                AuthInfo.listAllAuthorizations().then((authOrgs) => {
+                    let resultOrg: AuthOrg | undefined;
+                    if (authOrgs && authOrgs.length > 0) {
+                        const defaultUsername = usernameOrAlias || this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFolderPath(this.projectFolder));
+                        if (defaultUsername) {
+                            for (const authOrg of authOrgs) {
+                                if (defaultUsername.indexOf('@') !== -1) {
+                                    if (authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
+                                        resultOrg = new AuthOrg(authOrg);
+                                    }
+                                } else {
+                                    if (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
+                                        resultOrg = new AuthOrg(authOrg);
+                                    }
+                                }
+                                if (!resultOrg && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()))) {
+                                    resultOrg = new AuthOrg(authOrg);
+                                }
+                            }
                         }
+                        resolve(resultOrg);
+                    } else {
+                        resolve(undefined);
                     }
-                    this._allowConcurrence = false;
-                    endOperation(this);
-                    resolve(inbstanceUrl);
-                } else {
-                    this._allowConcurrence = false;
-                    endOperation(this);
-                    resolve(undefined);
-                }
+                }).catch((error) => {
+                    reject(error);
+                });
             } catch (error) {
-                this._allowConcurrence = false;
-                endOperation(this);
                 reject(error);
             }
         });
@@ -451,7 +452,6 @@ export class Connection {
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
     listAuthOrgs(): Promise<AuthOrg[]> {
-        startOperation(this);
         return new Promise<AuthOrg[]>((resolve, reject) => {
             try {
                 AuthInfo.listAllAuthorizations().then((orgs) => {
@@ -461,14 +461,11 @@ export class Connection {
                             authOrgs.push(new AuthOrg(org));
                         }
                     }
-                    endOperation(this);
                     resolve(authOrgs);
                 }).catch((error) => {
-                    endOperation(this);
                     reject(error);
                 });
             } catch (error) {
-                endOperation(this);
                 reject(error);
             }
         });
@@ -486,26 +483,37 @@ export class Connection {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
     query(query: string, useToolingApi?: boolean): Promise<any[]> {
-        startOperation(this);
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
                 }
+                const username = await this.getAuthUsername();
+                if (username) {
+                    const connection = await Connection.create({
+                        authInfo: await AuthInfo.create({ username: username })
+                    });
+                    const result = (useToolingApi) ? await connection.tooling.query(query) : await connection.query(query);
+                    if (!result.records || result.records.length <= 0) {
+                        resolve([]);
+                    } else {
+                        resolve(result.records);
+                    }
+                } else {
+                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
+                }
+
                 const process = ProcessFactory.query(this.usernameOrAlias, query, useToolingApi);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
                         const records = (response !== undefined) ? Utils.forceArray(response.result.records) : [];
-                        endOperation(this);
                         resolve(records);
                     });
                 }).catch((error) => {
-                    endOperation(this);
                     reject(error);
                 });
             } catch (error) {
-                endOperation(this);
                 reject(error);
             }
         });
@@ -522,27 +530,24 @@ export class Connection {
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     listMetadataTypes(): Promise<MetadataDetail[]> {
-        startOperation(this);
-        return new Promise<MetadataDetail[]>((resolve, reject) => {
+        return new Promise<MetadataDetail[]>(async (resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
                 }
-                const process = ProcessFactory.listMetadataTypes(this.usernameOrAlias, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const objects = (response !== undefined) ? response.result.metadataObjects : undefined;
-                        const metadataDetails = MetadataFactory.createMetadataDetails(objects);
-                        endOperation(this);
-                        resolve(metadataDetails);
+                const username = await this.getAuthUsername();
+                if (username) {
+                    const connection = await Connection.create({
+                        authInfo: await AuthInfo.create({ username: username })
                     });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
+                    const apiVersion = this.apiVersion ? ProjectUtils.getApiAsString(this.apiVersion) : undefined;
+                    const describeMetadata = await connection.metadata.describe(apiVersion);
+                    const metadataDetails = MetadataFactory.createMetadataDetails(describeMetadata.metadataObjects);
+                    resolve(metadataDetails);
+                } else {
+                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
+                }
             } catch (error) {
-                endOperation(this);
                 reject(error);
             }
         });
@@ -561,52 +566,55 @@ export class Connection {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
     describeMetadataTypes(typesOrDetails?: string[] | MetadataDetail[], downloadAll?: boolean, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
-        startOperation(this);
         resetProgress(this);
         return new Promise<{ [key: string]: MetadataType }>(async (resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
                 }
-                this._allowConcurrence = true;
-                const metadataToProcess = getMetadataTypeNames(typesOrDetails);
-                this._increment = calculateIncrement(metadataToProcess);
-                callEvent(this, EVENT.PREPARE);
-                let foldersByType;
-                if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
-                    foldersByType = await getFoldersByType(this);
-                }
-                let metadata: { [key: string]: MetadataType } = {};
-                const batchesToProcess = getBatches(this, metadataToProcess);
-                for (const batch of batchesToProcess) {
-                    downloadMetadata(this, batch.records, downloadAll, foldersByType, groupGlobalActions).then((downloadedMetadata) => {
-                        Object.keys(downloadedMetadata).forEach(function (key) {
-                            metadata[key] = downloadedMetadata[key];
-                        });
-                        batch.completed = true;
-                        let nCompleted = 0;
-                        for (const resultBatch of batchesToProcess) {
-                            if (resultBatch.completed) {
-                                nCompleted++;
-                            }
-                        }
-                        if (nCompleted === batchesToProcess.length) {
-                            metadata = MetadataUtils.orderMetadata(metadata);
-                            this._allowConcurrence = false;
-                            endOperation(this);
-                            resolve(metadata);
-                            return;
-                        }
-                    }).catch((error) => {
-                        this._allowConcurrence = false;
-                        endOperation(this);
-                        reject(error);
-                        return;
+                const username = await this.getAuthUsername();
+                if (username) {
+                    const connection = await Connection.create({
+                        authInfo: await AuthInfo.create({ username: username })
                     });
+                    const metadataToProcess = getMetadataTypeNames(typesOrDetails);
+                    this._increment = calculateIncrement(metadataToProcess);
+                    callEvent(this, EVENT.PREPARE);
+                    let foldersByType;
+                    if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
+                        foldersByType = await getFoldersByType(this);
+                    }
+                    let metadata: { [key: string]: MetadataType } = {};
+                    const batchesToProcess = getBatches(this, metadataToProcess);
+                    for (const batch of batchesToProcess) {
+                        downloadMetadata(this, connection, batch.records, downloadAll, foldersByType, groupGlobalActions).then((downloadedMetadata) => {
+                            Object.keys(downloadedMetadata).forEach(function (key) {
+                                metadata[key] = downloadedMetadata[key];
+                            });
+                            batch.completed = true;
+                            let nCompleted = 0;
+                            for (const resultBatch of batchesToProcess) {
+                                if (resultBatch.completed) {
+                                    nCompleted++;
+                                }
+                            }
+                            if (nCompleted === batchesToProcess.length) {
+                                metadata = MetadataUtils.orderMetadata(metadata);
+                                this._allowConcurrence = false;
+                                resolve(metadata);
+                                return;
+                            }
+                        }).catch((error) => {
+                            this._allowConcurrence = false;
+                            reject(error);
+                            return;
+                        });
+                    }
+                } else {
+                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
                 }
             } catch (error) {
                 this._allowConcurrence = false;
-                endOperation(this);
                 reject(error);
             }
         });
@@ -624,26 +632,36 @@ export class Connection {
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     listSObjects(category?: string): Promise<string[]> {
-        startOperation(this);
-        return new Promise<string[]>((resolve, reject) => {
+        return new Promise<string[]>(async (resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
                 }
-                const process = ProcessFactory.listSObjects(this.usernameOrAlias, category, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const objects = (response !== undefined) ? response.result : [];
-                        endOperation(this);
-                        resolve(objects);
+                const username = await this.getAuthUsername();
+                if (username) {
+                    const sObjects: string[] = [];
+                    const connection = await Connection.create({
+                        authInfo: await AuthInfo.create({ username: username })
                     });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
+                    const result = await connection.describeGlobal();
+                    if (result.sobjects) {
+                        for (const obj of result.sobjects) {
+                            if (obj.queryable) {
+                                if (!category || category.toLowerCase() === 'all') {
+                                    sObjects.push(obj.name);
+                                } else if (!obj.custom && category.toLowerCase() === 'standard') {
+                                    sObjects.push(obj.name);
+                                } else if (obj.custom && category.toLowerCase() === 'custom') {
+                                    sObjects.push(obj.name);
+                                }
+                            }
+                        }
+                    }
+                    resolve(sObjects);
+                } else {
+                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
+                }
             } catch (error) {
-                endOperation(this);
                 reject(error);
             }
         });
@@ -660,43 +678,47 @@ export class Connection {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
     describeSObjects(sObjects: string | string[]): Promise<{ [key: string]: SObject }> {
-        startOperation(this);
         resetProgress(this);
-        return new Promise<{ [key: string]: SObject }>((resolve, reject) => {
+        return new Promise<{ [key: string]: SObject }>(async (resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
                 }
-                sObjects = Utils.forceArray(sObjects);
-                this._increment = calculateIncrement(sObjects);
-                callEvent(this, EVENT.PREPARE);
-                let resultObjects: { [key: string]: SObject } = {};
-                const batchesToProcess = getBatches(this, sObjects);
-                for (const batch of batchesToProcess) {
-                    downloadSObjectsData(this, batch.records).then((downloadedSObjects) => {
-                        Object.keys(downloadedSObjects).forEach(function (key) {
-                            resultObjects[key] = downloadedSObjects[key];
-                        });
-                        batch.completed = true;
-                        let nCompleted = 0;
-                        for (const resultBatch of batchesToProcess) {
-                            if (resultBatch.completed) {
-                                nCompleted++;
+                const username = await this.getAuthUsername();
+                const connection = await Connection.create({
+                    authInfo: await AuthInfo.create({ username: username })
+                });
+                if (username) {
+                    sObjects = Utils.forceArray(sObjects);
+                    this._increment = calculateIncrement(sObjects);
+                    callEvent(this, EVENT.PREPARE);
+                    let resultObjects: { [key: string]: SObject } = {};
+                    const batchesToProcess = getBatches(this, sObjects);
+                    for (const batch of batchesToProcess) {
+                        downloadSObjectsData(this, connection, batch.records).then((downloadedSObjects) => {
+                            Object.keys(downloadedSObjects).forEach(function (key) {
+                                resultObjects[key] = downloadedSObjects[key];
+                            });
+                            batch.completed = true;
+                            let nCompleted = 0;
+                            for (const resultBatch of batchesToProcess) {
+                                if (resultBatch.completed) {
+                                    nCompleted++;
+                                }
                             }
-                        }
-                        if (nCompleted === batchesToProcess.length) {
-                            resultObjects = MetadataUtils.orderSObjects(resultObjects);
-                            endOperation(this);
-                            resolve(resultObjects);
-                            return;
-                        }
-                    }).catch((error) => {
-                        endOperation(this);
-                        reject(error);
-                    });
+                            if (nCompleted === batchesToProcess.length) {
+                                resultObjects = MetadataUtils.orderSObjects(resultObjects);
+                                resolve(resultObjects);
+                                return;
+                            }
+                        }).catch((error) => {
+                            reject(error);
+                        });
+                    }
+                } else {
+                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
                 }
             } catch (error) {
-                endOperation(this);
                 reject(error);
             }
         });
@@ -1898,13 +1920,13 @@ function waitForFiles(folder: string): Promise<void> {
     });
 }
 
-function restoreOriginalProjectData(connection: Connection, originalProjectFolder: string) {
+function restoreOriginalProjectData(connection: SFConnector, originalProjectFolder: string) {
     connection.setProjectFolder(originalProjectFolder);
     connection.setPackageFolder(originalProjectFolder + '/manifest');
     connection.setPackageFile(originalProjectFolder + '/manifest/package.xml');
 }
 
-function copyMetadataFiles(connection: Connection, targetProject: string, folderMetadataMap: { [key: string]: MetadataDetail }, types: { [key: string]: MetadataType }, metadataTypes: { [key: string]: MetadataType }, compress?: boolean, compressOrder?: string) {
+function copyMetadataFiles(connection: SFConnector, targetProject: string, folderMetadataMap: { [key: string]: MetadataDetail }, types: { [key: string]: MetadataType }, metadataTypes: { [key: string]: MetadataType }, compress?: boolean, compressOrder?: string) {
     const path = connection.projectFolder;
     for (const folder of (Object.keys(folderMetadataMap))) {
         const metadataDetail = folderMetadataMap[folder];
@@ -1998,59 +2020,55 @@ function processExportTreeDataOut(response: string): ExportTreeDataResult[] {
     return dataToReturn;
 }
 
-function callEvent(connection: Connection, stage: string, entityName?: string, entityType?: string, entityItem?: string, data?: any) {
+function callEvent(connection: SFConnector, stage: string, entityName?: string, entityType?: string, entityItem?: string, data?: any) {
     connection._event.emit(stage, new ProgressStatus(connection._increment, connection._percentage, entityName, entityType, entityItem, data));
 }
 
-function downloadMetadata(connection: Connection, metadataToDownload: string[], downloadAll?: boolean, foldersByType?: { [key: string]: any[] }, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
+function downloadMetadata(sfConnection: SFConnector, connection: Connection, metadataToDownload: string[], downloadAll?: boolean, foldersByType?: { [key: string]: any[] }, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
     return new Promise<{ [key: string]: MetadataType }>(async (resolve, reject) => {
         try {
             const metadata: { [key: string]: MetadataType } = {};
             for (const metadataTypeName of metadataToDownload) {
                 try {
-                    if (connection._abort) {
-                        connection._allowConcurrence = false;
-                        endOperation(connection);
+                    if (sfConnection._abort) {
                         resolve(metadata);
                         return;
                     }
-                    callEvent(connection, EVENT.BEFORE_DOWNLOAD_TYPE, metadataTypeName);
+                    callEvent(sfConnection, EVENT.BEFORE_DOWNLOAD_TYPE, metadataTypeName);
                     if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
-                        const records = await connection.query(METADATA_QUERIES[metadataTypeName]);
-                        if (!records || records.length === 0) {
+                        const result = await connection.query(METADATA_QUERIES[metadataTypeName]);
+                        if (!result.records || result.records.length <= 0) {
                             continue;
                         }
-                        const metadataType = MetadataFactory.createMetadataTypeFromRecords(metadataTypeName, records, foldersByType, connection.namespacePrefix, downloadAll);
-                        connection._percentage += connection._increment;
+                        const metadataType = MetadataFactory.createMetadataTypeFromRecords(metadataTypeName, result.records, foldersByType, sfConnection.namespacePrefix, downloadAll);
+                        sfConnection._percentage += sfConnection._increment;
                         if (metadataType !== undefined && metadataType.hasChilds()) {
                             metadata[metadataTypeName] = metadataType;
                         }
-                        callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+                        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
                     } else if (NotIncludedMetadata[metadataTypeName]) {
                         const metadataType = MetadataFactory.createNotIncludedMetadataType(metadataTypeName);
-                        connection._percentage += connection._increment;
+                        sfConnection._percentage += sfConnection._increment;
                         if (metadataType !== undefined && metadataType.hasChilds()) {
                             metadata[metadataTypeName] = metadataType;
                         }
-                        callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
-                    } else if (connection.usernameOrAlias) {
-                        const process = ProcessFactory.describeMetadataType(connection.usernameOrAlias, metadataTypeName, undefined, connection.apiVersion);
-                        addProcess(connection, process);
-                        const response = await ProcessHandler.runProcess(process);
-                        connection.handleResponse(response, () => {
-                            const metadataType = MetadataFactory.createMetedataTypeFromResponse(metadataTypeName, response, connection.namespacePrefix, downloadAll, groupGlobalActions);
-                            connection._percentage += connection._increment;
-                            if (metadataType !== undefined && metadataType.hasChilds()) {
-                                metadata[metadataTypeName] = metadataType;
-                            }
-                            callEvent(connection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
-                        });
+                        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+                    } else if (sfConnection.usernameOrAlias) {
+                        const query: ListMetadataQuery = {
+                            type: metadataTypeName,
+                        };
+                        const apiVersion = sfConnection.apiVersion !== undefined ? ProjectUtils.getApiAsString(sfConnection.apiVersion) : undefined;
+                        const result = await connection.metadata.list(query, apiVersion);
+                        const metadataType = MetadataFactory.createMetedataTypeFromResponse(metadataTypeName, result, sfConnection.namespacePrefix, downloadAll, groupGlobalActions);
+                        sfConnection._percentage += sfConnection._increment;
+                        if (metadataType !== undefined && metadataType.hasChilds()) {
+                            metadata[metadataTypeName] = metadataType;
+                        }
+                        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
                     }
                 } catch (error) {
                     const err = error as Error;
-                    callEvent(connection, EVENT.DOWNLOAD_ERROR, metadataTypeName, undefined, undefined, err.message);
-                    /*if (error.message.indexOf('INVALID_TYPE') === -1)
-                        throw error;*/
+                    callEvent(sfConnection, EVENT.DOWNLOAD_ERROR, metadataTypeName, undefined, undefined, err.message);
                 }
             }
             resolve(metadata);
@@ -2060,34 +2078,27 @@ function downloadMetadata(connection: Connection, metadataToDownload: string[], 
     });
 }
 
-function downloadSObjectsData(connection: Connection, sObjects: string[]): Promise<{ [key: string]: SObject }> {
+function downloadSObjectsData(sfConnection: SFConnector, connection: Connection, sObjects: string[]): Promise<{ [key: string]: SObject }> {
     return new Promise<{ [key: string]: SObject }>(async (resolve, reject) => {
         try {
+
             const sObjectsResult: { [key: string]: SObject } = {};
-            if (connection.usernameOrAlias) {
-                for (const sObject of sObjects) {
-                    try {
-                        if (connection._abort) {
-                            endOperation(connection);
-                            resolve(sObjectsResult);
-                            return;
-                        }
-                        callEvent(connection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
-                        const process = ProcessFactory.getSObjectSchema(connection.usernameOrAlias, sObject, connection.apiVersion);
-                        addProcess(connection, process);
-                        const response = await ProcessHandler.runProcess(process);
-                        connection.handleResponse(response, () => {
-                            const sObjectResult = MetadataFactory.createSObjectFromJSONSchema(response);
-                            connection._percentage += connection._increment;
-                            if (sObjectResult !== undefined) {
-                                sObjectsResult[sObject] = sObjectResult;
-                            }
-                            callEvent(connection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectResult);
-                        });
-                    } catch (error) {
-                        const err = error as Error;
-                        callEvent(connection, EVENT.DOWNLOAD_ERROR, sObject, undefined, undefined, err.message);
+            for (const sObject of sObjects) {
+                try {
+                    if (sfConnection._abort) {
+                        resolve(sObjectsResult);
+                        return;
                     }
+                    callEvent(sfConnection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
+                    const result = await connection.describe(sObject);
+                    sfConnection._percentage += sfConnection._increment;
+                    if (result) {
+                        sObjectsResult[sObject] = new SObject(result);
+                    }
+                    callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, sObjectsResult[sObject]);
+                } catch (error) {
+                    const err = error as Error;
+                    callEvent(sfConnection, EVENT.DOWNLOAD_ERROR, sObject, undefined, undefined, err.message);
                 }
             }
             resolve(sObjectsResult);
@@ -2097,7 +2108,7 @@ function downloadSObjectsData(connection: Connection, sObjects: string[]): Promi
     });
 }
 
-function getBatches(connection: Connection, objects: string[]) {
+function getBatches(connection: SFConnector, objects: string[]) {
     const nBatches = (connection.multiThread) ? OSUtils.getAvailableCPUs() : 1;
     const recordsPerBatch = Math.ceil(objects.length / nBatches);
     const batches: BatchData[] = [];
@@ -2148,7 +2159,7 @@ function getMetadataTypeNames(typesOrDetails?: string[] | MetadataDetail[]) {
     return result;
 }
 
-function getFoldersByType(connection: Connection): Promise<{ [key: string]: any[] }> {
+function getFoldersByType(connection: SFConnector): Promise<{ [key: string]: any[] }> {
     return new Promise((resolve, reject) => {
         const query = 'Select Id, Name, DeveloperName, NamespacePrefix, Type FROM Folder';
         try {
@@ -2176,12 +2187,12 @@ function getFoldersByType(connection: Connection): Promise<{ [key: string]: any[
     });
 }
 
-function resetProgress(connection: Connection): void {
+function resetProgress(connection: SFConnector): void {
     connection._percentage = 0;
     connection._increment = 0;
 }
 
-function killProcesses(connection: Connection): void {
+function killProcesses(connection: SFConnector): void {
     if (connection._processes && Object.keys(connection._processes).length > 0) {
         for (let process of Object.keys(connection._processes)) {
             killProcess(connection, connection._processes[process]);
@@ -2189,12 +2200,12 @@ function killProcesses(connection: Connection): void {
     }
 }
 
-function killProcess(connection: Connection, process: Process): void {
+function killProcess(connection: SFConnector, process: Process): void {
     process.kill();
     delete connection._processes[process.name];
 }
 
-function startOperation(connection: Connection): void {
+function startOperation(connection: SFConnector): void {
     if (!connection._allowConcurrence) {
         if (connection._inProgress) {
             throw new OperationNotAllowedException('Connection in use. Abort the current operation to execute other.');
@@ -2205,14 +2216,14 @@ function startOperation(connection: Connection): void {
     }
 }
 
-function endOperation(connection: Connection): void {
+function endOperation(connection: SFConnector): void {
     if (!connection._allowConcurrence) {
         connection._inProgress = false;
         connection._processes = {};
     }
 }
 
-function addProcess(connection: Connection, process: Process): void {
+function addProcess(connection: SFConnector, process: Process): void {
     if (connection._processes === undefined) {
         connection._processes = {};
     }

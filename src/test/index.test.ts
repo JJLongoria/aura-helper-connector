@@ -1,9 +1,9 @@
 import { FileChecker, FileWriter, MetadataItem, MetadataObject, MetadataType, MetadataTypes } from "@aurahelper/core";
-import { Connection } from '../index';
+import { SFConnector } from '../index';
 
 describe('Testing index.js', () => {
     test('Testing query()', async () => {
-        const connection = new Connection('MyOrg', '50.0');
+        const connection = new SFConnector('MyOrg', '50.0');
         connection.onAfterDownloadType(() => {
 
         });
@@ -54,7 +54,7 @@ describe('Testing index.js', () => {
         expect(records.length).toBeGreaterThan(0);
     }, 300000);
     test('Testing query() with Error', async () => {
-        const connection = new Connection('MyOrg', '50');
+        const connection = new SFConnector('MyOrg', '50');
 
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
@@ -66,7 +66,8 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing listMetadataTypes()', async () => {
-        const connection = new Connection('MyOrg', '50.0');
+        console.time('listMetadataTypes');
+        const connection = new SFConnector('MyOrg', '50.0');
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
         connection.setApiVersion('50.0');
@@ -76,9 +77,10 @@ describe('Testing index.js', () => {
         connection.setPackageFile('./src/test/assets/SFDXProject/MyOrg/PROD/manifest/package.xml');
         const metadataTypes = await connection.listMetadataTypes();
         expect(metadataTypes.length).toBeGreaterThan(0);
+        console.timeEnd('listMetadataTypes');
     }, 300000);
     test('Testing listMetadataTypes() with Error', async () => {
-        const connection = new Connection('MyOrg', '50');
+        const connection = new SFConnector('MyOrg', '50');
 
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
@@ -90,24 +92,46 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing describeMetadataTypes() Download All', async () => {
-        const connection = new Connection('MyOrg', '50.0');
-
-
+        const connection = new SFConnector('MyOrg', '50.0');
         connection.setMultiThread();
         const metadata = await connection.describeMetadataTypes(['Report', 'Dashboard', 'EmailTemplate', 'Document', 'CustomObject', 'CustomField', 'Flow', 'Layout', 'StandardValueSet'], true);
         expect(metadata['CustomObject'].name).toMatch('CustomObject');
     }, 300000);
+    test('Testing describeMetadataTypes() Download All single thread', async () => {
+        console.time('describeMetadataTypesSingle');
+        const connection = new SFConnector('MyOrg', '50.0');
+        connection.setSingleThread();
+        const metadata = await connection.describeMetadataTypes(['Report', 'Dashboard', 'EmailTemplate', 'Document', 'CustomObject', 'CustomField', 'Flow', 'Layout', 'StandardValueSet'], true);
+        expect(metadata['CustomObject'].name).toMatch('CustomObject');
+        console.timeEnd('describeMetadataTypesSingle');
+    }, 300000);
+    test('Testing describeMetadataTypes() with all types Download All', async () => {
+        console.time('describeMetadataTypesAll');
+        const connection = new SFConnector('MyOrg', '50.0');
+        connection.setMultiThread();
+        const metadataTypes = await connection.listMetadataTypes();
+        const metadata = await connection.describeMetadataTypes(metadataTypes, true);
+        expect(metadata['CustomObject'].name).toMatch('CustomObject');
+        console.timeEnd('describeMetadataTypesAll');
+    }, 300000);
+    test('Testing describeMetadataTypes() with all types Download All single thread', async () => {
+        console.time('describeMetadataTypesAllSingle');
+        const connection = new SFConnector('MyOrg', '50.0');
+        connection.setSingleThread();
+        const metadataTypes = await connection.listMetadataTypes();
+        const metadata = await connection.describeMetadataTypes(metadataTypes, true);
+        expect(metadata['CustomObject'].name).toMatch('CustomObject');
+        console.timeEnd('describeMetadataTypesAllSingle');
+    }, 3000000);
     test('Testing describeMetadataTypes() Download Only Org Namespace', async () => {
-        const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-
-
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
         connection.setMultiThread();
         const metadata = await connection.describeMetadataTypes(['Report', 'Dashboard', 'EmailTemplate', 'Document', 'CustomObject', 'CustomField', 'Flow', 'Layout'], false);
         expect(metadata['CustomField'].name).toMatch('CustomField');
     }, 300000);
     test('Testing abortConnection()', async () => {
         const objects = ['Report', 'Dashboard', 'EmailTemplate', 'Document', 'CustomObject', 'CustomField', 'Flow', 'Layout', 'QuickAction', 'CompactLayout', 'RecordType', 'WebLink', 'CustomTab', 'ApexClass', 'ApexTrigger', 'ApexPage'];
-        const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
         connection.onAbort(() => {
             console.log("aborted");
         });
@@ -119,7 +143,7 @@ describe('Testing index.js', () => {
         expect(Object.keys(metadata).length).toBeLessThan(objects.length);
     }, 300000);
     test('Testing describeMetadataTypes() Entire Metadata', async () => {
-        const connection = new Connection('MyOrg', '50.0');
+        const connection = new SFConnector('MyOrg', '50.0');
 
 
         connection.setUsernameOrAlias('MyOrg');
@@ -132,7 +156,7 @@ describe('Testing index.js', () => {
         expect(metadata['CustomObject'].name).toMatch('CustomObject');
     }, 300000);
     test('Testing listAuthOrgs()', async () => {
-        const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -140,14 +164,34 @@ describe('Testing index.js', () => {
         expect(authOrgs.length).toBeGreaterThan(0);
     }, 300000);
     test('Testing listSObjects()', async () => {
-        const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
+        console.time('listSObjects');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
 
         connection.setMultiThread();
         const sObjects = await connection.listSObjects();
         expect(sObjects.length).toBeGreaterThan(0);
+        console.timeEnd('listSObjects');
+    }, 300000);
+    test('Testing listSObjects() custom', async () => {
+        console.time('listSObjectsCustom');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
+
+        connection.setMultiThread();
+        const sObjects = await connection.listSObjects('custom');
+        expect(sObjects.length).toBeGreaterThan(0);
+        console.timeEnd('listSObjectsCustom');
+    }, 300000);
+    test('Testing listSObjects() standard', async () => {
+        console.time('listSObjectsStandard');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
+
+        connection.setMultiThread();
+        const sObjects = await connection.listSObjects('standard');
+        expect(sObjects.length).toBeGreaterThan(0);
+        console.timeEnd('listSObjectsStandard');
     }, 300000);
     test('Testing listSObjects() With Error', async () => {
-        const connection = new Connection('MyOrg', '50', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '50', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -159,15 +203,43 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing describeSObjects()', async () => {
-        const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
-
-
+        console.time('describeSObjects');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
         connection.setMultiThread();
-        const sObjects = await connection.describeSObjects(['Account']);
+        const sObjects = await connection.describeSObjects(['Account', 'Case', 'Opportunity', 'Lead', 'UserRole', 'ApexClass']);
         expect(sObjects['Account'].name).toEqual('Account');
+        console.timeEnd('describeSObjects');
+    }, 300000);
+    test('Testing describeSObjects custom()', async () => {
+        console.time('describeSObjects');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
+        connection.setMultiThread();
+        const sObjectList = await connection.listSObjects('custom');
+        const sObjects = await connection.describeSObjects(sObjectList);
+        expect(sObjects['acn__ALMA_Record__c'].name).toEqual('acn__ALMA_Record__c');
+        console.timeEnd('describeSObjects');
+    }, 300000);
+    test('Testing describeSObjects standard()', async () => {
+        console.time('describeSObjects');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
+        connection.setMultiThread();
+        const sObjectList = await connection.listSObjects('standard');
+        const sObjects = await connection.describeSObjects(sObjectList);
+        expect(sObjects['Account'].name).toEqual('Account');
+        console.timeEnd('describeSObjects');
+    }, 300000);
+    test('Testing describeSObjects all()', async () => {
+        console.time('describeSObjects');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
+        connection.setMultiThread();
+        const sObjectList = await connection.listSObjects('all');
+        const sObjects = await connection.describeSObjects(sObjectList);
+        expect(sObjects['Account'].name).toEqual('Account');
+        expect(sObjects['acn__ALMA_Record__c'].name).toEqual('acn__ALMA_Record__c');
+        console.timeEnd('describeSObjects');
     }, 300000);
     test('Testing retrieve()', async () => {
-        const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -177,7 +249,7 @@ describe('Testing index.js', () => {
         const status = await connection.retrieve(false);
     }, 300000);
     test('Testing retrieve() With Error', async () => {
-        const connection = new Connection('MyOrg', '50.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '50.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -193,7 +265,7 @@ describe('Testing index.js', () => {
 
     }, 300000);
     test('Testing validateDeploy()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -203,7 +275,7 @@ describe('Testing index.js', () => {
         await connection.validateDeploy();
     }, 300000);
     test('Testing validateDeploy() with Error', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -218,7 +290,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing deploy()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -228,7 +300,7 @@ describe('Testing index.js', () => {
         await connection.deployPackage();
     }, 300000);
     test('Testing deploy() with Error', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -243,7 +315,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing quickDeploy()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -259,7 +331,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing quickDeploy() with Error', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -274,7 +346,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing deployReport()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -286,7 +358,7 @@ describe('Testing index.js', () => {
         expect(reportStatus.status).toMatch('Succeeded');
     }, 300000);
     test('Testing deployReport() with Error', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -301,7 +373,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing cancelDeploy() with Error', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -320,7 +392,7 @@ describe('Testing index.js', () => {
             FileWriter.delete('./src/test/assets/SFDXProject/newProject');
         }
         FileWriter.createFolderSync('./src/test/assets/SFDXProject/newProject');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -335,14 +407,14 @@ describe('Testing index.js', () => {
             FileWriter.delete('./src/test/assets/SFDXProject/newProject');
         }
         FileWriter.createFolderSync('./src/test/assets/SFDXProject/newProject');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
         await connection.createSFDXProject('MyOrg', './src/test/assets/SFDXProject/newProject', 'standard', true);
     }, 300000);
     test('Testing setAuthOrg()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -353,7 +425,7 @@ describe('Testing index.js', () => {
         expect(connection.usernameOrAlias).toMatch('MyOrg');
     }, 300000);
     test('Testing setAuthOrg() with Error', async () => {
-        const connection = new Connection(undefined, '51.0', undefined, 'acn');
+        const connection = new SFConnector(undefined, '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -367,7 +439,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing exportTreeData()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -379,7 +451,7 @@ describe('Testing index.js', () => {
         await connection.exportTreeData('Select Id, Name from Account', './src/test/assets/exported', 'accounts');
     }, 300000);
     test('Testing exportTreeData() with error', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -395,7 +467,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing importTreeData() and deleteBulk()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -418,7 +490,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing deleteBulk() with Error', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -435,7 +507,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing executeApexAnonymous()', async () => {
-        const connection = new Connection('MyOrg', '51.0', './src/test/assets/SFDXProject/MyOrg/PROD', 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', './src/test/assets/SFDXProject/MyOrg/PROD', 'acn');
 
 
         connection.setMultiThread();
@@ -447,7 +519,7 @@ describe('Testing index.js', () => {
         expect(log).toMatch('Compiled successfully.');
     }, 300000);
     test('Testing getAuthUsername()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -459,7 +531,7 @@ describe('Testing index.js', () => {
         expect(username).toMatch('juan.longoria.lopez@accenture.com');
     }, 300000);
     test('Testing getAuthUsername() from project', async () => {
-        const connection = new Connection(undefined, '51.0', undefined, 'acn');
+        const connection = new SFConnector(undefined, '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -471,7 +543,7 @@ describe('Testing index.js', () => {
         expect(username).toMatch('juan.longoria.lopez@accenture.com');
     }, 300000);
     test('Testing getServerInstance()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -483,7 +555,7 @@ describe('Testing index.js', () => {
         expect(instance).toMatch('jjlongoria');
     }, 300000);
     test('Testing getServerInstance With Other username()', async () => {
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -496,7 +568,7 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing loadUserPermissions()', async () => {
         FileWriter.createFolderSync('./src/test/assets/tmpFolder');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -509,7 +581,7 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing retrieveLocalSpecialTypes()', async () => {
         FileWriter.createFolderSync('./src/test/assets/tmpFolder');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -531,7 +603,7 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing retrieveLocalSpecialTypes() all', async () => {
         FileWriter.createFolderSync('./src/test/assets/tmpFolder');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -543,7 +615,7 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing retrieveMixedSpecialTypes()', async () => {
         FileWriter.createFolderSync('./src/test/assets/tmpFolder');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -565,7 +637,7 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing retrieveMixedSpecialTypes() all', async () => {
         FileWriter.createFolderSync('./src/test/assets/tmpFolder');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -577,7 +649,7 @@ describe('Testing index.js', () => {
     }, 300000);
     test('Testing retrieveOrgSpecialTypes()', async () => {
         FileWriter.createFolderSync('./src/test/assets/tmpFolder');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
@@ -598,8 +670,8 @@ describe('Testing index.js', () => {
         await connection.retrieveOrgSpecialTypes('./src/test/assets/tmpFolder', types, false, true);
     }, 300000);
     test('Testing retrieveOrgSpecialTypes() All', async () => {
-        FileWriter.createFolderSync('./src/test/assets/tmpFolder');
-        const connection = new Connection('MyOrg', '51.0', undefined, 'acn');
+        FileWriter.createFolderSync('./src/test/assets/tmpFolder2');
+        const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
 
 
         connection.setMultiThread();
