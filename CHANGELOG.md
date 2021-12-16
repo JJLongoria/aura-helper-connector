@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0 - 2021-12-13]
 ### Added
+
+### Fixed
+- Fixed little problem with load permissions when tempFolder not exists
+
+
+
+## [2.0.0 - 2021-12-13]
+### Added
 - Changed to Typescript
 - Added support to API 53.0
 - Added Salesforce Core libraries to support connections and make it faster
