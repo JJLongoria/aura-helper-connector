@@ -1523,7 +1523,6 @@ export class SFConnector {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
                 }
-                tmpFolder = Validator.validateFolderPath(tmpFolder);
                 const originalProjectFolder = Validator.validateFolderPath(this.projectFolder);
                 callEvent(this, EVENT.PREPARE);
                 this._allowConcurrence = true;
@@ -1860,7 +1859,7 @@ export class SFConnector {
         });
     }
 
-    handleResponse(response: any, onSuccess: () => void) {
+    private handleResponse(response: any, onSuccess: () => void) {
         if (response !== undefined) {
             if (typeof response === 'object') {
                 if (response.status === 0) {
