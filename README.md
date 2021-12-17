@@ -1090,8 +1090,8 @@ This method can throw the next exceptions:
 ```
 ---
 
-## [**query(query, userToolingApi)**](#queryquery-usertoolingapi)
-Method to execute a query to the connected org
+## [**query<T>(query, userToolingApi)**](#queryquery-usertoolingapi)
+Method to execute a query to the connected org. Can return a Typed data (or use any to return any json)
 
 ### **Parameters:**
   - **query**: Query to execute (Required)
@@ -1101,7 +1101,7 @@ Method to execute a query to the connected org
 
 ### **Return:**
 Return a promise with the record list 
-- `Promise<any[]>`
+- `Promise<T[]>`
 
 ### **Throws:**
 This method can throw the next exceptions:
@@ -1119,7 +1119,15 @@ This method can throw the next exceptions:
 
     const query = 'Select Id, Name, Phone, CustomField__c from Account where Name != null';
 
-    connection.query(query).then((records) => {
+    interface AccountRecord {
+      Id: string;
+      Name: string;
+      Phone: string;
+      CustomField__c: string;
+    }
+
+    connection.query<AccountRecord>(query).then((records) => {
+      // records will be an instance of AccountRecord[];
         for(const record of records){
             console.log('Account Id: ' + record.Id);
             console.log('Account Name: ' + record.Name);

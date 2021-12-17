@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0 - 2021-12-13]
 ### Added
+- Chage **query()** to able to return a typed recods. (query<T>)
+- Improve **executeApexAnonymous()** method performance to make it about 70% faster
+- Improve **setAuthOrg()** method performance to make it about 90% faster
+- Improve all **retrieveSpecial** methods performance to make it about 50% faster
 
 ### Fixed
 - Fixed little problem with load permissions when tempFolder not exists
@@ -16,11 +20,11 @@ All notable changes to this project will be documented in this file.
 - Added Salesforce Core libraries to support connections and make it faster
 - Rename class from Connection to SFConnector to avoid conflicts with Salesforce Core Objects
 - Added new method **getAuthOrg(username?: string)** to get AuthOrg data from any org authorized on the system
-- Improve **listMetadataTypes()** method performance to make faster about 90% 
-- Improve **describeMetadataTypes()** method performance make faster about 95%
-- Improve **query()** method performance to make faster about 90% 
-- Improve **listSObjects()** method performance to make faster about 70% 
-- Improve **describeSObjects()** method performance to make faster about 85%
+- Improve **listMetadataTypes()** method performance to make it about 90% faster
+- Improve **describeMetadataTypes()** method performance make it about 95% faster
+- Improve **query()** method performance to make faster it about 90% faster
+- Improve **listSObjects()** method performance to make it about 70% faster
+- Improve **describeSObjects()** method performance to make it about 85% faster
 - Improve General Performance about 60-80%
 
 ### Fixed

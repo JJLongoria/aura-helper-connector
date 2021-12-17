@@ -50,7 +50,11 @@ describe('Testing index.js', () => {
         connection.setSingleThread();
         connection.setApiVersion('50.0');
         connection.setProjectFolder('./');
-        const records = await connection.query('Select Id from Account Limit 1');
+        interface AccountRecord {
+            Id: string;
+            Name: string;
+        };
+        const records = await connection.query<AccountRecord>('Select Id, Name from Account Limit 1');
         expect(records.length).toBeGreaterThan(0);
     }, 300000);
     test('Testing query() with Error', async () => {
@@ -59,7 +63,7 @@ describe('Testing index.js', () => {
         connection.setUsernameOrAlias('MyOrg');
         connection.setSingleThread();
         try {
-            const records = await connection.query('Select Id from Acc', false);
+            const records = await connection.query<any>('Select Id from Acc', false);
         } catch (error) {
             const err = error as Error;
             expect(err.message).toMatch('sObject type \'Acc\' is not supported');
@@ -414,15 +418,15 @@ describe('Testing index.js', () => {
         await connection.createSFDXProject('MyOrg', './src/test/assets/SFDXProject/newProject', 'standard', true);
     }, 300000);
     test('Testing setAuthOrg()', async () => {
+        console.time('setAuthOrg');
         const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');
-
-
         connection.setMultiThread();
         connection.setProjectFolder('./src/test/assets/SFDXProject/newProject/MyOrg');
         connection.setPackageFolder('./src/test/assets/SFDXProject/newProject/MyOrg/manifest');
         connection.setPackageFile('./src/test/assets/SFDXProject/newProject/MyOrg/manifest/package.xml');
         await connection.setAuthOrg('MyOrg');
         expect(connection.usernameOrAlias).toMatch('MyOrg');
+        console.timeEnd('setAuthOrg');
     }, 300000);
     test('Testing setAuthOrg() with Error', async () => {
         const connection = new SFConnector(undefined, '51.0', undefined, 'acn');
@@ -507,6 +511,7 @@ describe('Testing index.js', () => {
         }
     }, 300000);
     test('Testing executeApexAnonymous()', async () => {
+        console.time('executeApexAnonymous');
         const connection = new SFConnector('MyOrg', '51.0', './src/test/assets/SFDXProject/MyOrg/PROD', 'acn');
 
 
@@ -516,7 +521,8 @@ describe('Testing index.js', () => {
         connection.setPackageFolder('./src/test/assets/SFDXProject/MyOrg/PROD/manifest');
         connection.setPackageFile('./src/test/assets/SFDXProject/MyOrg/PROD/manifest/package.xml');
         const log = await connection.executeApexAnonymous('./src/test/assets/apexScript.apex');
-        expect(log).toMatch('Compiled successfully.');
+        expect(log).toMatch('APEX_CODE');
+        console.timeEnd('executeApexAnonymous');
     }, 300000);
     test('Testing getAuthUsername()', async () => {
         const connection = new SFConnector('MyOrg', '51.0', undefined, 'acn');

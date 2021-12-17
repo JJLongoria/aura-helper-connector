@@ -1,10 +1,10 @@
 import EventEmitter from "events";
-import { AuthInfo, Connection } from '@salesforce/core';
+import { AuthInfo, Connection, AuthConfigs, Org, Config } from '@salesforce/core';
 import { MetadataFactory } from '@aurahelper/metadata-factory';
 import { PackageGenerator } from '@aurahelper/package-generator';
 import { XMLCompressor } from '@aurahelper/xml-compressor';
 import { XML } from '@aurahelper/languages';
-import { AuthOrg, BulkStatus, ConnectionException, CoreUtils, DataRequiredException, DeployStatus, ExportTreeDataResult, ImportTreeDataResult, FileChecker, FileReader, FileWriter, MetadataDetail, MetadataType, MetadataTypes, NotIncludedMetadata, OperationNotAllowedException, PathUtils, Process, ProcessFactory, ProcessHandler, ProgressStatus, RetrieveResult, RetrieveStatus, SFDXProjectResult, SObject, SpecialMetadata, ImportTreeDataResponse, MetadataObject } from "@aurahelper/core";
+import { AuthOrg, BulkStatus, ConnectionException, CoreUtils, DataRequiredException, DeployStatus, ExportTreeDataResult, ImportTreeDataResult, FileChecker, FileReader, FileWriter, MetadataDetail, MetadataType, MetadataTypes, NotIncludedMetadata, OperationNotAllowedException, PathUtils, Process, ProcessFactory, ProcessHandler, ProgressStatus, RetrieveResult, RetrieveStatus, SFDXProjectResult, SObject, SpecialMetadata, ImportTreeDataResponse, MetadataObject, SpecialMetadataDef, NotIncludedMetadataDef } from "@aurahelper/core";
 import { ListMetadataQuery } from "jsforce";
 const XMLParser = XML.XMLParser;
 const XMLUtils = XML.XMLUtils;
@@ -15,6 +15,15 @@ const Utils = CoreUtils.Utils;
 const MathUtils = CoreUtils.MathUtils;
 const MetadataUtils = CoreUtils.MetadataUtils;
 const ProjectUtils = CoreUtils.ProjectUtils;
+
+
+const xmlChars: any = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+    '"': '&quot;',
+    "'": '&apos;'
+}
 
 const PROJECT_NAME: string = 'TempProject';
 
@@ -472,7 +481,7 @@ export class SFConnector {
     }
 
     /**
-     * Method to execute a query to the connected org
+     * Method to execute a query to the connected org. Can return a Typed data (or use any to return any json)
      * @param {string} query Query to execute (Required)
      * @param {boolean} [useToolingApi] true to use Tooling API to execute the query
      * 
@@ -482,7 +491,7 @@ export class SFConnector {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    query(query: string, useToolingApi?: boolean): Promise<any[]> {
+    query<T>(query: string, useToolingApi?: boolean): Promise<T[]> {
         return new Promise(async (resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
@@ -497,22 +506,11 @@ export class SFConnector {
                     if (!result.records || result.records.length <= 0) {
                         resolve([]);
                     } else {
-                        resolve(result.records);
+                        resolve(result.records as T[]);
                     }
                 } else {
                     reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
                 }
-
-                const process = ProcessFactory.query(this.usernameOrAlias, query, useToolingApi);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const records = (response !== undefined) ? Utils.forceArray(response.result.records) : [];
-                        resolve(records);
-                    });
-                }).catch((error) => {
-                    reject(error);
-                });
             } catch (error) {
                 reject(error);
             }
@@ -1273,33 +1271,35 @@ export class SFConnector {
      * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
      */
-    setAuthOrg(usernameOrAlias?: string): Promise<void> {
+    async setAuthOrg(usernameOrAlias?: string): Promise<void> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<void>((resolve, reject) => {
-            try {
-                const userNameRes = usernameOrAlias || this.usernameOrAlias;
-                if (!userNameRes) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                let process = ProcessFactory.setAuthOrg(userNameRes, projectFolder);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        this.usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
-                        endOperation(this);
-                        resolve();
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            const userNameRes = usernameOrAlias || this.usernameOrAlias;
+            if (!userNameRes) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            const username = await this.getAuthUsername(userNameRes);
+            if (username) {
+                const projectFolder = Validator.validateFolderPath(this.projectFolder);
+                const config = await Config.create({
+                    rootFolder: projectFolder,
+                    filename: 'sfdx-config.json',
+                    isGlobal: false,
+                });
+                config.read();
+                await Org.create({ aliasOrUsername: userNameRes });
+                await config.set("defaultusername", userNameRes);
+                this.usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
+                await config.write();
+            } else {
+                throw new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias);
+            }
+        } catch (error) {
+            endOperation(this);
+            const err = error as Error;
+            throw new ConnectionException(err.message);
+        }
     }
 
     /**
@@ -1471,28 +1471,40 @@ export class SFConnector {
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
     executeApexAnonymous(scriptfile: string): Promise<string> {
-        startOperation(this);
         resetProgress(this);
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<string>(async (resolve, reject) => {
             try {
                 if (!this.usernameOrAlias) {
                     throw new DataRequiredException('usernameOrAlias');
                 }
                 scriptfile = Validator.validateFilePath(scriptfile);
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                let process = ProcessFactory.executeApexAnonymous(this.usernameOrAlias, scriptfile, projectFolder, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        endOperation(this);
-                        resolve(response);
+                const username = await this.getAuthUsername();
+                if (username) {
+                    const connection = await Connection.create({
+                        authInfo: await AuthInfo.create({ username: username })
                     });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
+                    const endpoint = connection.instanceUrl + '/services/Soap/s/' + this.apiVersion + '/' + connection.accessToken.split('!')[0];
+                    const request = {
+                        method: 'POST',
+                        url: endpoint,
+                        body: getApexExecutionSoapBody(connection.accessToken, FileReader.readFileSync(scriptfile)),
+                        headers: { 'content-type': 'text/xml', 'soapaction': 'executeAnonymous' }
+                    };
+                    const response: any = await connection.request(request);
+                    const log = response['soapenv:Envelope']['soapenv:Header'].DebuggingInfo.debugLog;
+                    const result = response['soapenv:Envelope']['soapenv:Body'].executeAnonymousResponse.result;
+                    if (!result.success) {
+                        if (typeof result.compileProblem === 'string') {
+                            reject(new ConnectionException(result.compileProblem + ' Line: ' + result.line + '; Column: ' + result.column));
+                        } else if (typeof result.exceptionMessage === 'string') {
+                            reject(new ConnectionException(result.exceptionMessage + '. ' + ((typeof result.exceptionStackTrace === 'string') ? result.exceptionStackTrace : '')));
+                        }
+                    }
+                    resolve(log);
+                } else {
+                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
+                }
             } catch (error) {
-                endOperation(this);
                 reject(error);
             }
         });
@@ -1604,12 +1616,12 @@ export class SFConnector {
                 const originalProjectFolder = this.projectFolder;
                 callEvent(this, EVENT.PREPARE);
                 const dataToRetrieve: string[] = [];
-                Object.keys(SpecialMetadata).forEach(function (key) {
+                Object.keys(SpecialMetadata).forEach(function (key: string) {
                     if (!typesToRetrieve || typesToRetrieve[key]) {
                         if (!dataToRetrieve.includes(key)) {
                             dataToRetrieve.push(key);
                         }
-                        for (let child of SpecialMetadata[key]) {
+                        for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
                             if (!dataToRetrieve.includes(child)) {
                                 dataToRetrieve.push(child);
                             }
@@ -1630,10 +1642,14 @@ export class SFConnector {
                     }
                 }
                 MetadataUtils.checkAll(metadata);
-                if (FileChecker.isExists(tmpFolder)) {
-                    FileWriter.delete(tmpFolder);
+                try {
+                    if (FileChecker.isExists(tmpFolder)) {
+                        FileWriter.delete(tmpFolder);
+                    }
+                    FileWriter.createFolderSync(tmpFolder);
+                } catch (error) {
+
                 }
-                FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
                 if (this.packageFolder) {
@@ -1708,7 +1724,7 @@ export class SFConnector {
                         if (!dataToRetrieve.includes(key)) {
                             dataToRetrieve.push(key);
                         }
-                        for (let child of SpecialMetadata[key]) {
+                        for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
                             if (!dataToRetrieve.includes(child)) {
                                 dataToRetrieve.push(child);
                             }
@@ -1733,8 +1749,13 @@ export class SFConnector {
                 this._allowConcurrence = true;
                 metadata = MetadataUtils.combineMetadata(metadata, metadataFromOrg);
                 MetadataUtils.checkAll(metadata);
-                if (FileChecker.isExists(tmpFolder)) {
-                    FileWriter.delete(tmpFolder);
+                try {
+                    if (FileChecker.isExists(tmpFolder)) {
+                        FileWriter.delete(tmpFolder);
+                    }
+                    FileWriter.createFolderSync(tmpFolder);
+                } catch (error) {
+
                 }
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
@@ -1811,7 +1832,7 @@ export class SFConnector {
                         if (!dataToRetrieve.includes(key)) {
                             dataToRetrieve.push(key);
                         }
-                        for (let child of SpecialMetadata[key]) {
+                        for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
                             if (!dataToRetrieve.includes(child)) {
                                 dataToRetrieve.push(child);
                             }
@@ -1827,8 +1848,13 @@ export class SFConnector {
                 const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
                 this._allowConcurrence = true;
                 MetadataUtils.checkAll(metadataFromOrg);
-                if (FileChecker.isExists(tmpFolder)) {
-                    FileWriter.delete(tmpFolder);
+                try {
+                    if (FileChecker.isExists(tmpFolder)) {
+                        FileWriter.delete(tmpFolder);
+                    }
+                    FileWriter.createFolderSync(tmpFolder);
+                } catch (error) {
+
                 }
                 FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
@@ -1930,7 +1956,7 @@ function copyMetadataFiles(connection: SFConnector, targetProject: string, folde
     for (const folder of (Object.keys(folderMetadataMap))) {
         const metadataDetail = folderMetadataMap[folder];
         const metadataTypeName = metadataDetail.xmlName;
-        if (!SpecialMetadata[metadataTypeName] || !metadataTypes[metadataTypeName]) {
+        if (!SpecialMetadata[metadataTypeName as keyof SpecialMetadataDef] || !metadataTypes[metadataTypeName]) {
             continue;
         }
         const haveTypesToCopy = types !== undefined;
@@ -2045,7 +2071,7 @@ function downloadMetadata(sfConnection: SFConnector, connection: Connection, met
                             metadata[metadataTypeName] = metadataType;
                         }
                         callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
-                    } else if (NotIncludedMetadata[metadataTypeName]) {
+                    } else if (NotIncludedMetadata[metadataTypeName as keyof NotIncludedMetadataDef]) {
                         const metadataType = MetadataFactory.createNotIncludedMetadataType(metadataTypeName);
                         sfConnection._percentage += sfConnection._increment;
                         if (metadataType !== undefined && metadataType.hasChilds()) {
@@ -2168,7 +2194,7 @@ function getFoldersByType(connection: SFConnector): Promise<{ [key: string]: any
                 resolve({});
                 return;
             }
-            connection.query(query).then((records) => {
+            connection.query<any>(query).then((records) => {
                 let result: { [key: string]: any[] } = {};
                 for (const folder of records) {
                     if (!result[folder.Type]) {
@@ -2229,15 +2255,26 @@ function addProcess(connection: SFConnector, process: Process): void {
     connection._processes[process.name] = process;
 }
 
-function createAuthOrgs(orgs: any | any[]): AuthOrg[] {
-    const authOrgs = [];
-    if (orgs !== undefined) {
-        orgs = Utils.forceArray(orgs);
-        for (const org of orgs) {
-            authOrgs.push(new AuthOrg(org));
-        }
-    }
-    return authOrgs;
+function getApexExecutionSoapBody(sessionId: string, body: string) {
+    return '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:apex="http://soap.sforce.com/2006/08/apex">' +
+        '<soapenv:Header>' +
+        '<apex:DebuggingHeader><apex:debugLevel>DEBUGONLY</apex:debugLevel></apex:DebuggingHeader>' +
+        '<apex:SessionHeader>' +
+        '<apex:sessionId>' + sessionId + '</apex:sessionId>' +
+        '</apex:SessionHeader>' +
+        '</soapenv:Header>' +
+        '<soapenv:Body>' +
+        '<apex:executeAnonymous>' +
+        '<apex:String>' + escapeXML(body) + '</apex:String>' +
+        '</apex:executeAnonymous>' +
+        '</soapenv:Body>' +
+        '</soapenv:Envelope>';
+}
+
+function escapeXML(body: string): string {
+    return body.replace(/[<>&'"]/g, character => {
+        return xmlChars[character];
+    });
 }
 
 interface BatchData {
