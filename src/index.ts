@@ -1646,10 +1646,10 @@ export class SFConnector {
                     if (FileChecker.isExists(tmpFolder)) {
                         FileWriter.delete(tmpFolder);
                     }
-                    FileWriter.createFolderSync(tmpFolder);
                 } catch (error) {
 
                 }
+                FileWriter.createFolderSync(tmpFolder);
                 callEvent(this, EVENT.CREATE_PROJECT);
                 const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
                 if (this.packageFolder) {
@@ -1753,7 +1753,6 @@ export class SFConnector {
                     if (FileChecker.isExists(tmpFolder)) {
                         FileWriter.delete(tmpFolder);
                     }
-                    FileWriter.createFolderSync(tmpFolder);
                 } catch (error) {
 
                 }
@@ -1852,7 +1851,6 @@ export class SFConnector {
                     if (FileChecker.isExists(tmpFolder)) {
                         FileWriter.delete(tmpFolder);
                     }
-                    FileWriter.createFolderSync(tmpFolder);
                 } catch (error) {
 
                 }

@@ -53,9 +53,9 @@
     "email": "juanjoselongoria@gmail.com"
   },
   "dependencies": {
-    "@aurahelper/core": "../ah-core",
+    "@aurahelper/core": "^2.1.0",
     "@aurahelper/languages": "^2.0.0",
-    "@aurahelper/metadata-factory": "^2.0.0",
+    "@aurahelper/metadata-factory": "^2.1.0",
     "@aurahelper/package-generator": "^2.0.0",
     "@aurahelper/xml-compressor": "^2.0.0",
     "@salesforce/core": "^2.31.1"
