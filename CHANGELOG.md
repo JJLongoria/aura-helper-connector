@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.1.1 - 2022-06-21]
+### Fixed
+- Fixed the Email template group problem when download it from org
+- Fixed vulnerabilities
+
 ## [2.0.0 - 2021-12-13]
 ### Added
 - Chage **query()** to able to return a typed recods. (query<T>)
