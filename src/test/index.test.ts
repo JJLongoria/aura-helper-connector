@@ -54,7 +54,7 @@ describe('Testing index.js', () => {
             Id: string;
             Name: string;
         };
-        const records = await connection.query<AccountRecord>('Select Id, Name from Account Limit 1');
+        const records = await connection.query<AccountRecord>('Select Id, Name from Account Limit 1');        
         expect(records.length).toBeGreaterThan(0);
     }, 300000);
     test('Testing query() with Error', async () => {
@@ -482,7 +482,7 @@ describe('Testing index.js', () => {
         connection.setPackageFile('./src/test/assets/SFDXProject/MyOrg/PROD/manifest/package.xml');
         const results = await connection.importTreeData('./src/test/assets/exported/accounts-Accounts.json');
         if (results.results) {
-            let ids = [];
+            let ids: string[] = [];
             for (const result of results.results) {
                 ids.push(result.id);
             }

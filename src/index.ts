@@ -1,11 +1,12 @@
 import EventEmitter from "events";
-import { AuthInfo, Connection, AuthConfigs, Org, Config } from '@salesforce/core';
+import { AuthInfo, Connection, Org, Config, OrgAuthorization } from '@salesforce/core';
 import { MetadataFactory } from '@aurahelper/metadata-factory';
 import { PackageGenerator } from '@aurahelper/package-generator';
 import { XMLCompressor } from '@aurahelper/xml-compressor';
 import { XML } from '@aurahelper/languages';
 import { AuthOrg, BulkStatus, ConnectionException, CoreUtils, DataRequiredException, DeployStatus, ExportTreeDataResult, ImportTreeDataResult, FileChecker, FileReader, FileWriter, MetadataDetail, MetadataType, MetadataTypes, NotIncludedMetadata, OperationNotAllowedException, PathUtils, Process, ProcessFactory, ProcessHandler, ProgressStatus, RetrieveResult, RetrieveStatus, SFDXProjectResult, SObject, SpecialMetadata, ImportTreeDataResponse, MetadataObject, SpecialMetadataDef, NotIncludedMetadataDef } from "@aurahelper/core";
-import { ListMetadataQuery } from "jsforce";
+import { HttpRequest } from "jsforce";
+import { ListMetadataQuery } from "jsforce/lib/api/metadata";
 const XMLParser = XML.XMLParser;
 const XMLUtils = XML.XMLUtils;
 const Validator = CoreUtils.Validator;
@@ -420,7 +421,7 @@ export class SFConnector {
         usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
         return new Promise<AuthOrg | undefined>((resolve, reject) => {
             try {
-                AuthInfo.listAllAuthorizations().then((authOrgs) => {
+                AuthInfo.listAllAuthorizations().then((authOrgs: OrgAuthorization[]) => {
                     let resultOrg: AuthOrg | undefined;
                     if (authOrgs && authOrgs.length > 0) {
                         const defaultUsername = usernameOrAlias || this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFolderPath(this.projectFolder));
@@ -431,11 +432,13 @@ export class SFConnector {
                                         resultOrg = new AuthOrg(authOrg);
                                     }
                                 } else {
-                                    if (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
+                                    const orgAlias = authOrg.aliases?.find((alias) => alias?.toLowerCase().trim() === defaultUsername.toLowerCase().trim());
+                                    if (orgAlias) {
                                         resultOrg = new AuthOrg(authOrg);
                                     }
                                 }
-                                if (!resultOrg && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || (authOrg.alias && authOrg.alias.toLowerCase().trim() === defaultUsername.toLowerCase().trim()))) {
+                                const orgAlias = authOrg.aliases?.find((alias) => alias?.toLowerCase().trim() === defaultUsername.toLowerCase().trim());
+                                if (!resultOrg && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || orgAlias)) {
                                     resultOrg = new AuthOrg(authOrg);
                                 }
                             }
@@ -1470,44 +1473,45 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the script file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    executeApexAnonymous(scriptfile: string): Promise<string> {
+    async executeApexAnonymous(scriptfile: string): Promise<string> {
         resetProgress(this);
-        return new Promise<string>(async (resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                scriptfile = Validator.validateFilePath(scriptfile);
-                const username = await this.getAuthUsername();
-                if (username) {
-                    const connection = await Connection.create({
-                        authInfo: await AuthInfo.create({ username: username })
-                    });
-                    const endpoint = connection.instanceUrl + '/services/Soap/s/' + this.apiVersion + '/' + connection.accessToken.split('!')[0];
-                    const request = {
-                        method: 'POST',
-                        url: endpoint,
-                        body: getApexExecutionSoapBody(connection.accessToken, FileReader.readFileSync(scriptfile)),
-                        headers: { 'content-type': 'text/xml', 'soapaction': 'executeAnonymous' }
-                    };
-                    const response: any = await connection.request(request);
-                    const log = response['soapenv:Envelope']['soapenv:Header'].DebuggingInfo.debugLog;
-                    const result = response['soapenv:Envelope']['soapenv:Body'].executeAnonymousResponse.result;
-                    if (!result.success) {
-                        if (typeof result.compileProblem === 'string') {
-                            reject(new ConnectionException(result.compileProblem + ' Line: ' + result.line + '; Column: ' + result.column));
-                        } else if (typeof result.exceptionMessage === 'string') {
-                            reject(new ConnectionException(result.exceptionMessage + '. ' + ((typeof result.exceptionStackTrace === 'string') ? result.exceptionStackTrace : '')));
-                        }
-                    }
-                    resolve(log);
-                } else {
-                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
-                }
-            } catch (error) {
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            scriptfile = Validator.validateFilePath(scriptfile);
+            const username = await this.getAuthUsername();
+            if (username) {
+                const connection = await Connection.create({
+                    authInfo: await AuthInfo.create({ username: username })
+                });
+                if(!connection || !connection.accessToken){
+                    throw new ConnectionException('Connection not found');
+                }
+                const endpoint = connection.instanceUrl + '/services/Soap/s/' + this.apiVersion + '/' + connection.accessToken.split('!')[0];
+                const request: HttpRequest = {
+                    method: 'POST',
+                    url: endpoint,
+                    body: getApexExecutionSoapBody(connection.accessToken, FileReader.readFileSync(scriptfile)),
+                    headers: { 'content-type': 'text/xml', 'soapaction': 'executeAnonymous' }
+                };
+                const response: any = await connection.request(request);
+                const log = response['soapenv:Envelope']['soapenv:Header'].DebuggingInfo.debugLog;
+                const result = response['soapenv:Envelope']['soapenv:Body'].executeAnonymousResponse.result;
+                if (!result.success) {
+                    if (typeof result.compileProblem === 'string') {
+                        throw new ConnectionException(result.compileProblem + ' Line: ' + result.line + '; Column: ' + result.column);
+                    } else if (typeof result.exceptionMessage === 'string') {
+                        throw new ConnectionException(result.exceptionMessage + '. ' + ((typeof result.exceptionStackTrace === 'string') ? result.exceptionStackTrace : ''));
+                    }
+                }
+                return log;
+            } else {
+                throw new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias);
+            }
+        } catch (error) {
+            throw error;
+        }
     }
 
     /**
