@@ -81,6 +81,7 @@ export class SFConnector {
     _abort: boolean;
     _allowConcurrence: boolean;
     _event: EventEmitter;
+    _useAuraHelperSFDX: boolean;
 
     /**
      * Constructor to create a new connection object
@@ -106,6 +107,11 @@ export class SFConnector {
         this._abort = false;
         this._allowConcurrence = false;
         this._event = new EventEmitter();
+        this._useAuraHelperSFDX = false;
+    }
+
+    useAuraHelperSFDX(useAuraHelperSFDX: boolean) {
+        this._useAuraHelperSFDX = useAuraHelperSFDX === undefined ? true : useAuraHelperSFDX;
     }
 
     /**
@@ -754,10 +760,18 @@ export class SFConnector {
                 if (useMetadataAPI) {
                     targetDir = Validator.validateFolderPath(targetDir);
                     const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    process = ProcessFactory.mdapiRetrievePackage(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.mdapiRetrievePackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
+                    } else {
+                        process = ProcessFactory.mdapiRetrievePackageSF(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
+                    }
                 } else {
                     const packageFile = Validator.validateFilePath(this.packageFile);
-                    process = ProcessFactory.sourceRetrievePackage(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.sourceRetrievePackageSFDX(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
+                    } else {
+                        process = ProcessFactory.sourceRetrievePackageSF(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
+                    }
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -801,7 +815,7 @@ export class SFConnector {
                 }
                 this._allowConcurrence = true;
                 targetDir = Validator.validateFolderPath(targetDir);
-                let process = ProcessFactory.mdapiRetrieveReport(this.usernameOrAlias, retrieveId, targetDir);
+                let process = this._useAuraHelperSFDX ? ProcessFactory.mdapiRetrieveReportSFDX(this.usernameOrAlias, retrieveId, targetDir) : ProcessFactory.mdapiRetrieveReportSF(this.usernameOrAlias, retrieveId, targetDir);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
@@ -861,10 +875,18 @@ export class SFConnector {
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
                     const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    process = ProcessFactory.mdapiValidatePackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.mdapiValidatePackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    } else {
+                        process = ProcessFactory.mdapiValidatePackageSF(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    }
                 } else {
                     const packageFile = Validator.validateFilePath(this.packageFile);
-                    process = ProcessFactory.sourceValidatePackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.sourceValidatePackageSFDX(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    } else {
+                        process = ProcessFactory.sourceValidatePackageSF(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                    }
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -917,10 +939,18 @@ export class SFConnector {
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
                     const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    process = ProcessFactory.mdapiDeployPackage(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.mdapiDeployPackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                    } else {
+                        process = ProcessFactory.mdapiDeployPackageSF(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                    }
                 } else {
                     const packageFile = Validator.validateFilePath(this.packageFile);
-                    process = ProcessFactory.sourceDeployPackage(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.sourceDeployPackageSFDX(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                    } else {
+                        process = ProcessFactory.sourceDeployPackageSF(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                    }
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -970,7 +1000,11 @@ export class SFConnector {
                 const testsToRun = Utils.forceArray(runTests);
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                process = ProcessFactory.sourceDeploy(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceDeploySFDX(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceDeploySF(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
@@ -1015,9 +1049,17 @@ export class SFConnector {
                 let process;
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
                 if (useMetadataAPI) {
-                    process = ProcessFactory.mdapiQuickDeploy(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.sourceQuickDeploySFDX(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                    } else {
+                        process = ProcessFactory.mdapiQuickDeploySF(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                    }
                 } else {
-                    process = ProcessFactory.sourceQuickDeploy(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.sourceQuickDeploySFDX(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                    } else {
+                        process = ProcessFactory.sourceQuickDeploySF(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                    }
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -1060,9 +1102,17 @@ export class SFConnector {
                 this._allowConcurrence = true;
                 let process;
                 if (useMetadataAPI) {
-                    process = ProcessFactory.mdapiDeployReport(this.usernameOrAlias, deployId, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.mdapiDeployReportSFDX(this.usernameOrAlias, deployId, waitMinutes);
+                    } else {
+                        process = ProcessFactory.sourceDeployReportSF(this.usernameOrAlias, deployId, waitMinutes);
+                    }
                 } else {
-                    process = ProcessFactory.sourceDeployReport(this.usernameOrAlias, deployId, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.sourceDeployReportSFDX(this.usernameOrAlias, deployId, waitMinutes);
+                    } else {
+                        process = ProcessFactory.sourceDeployReportSF(this.usernameOrAlias, deployId, waitMinutes);
+                    }
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -1107,9 +1157,17 @@ export class SFConnector {
                 }
                 let process;
                 if (useMetadataAPI) {
-                    process = ProcessFactory.mdapiCancelDeploy(this.usernameOrAlias, deployId, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.mdapiCancelDeploySFDX(this.usernameOrAlias, deployId, waitMinutes);
+                    } else {
+                        process = ProcessFactory.sourceCancelDeploySF(this.usernameOrAlias, deployId, waitMinutes);
+                    }
                 } else {
-                    process = ProcessFactory.sourceCancelDeploy(this.usernameOrAlias, deployId, waitMinutes);
+                    if (this._useAuraHelperSFDX) {
+                        process = ProcessFactory.sourceCancelDeploySFDX(this.usernameOrAlias, deployId, waitMinutes);
+                    } else {
+                        process = ProcessFactory.sourceCancelDeploySF(this.usernameOrAlias, deployId, waitMinutes);
+                    }
                 }
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
@@ -1154,7 +1212,7 @@ export class SFConnector {
                 const packageFile = Validator.validateFilePath(this.packageFile);
                 const packageFolder = Validator.validateFolderPath(this.packageFolder);
                 targetDir = Validator.validateFolderPath(targetDir);
-                let process = ProcessFactory.convertToSFDX(packageFolder, packageFile, targetDir, this.apiVersion);
+                let process = this._useAuraHelperSFDX ? ProcessFactory.convertMdApiToSFDX(packageFolder, packageFile, targetDir, this.apiVersion) : ProcessFactory.convertMdApiToSF(packageFolder, packageFile, targetDir, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
@@ -1196,7 +1254,7 @@ export class SFConnector {
             try {
                 const packageFile = Validator.validateFilePath(this.packageFile);
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                let process = ProcessFactory.convertToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion);
+                let process = this._useAuraHelperSFDX ? ProcessFactory.convertSFDXToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion) : ProcessFactory.convertSFToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
@@ -1236,7 +1294,7 @@ export class SFConnector {
         return new Promise<SFDXProjectResult>((resolve, reject) => {
             try {
                 let projectFolderRes = Validator.validateFolderPath(projectFolder || this.projectFolder);
-                let process = ProcessFactory.createSFDXProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest);
+                let process = this._useAuraHelperSFDX ? ProcessFactory.createSFDXProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest) : ProcessFactory.createSFProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
@@ -1330,7 +1388,7 @@ export class SFConnector {
                     throw new DataRequiredException('usernameOrAlias');
                 }
                 outputPath = Validator.validateFolderPath(outputPath);
-                let process = ProcessFactory.exportTreeData(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion);
+                let process = this._useAuraHelperSFDX ? ProcessFactory.exportTreeDataSFDX(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion) : ProcessFactory.exportTreeDataSF(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
@@ -1371,7 +1429,7 @@ export class SFConnector {
                     throw new DataRequiredException('usernameOrAlias');
                 }
                 file = Validator.validateFilePath(file);
-                let process = ProcessFactory.importTreeData(this.usernameOrAlias, file, this.apiVersion);
+                let process = this._useAuraHelperSFDX ? ProcessFactory.importTreeDataSFDX(this.usernameOrAlias, file, this.apiVersion) : ProcessFactory.importTreeDataSF(this.usernameOrAlias, file, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     if (response.status === 0) {
@@ -1434,7 +1492,7 @@ export class SFConnector {
                 }
                 csvfile = Validator.validateFilePath(csvfile);
                 const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                let process = ProcessFactory.bulkDelete(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion);
+                let process = this._useAuraHelperSFDX ? ProcessFactory.bulkDeleteSFDX(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion) : ProcessFactory.bulkDeleteSF(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion);
                 addProcess(this, process);
                 ProcessHandler.runProcess(process).then((response) => {
                     this.handleResponse(response, () => {
@@ -1485,7 +1543,7 @@ export class SFConnector {
                 const connection = await Connection.create({
                     authInfo: await AuthInfo.create({ username: username })
                 });
-                if(!connection || !connection.accessToken){
+                if (!connection || !connection.accessToken) {
                     throw new ConnectionException('Connection not found');
                 }
                 const endpoint = connection.instanceUrl + '/services/Soap/s/' + this.apiVersion + '/' + connection.accessToken.split('!')[0];
@@ -2171,7 +2229,7 @@ function calculateIncrement(objects: string[]) {
 function getMetadataTypeNames(typesOrDetails?: string[] | MetadataDetail[]) {
     const result = [];
     if (typesOrDetails !== undefined) {
-        const objectsToProcess = Utils.forceArray(typesOrDetails);
+        const objectsToProcess = Utils.forceArray<any>(typesOrDetails);
         for (const obj of objectsToProcess) {
             if (obj.xmlName !== undefined) {
                 result.push(obj.xmlName);
