@@ -385,15 +385,10 @@ export class SFConnector {
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    getAuthUsername(usernameOrAlias?: string): Promise<string | undefined> {
-        usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
-        return new Promise<string | undefined>(async (resolve, reject) => {
-            this.getAuthOrg(usernameOrAlias).then((authOrg) => {
-                resolve(authOrg ? authOrg.username : undefined);
-            }).catch((error) => {
-                reject(error);
-            });
-        });
+    async getAuthUsername(usernameOrAlias?: string): Promise<string | undefined> {
+        usernameOrAlias = usernameOrAlias ?? this.usernameOrAlias;
+        const authOrg = await this.getAuthOrg(usernameOrAlias);
+        return authOrg ? authOrg.username : undefined;
     }
 
     /**
@@ -404,15 +399,10 @@ export class SFConnector {
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    getServerInstance(usernameOrAlias?: string): Promise<string | undefined> {
-        usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
-        return new Promise<string | undefined>((resolve, reject) => {
-            this.getAuthOrg(usernameOrAlias).then((authOrg) => {
-                resolve(authOrg ? authOrg.instanceUrl : undefined);
-            }).catch((error) => {
-                reject(error);
-            });
-        });
+    async getServerInstance(usernameOrAlias?: string): Promise<string | undefined> {
+        usernameOrAlias = usernameOrAlias ?? this.usernameOrAlias;
+        const authOrg = await this.getAuthOrg(usernameOrAlias);
+        return authOrg ? authOrg.instanceUrl : undefined;
     }
 
     /**
@@ -423,43 +413,34 @@ export class SFConnector {
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    getAuthOrg(usernameOrAlias?: string): Promise<AuthOrg | undefined> {
-        usernameOrAlias = usernameOrAlias || this.usernameOrAlias;
-        return new Promise<AuthOrg | undefined>((resolve, reject) => {
-            try {
-                AuthInfo.listAllAuthorizations().then((authOrgs: OrgAuthorization[]) => {
-                    let resultOrg: AuthOrg | undefined;
-                    if (authOrgs && authOrgs.length > 0) {
-                        const defaultUsername = usernameOrAlias || this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFolderPath(this.projectFolder));
-                        if (defaultUsername) {
-                            for (const authOrg of authOrgs) {
-                                if (defaultUsername.indexOf('@') !== -1) {
-                                    if (authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
-                                        resultOrg = new AuthOrg(authOrg);
-                                    }
-                                } else {
-                                    const orgAlias = authOrg.aliases?.find((alias) => alias?.toLowerCase().trim() === defaultUsername.toLowerCase().trim());
-                                    if (orgAlias) {
-                                        resultOrg = new AuthOrg(authOrg);
-                                    }
-                                }
-                                const orgAlias = authOrg.aliases?.find((alias) => alias?.toLowerCase().trim() === defaultUsername.toLowerCase().trim());
-                                if (!resultOrg && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || orgAlias)) {
-                                    resultOrg = new AuthOrg(authOrg);
-                                }
-                            }
+    async getAuthOrg(usernameOrAlias?: string): Promise<AuthOrg | undefined> {
+        usernameOrAlias = usernameOrAlias ?? this.usernameOrAlias;
+        const authOrgs = await AuthInfo.listAllAuthorizations();
+        let resultOrg: AuthOrg | undefined;
+        if (authOrgs && authOrgs.length > 0) {
+            const defaultUsername = usernameOrAlias || this.usernameOrAlias || ProjectUtils.getOrgAlias(Validator.validateFolderPath(this.projectFolder));
+            if (defaultUsername) {
+                for (const authOrg of authOrgs) {
+                    if (defaultUsername.indexOf('@') !== -1) {
+                        if (authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) {
+                            resultOrg = new AuthOrg(authOrg);
                         }
-                        resolve(resultOrg);
                     } else {
-                        resolve(undefined);
+                        const orgAlias = authOrg.aliases?.find((alias) => alias?.toLowerCase().trim() === defaultUsername.toLowerCase().trim());
+                        if (orgAlias) {
+                            resultOrg = new AuthOrg(authOrg);
+                        }
                     }
-                }).catch((error) => {
-                    reject(error);
-                });
-            } catch (error) {
-                reject(error);
+                    const orgAlias = authOrg.aliases?.find((alias) => alias?.toLowerCase().trim() === defaultUsername.toLowerCase().trim());
+                    if (!resultOrg && ((authOrg.username && authOrg.username.toLowerCase().trim() === defaultUsername.toLowerCase().trim()) || orgAlias)) {
+                        resultOrg = new AuthOrg(authOrg);
+                    }
+                }
             }
-        });
+            return resultOrg;
+        } else {
+            return undefined;
+        }
     }
 
     /**
@@ -469,24 +450,15 @@ export class SFConnector {
      * 
      * @throws {ConnectionException} If run other connection process when has one process running or Connection Return an error 
      */
-    listAuthOrgs(): Promise<AuthOrg[]> {
-        return new Promise<AuthOrg[]>((resolve, reject) => {
-            try {
-                AuthInfo.listAllAuthorizations().then((orgs) => {
-                    const authOrgs: AuthOrg[] = [];
-                    if (orgs) {
-                        for (const org of orgs) {
-                            authOrgs.push(new AuthOrg(org));
-                        }
-                    }
-                    resolve(authOrgs);
-                }).catch((error) => {
-                    reject(error);
-                });
-            } catch (error) {
-                reject(error);
+    async listAuthOrgs(): Promise<AuthOrg[]> {
+        const orgs = await AuthInfo.listAllAuthorizations();
+        const authOrgs: AuthOrg[] = [];
+        if (orgs) {
+            for (const org of orgs) {
+                authOrgs.push(new AuthOrg(org));
             }
-        });
+        }
+        return authOrgs;
     }
 
     /**
@@ -500,30 +472,24 @@ export class SFConnector {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    query<T>(query: string, useToolingApi?: boolean): Promise<T[]> {
-        return new Promise(async (resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const username = await this.getAuthUsername();
-                if (username) {
-                    const connection = await Connection.create({
-                        authInfo: await AuthInfo.create({ username: username })
-                    });
-                    const result = (useToolingApi) ? await connection.tooling.query(query) : await connection.query(query);
-                    if (!result.records || result.records.length <= 0) {
-                        resolve([]);
-                    } else {
-                        resolve(result.records as T[]);
-                    }
-                } else {
-                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
-                }
-            } catch (error) {
-                reject(error);
+    async query<T>(query: string, useToolingApi?: boolean): Promise<T[]> {
+        if (!this.usernameOrAlias) {
+            throw new DataRequiredException('usernameOrAlias');
+        }
+        const username = await this.getAuthUsername();
+        if (username) {
+            const connection = await Connection.create({
+                authInfo: await AuthInfo.create({ username: username })
+            });
+            const result = (useToolingApi) ? await connection.tooling.query(query) : await connection.query(query);
+            if (!result.records || result.records.length <= 0) {
+                return [];
+            } else {
+                return result.records as T[];
             }
-        });
+        } else {
+            throw new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias);
+        }
     }
 
     /**
@@ -536,28 +502,22 @@ export class SFConnector {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    listMetadataTypes(): Promise<MetadataDetail[]> {
-        return new Promise<MetadataDetail[]>(async (resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const username = await this.getAuthUsername();
-                if (username) {
-                    const connection = await Connection.create({
-                        authInfo: await AuthInfo.create({ username: username })
-                    });
-                    const apiVersion = this.apiVersion ? ProjectUtils.getApiAsString(this.apiVersion) : undefined;
-                    const describeMetadata = await connection.metadata.describe(apiVersion);
-                    const metadataDetails = MetadataFactory.createMetadataDetails(describeMetadata.metadataObjects);
-                    resolve(metadataDetails);
-                } else {
-                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
-                }
-            } catch (error) {
-                reject(error);
-            }
-        });
+    async listMetadataTypes(): Promise<MetadataDetail[]> {
+        if (!this.usernameOrAlias) {
+            throw new DataRequiredException('usernameOrAlias');
+        }
+        const username = await this.getAuthUsername();
+        if (username) {
+            const connection = await Connection.create({
+                authInfo: await AuthInfo.create({ username: username })
+            });
+            const apiVersion = this.apiVersion ? ProjectUtils.getApiAsString(this.apiVersion) : undefined;
+            const describeMetadata = await connection.metadata.describe(apiVersion);
+            const metadataDetails = MetadataFactory.createMetadataDetails(describeMetadata.metadataObjects);
+            return metadataDetails;
+        } else {
+            throw new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias);
+        }
     }
 
     /**
@@ -572,59 +532,38 @@ export class SFConnector {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    describeMetadataTypes(typesOrDetails?: string[] | MetadataDetail[], downloadAll?: boolean, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
+    async describeMetadataTypes(typesOrDetails?: string[] | MetadataDetail[], downloadAll?: boolean, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
         resetProgress(this);
-        return new Promise<{ [key: string]: MetadataType }>(async (resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const username = await this.getAuthUsername();
-                if (username) {
-                    const connection = await Connection.create({
-                        authInfo: await AuthInfo.create({ username: username })
-                    });
-                    const metadataToProcess = getMetadataTypeNames(typesOrDetails);
-                    this._increment = calculateIncrement(metadataToProcess);
-                    callEvent(this, EVENT.PREPARE);
-                    let foldersByType;
-                    if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
-                        foldersByType = await getFoldersByType(this);
-                    }
-                    let metadata: { [key: string]: MetadataType } = {};
-                    const batchesToProcess = getBatches(this, metadataToProcess);
-                    for (const batch of batchesToProcess) {
-                        downloadMetadata(this, connection, batch.records, downloadAll, foldersByType, groupGlobalActions).then((downloadedMetadata) => {
-                            Object.keys(downloadedMetadata).forEach(function (key) {
-                                metadata[key] = downloadedMetadata[key];
-                            });
-                            batch.completed = true;
-                            let nCompleted = 0;
-                            for (const resultBatch of batchesToProcess) {
-                                if (resultBatch.completed) {
-                                    nCompleted++;
-                                }
-                            }
-                            if (nCompleted === batchesToProcess.length) {
-                                metadata = MetadataUtils.orderMetadata(metadata);
-                                this._allowConcurrence = false;
-                                resolve(metadata);
-                                return;
-                            }
-                        }).catch((error) => {
-                            this._allowConcurrence = false;
-                            reject(error);
-                            return;
-                        });
-                    }
-                } else {
-                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
-                }
-            } catch (error) {
-                this._allowConcurrence = false;
-                reject(error);
+        if (!this.usernameOrAlias) {
+            throw new DataRequiredException('usernameOrAlias');
+        }
+        const username = await this.getAuthUsername();
+        if (username) {
+            const connection = await Connection.create({
+                authInfo: await AuthInfo.create({ username: username })
+            });
+            const metadataToProcess = getMetadataTypeNames(typesOrDetails);
+            this._increment = calculateIncrement(metadataToProcess);
+            callEvent(this, EVENT.PREPARE);
+            let foldersByType;
+            if (metadataToProcess.includes(MetadataTypes.REPORT) || metadataToProcess.includes(MetadataTypes.DASHBOARD) || metadataToProcess.includes(MetadataTypes.EMAIL_TEMPLATE) || metadataToProcess.includes(MetadataTypes.DOCUMENT)) {
+                foldersByType = await getFoldersByType(this);
             }
-        });
+            const metadata: { [key: string]: MetadataType } = {};
+            const promises = [];
+            for (const metadataType of metadataToProcess) {
+                promises.push(downloadMetadataType(this, connection, metadataType, downloadAll, foldersByType, groupGlobalActions));
+            }
+            const result = await Promise.all(promises);
+            for (const metadataType of result) {
+                if (metadataType) {
+                    metadata[metadataType.name] = metadataType;
+                }
+            }
+            return metadata;
+        } else {
+            throw new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias);
+        }
     }
 
     /**
@@ -638,40 +577,34 @@ export class SFConnector {
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    listSObjects(category?: string): Promise<string[]> {
-        return new Promise<string[]>(async (resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const username = await this.getAuthUsername();
-                if (username) {
-                    const sObjects: string[] = [];
-                    const connection = await Connection.create({
-                        authInfo: await AuthInfo.create({ username: username })
-                    });
-                    const result = await connection.describeGlobal();
-                    if (result.sobjects) {
-                        for (const obj of result.sobjects) {
-                            if (obj.queryable) {
-                                if (!category || category.toLowerCase() === 'all') {
-                                    sObjects.push(obj.name);
-                                } else if (!obj.custom && category.toLowerCase() === 'standard') {
-                                    sObjects.push(obj.name);
-                                } else if (obj.custom && category.toLowerCase() === 'custom') {
-                                    sObjects.push(obj.name);
-                                }
-                            }
+    async listSObjects(category?: string): Promise<string[]> {
+        if (!this.usernameOrAlias) {
+            throw new DataRequiredException('usernameOrAlias');
+        }
+        const username = await this.getAuthUsername();
+        if (username) {
+            const sObjects: string[] = [];
+            const connection = await Connection.create({
+                authInfo: await AuthInfo.create({ username: username })
+            });
+            const result = await connection.describeGlobal();
+            if (result.sobjects) {
+                for (const obj of result.sobjects) {
+                    if (obj.queryable) {
+                        if (!category || category.toLowerCase() === 'all') {
+                            sObjects.push(obj.name);
+                        } else if (!obj.custom && category.toLowerCase() === 'standard') {
+                            sObjects.push(obj.name);
+                        } else if (obj.custom && category.toLowerCase() === 'custom') {
+                            sObjects.push(obj.name);
                         }
                     }
-                    resolve(sObjects);
-                } else {
-                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
                 }
-            } catch (error) {
-                reject(error);
             }
-        });
+            return sObjects;
+        } else {
+            throw new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias);
+        }
     }
 
     /**
@@ -684,51 +617,34 @@ export class SFConnector {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    describeSObjects(sObjects: string | string[]): Promise<{ [key: string]: SObject }> {
+    async describeSObjects(sObjects: string | string[]): Promise<{ [key: string]: SObject }> {
         resetProgress(this);
-        return new Promise<{ [key: string]: SObject }>(async (resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const username = await this.getAuthUsername();
-                const connection = await Connection.create({
-                    authInfo: await AuthInfo.create({ username: username })
-                });
-                if (username) {
-                    sObjects = Utils.forceArray(sObjects);
-                    this._increment = calculateIncrement(sObjects);
-                    callEvent(this, EVENT.PREPARE);
-                    let resultObjects: { [key: string]: SObject } = {};
-                    const batchesToProcess = getBatches(this, sObjects);
-                    for (const batch of batchesToProcess) {
-                        downloadSObjectsData(this, connection, batch.records).then((downloadedSObjects) => {
-                            Object.keys(downloadedSObjects).forEach(function (key) {
-                                resultObjects[key] = downloadedSObjects[key];
-                            });
-                            batch.completed = true;
-                            let nCompleted = 0;
-                            for (const resultBatch of batchesToProcess) {
-                                if (resultBatch.completed) {
-                                    nCompleted++;
-                                }
-                            }
-                            if (nCompleted === batchesToProcess.length) {
-                                resultObjects = MetadataUtils.orderSObjects(resultObjects);
-                                resolve(resultObjects);
-                                return;
-                            }
-                        }).catch((error) => {
-                            reject(error);
-                        });
-                    }
-                } else {
-                    reject(new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias));
-                }
-            } catch (error) {
-                reject(error);
-            }
+        if (!this.usernameOrAlias) {
+            throw new DataRequiredException('usernameOrAlias');
+        }
+        const username = await this.getAuthUsername();
+        const connection = await Connection.create({
+            authInfo: await AuthInfo.create({ username: username })
         });
+        if (username) {
+            sObjects = Utils.forceArray(sObjects);
+            this._increment = calculateIncrement(sObjects);
+            callEvent(this, EVENT.PREPARE);
+            let resultObjects: { [key: string]: SObject } = {};
+            const promises = [];
+            for (const sObject of sObjects) {
+                promises.push(downloadSObject(this, connection, sObject));
+            }
+            const result = await Promise.all(promises);
+            for (const sObject of result) {
+                if (sObject) {
+                    resultObjects[sObject.name] = sObject;
+                }
+            }
+            return resultObjects;
+        } else {
+            throw new ConnectionException('Not authorized org found with Username or Alias ' + this.usernameOrAlias);
+        }
     }
 
     /**
@@ -747,48 +663,40 @@ export class SFConnector {
      * @throws {InvalidDirectoryPathException} If the project folder or target dir is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieve(useMetadataAPI: boolean, targetDir?: string, waitMinutes?: string | number): Promise<RetrieveResult> {
+    async retrieve(useMetadataAPI: boolean, targetDir?: string, waitMinutes?: string | number): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<RetrieveResult>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                let process;
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                if (useMetadataAPI) {
-                    targetDir = Validator.validateFolderPath(targetDir);
-                    const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.mdapiRetrievePackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
-                    } else {
-                        process = ProcessFactory.mdapiRetrievePackageSF(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
-                    }
-                } else {
-                    const packageFile = Validator.validateFilePath(this.packageFile);
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.sourceRetrievePackageSFDX(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
-                    } else {
-                        process = ProcessFactory.sourceRetrievePackageSF(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
-                    }
-                }
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, async () => {
-                        const status = new RetrieveResult(response.result);
-                        endOperation(this);
-                        resolve(status);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            let process;
+            const projectFolder = Validator.validateFolderPath(this.projectFolder);
+            if (useMetadataAPI) {
+                targetDir = Validator.validateFolderPath(targetDir);
+                const packageFolder = Validator.validateFolderPath(this.packageFolder);
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.mdapiRetrievePackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
+                } else {
+                    process = ProcessFactory.mdapiRetrievePackageSF(this.usernameOrAlias, packageFolder, projectFolder, targetDir, this.apiVersion, waitMinutes);
+                }
+            } else {
+                const packageFile = Validator.validateFilePath(this.packageFile);
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceRetrievePackageSFDX(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceRetrievePackageSF(this.usernameOrAlias, packageFile, projectFolder, this.apiVersion, waitMinutes);
+                }
+            }
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const status = new RetrieveResult(response.result);
+            endOperation(this);
+            return status;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -805,39 +713,37 @@ export class SFConnector {
      * @throws {DirectoryNotFoundException} If the target dir not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the target dir is not a directory
      */
-    retrieveReport(retrieveId: string, targetDir: string): Promise<RetrieveStatus> {
+    async retrieveReport(retrieveId: string, targetDir: string): Promise<RetrieveStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<RetrieveStatus>((resolve, reject) => {
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
+            }
+            this._allowConcurrence = true;
+            targetDir = Validator.validateFolderPath(targetDir);
+            let process = this._useAuraHelperSFDX ? ProcessFactory.mdapiRetrieveReportSFDX(this.usernameOrAlias, retrieveId, targetDir) : ProcessFactory.mdapiRetrieveReportSF(this.usernameOrAlias, retrieveId, targetDir);
+            addProcess(this, process);
             try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                this._allowConcurrence = true;
-                targetDir = Validator.validateFolderPath(targetDir);
-                let process = this._useAuraHelperSFDX ? ProcessFactory.mdapiRetrieveReportSFDX(this.usernameOrAlias, retrieveId, targetDir) : ProcessFactory.mdapiRetrieveReportSF(this.usernameOrAlias, retrieveId, targetDir);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const status = new RetrieveStatus(response.result);
-                        this._allowConcurrence = false;
-                        endOperation(this);
-                        resolve(status);
-                    });
-                }).catch((error) => {
-                    this._allowConcurrence = false;
-                    if (error.message && error.message.indexOf('Retrieve result has been deleted') !== -1) {
-                        resolve(new RetrieveStatus(retrieveId, 'Succeeded', true, true));
-                    }
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
+                const response = this.handleResponse(await ProcessHandler.runProcess(process));
+                const status = new RetrieveStatus(response.result);
                 this._allowConcurrence = false;
                 endOperation(this);
-                reject(error);
+                return status;
+            } catch (error) {
+                const err = error as Error;
+                this._allowConcurrence = false;
+                if (err?.message?.indexOf('Retrieve result has been deleted') !== -1) {
+                    return new RetrieveStatus(retrieveId, 'Succeeded', true, true);
+                }
+                endOperation(this);
+                throw error;
             }
-        });
+        } catch (error) {
+            this._allowConcurrence = false;
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -860,50 +766,42 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    validateDeploy(testLevel?: string, runTests?: string | string[], useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
+    async validateDeploy(testLevel?: string, runTests?: string | string[], useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<DeployStatus>((resolve, reject) => {
-            if (runTests && Array.isArray(runTests)) {
-                runTests = runTests.join(',');
+        if (runTests && Array.isArray(runTests)) {
+            runTests = runTests.join(',');
+        }
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                let process;
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                if (useMetadataAPI) {
-                    const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.mdapiValidatePackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
-                    } else {
-                        process = ProcessFactory.mdapiValidatePackageSF(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
-                    }
+            let process;
+            const projectFolder = Validator.validateFolderPath(this.projectFolder);
+            if (useMetadataAPI) {
+                const packageFolder = Validator.validateFolderPath(this.packageFolder);
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.mdapiValidatePackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
                 } else {
-                    const packageFile = Validator.validateFilePath(this.packageFile);
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.sourceValidatePackageSFDX(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
-                    } else {
-                        process = ProcessFactory.sourceValidatePackageSF(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
-                    }
+                    process = ProcessFactory.mdapiValidatePackageSF(this.usernameOrAlias, packageFolder, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
                 }
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const validationId = new DeployStatus(response.result);
-                        endOperation(this);
-                        resolve(validationId);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+            } else {
+                const packageFile = Validator.validateFilePath(this.packageFile);
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceValidatePackageSFDX(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceValidatePackageSF(this.usernameOrAlias, packageFile, projectFolder, testLevel, runTests, this.apiVersion, waitMinutes);
+                }
             }
-        });
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const status = new DeployStatus(response.result);
+            endOperation(this);
+            return status;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -926,48 +824,40 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    deployPackage(testLevel?: string, runTests?: string | string[], useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
+    async deployPackage(testLevel?: string, runTests?: string | string[], useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<DeployStatus>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const testsToRun = Utils.forceArray(runTests);
-                let process;
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                if (useMetadataAPI) {
-                    const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.mdapiDeployPackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
-                    } else {
-                        process = ProcessFactory.mdapiDeployPackageSF(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
-                    }
-                } else {
-                    const packageFile = Validator.validateFilePath(this.packageFile);
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.sourceDeployPackageSFDX(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
-                    } else {
-                        process = ProcessFactory.sourceDeployPackageSF(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
-                    }
-                }
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const status = new DeployStatus(response.result);
-                        endOperation(this);
-                        resolve(status);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            const testsToRun = Utils.forceArray(runTests);
+            let process;
+            const projectFolder = Validator.validateFolderPath(this.projectFolder);
+            if (useMetadataAPI) {
+                const packageFolder = Validator.validateFolderPath(this.packageFolder);
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.mdapiDeployPackageSFDX(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                } else {
+                    process = ProcessFactory.mdapiDeployPackageSF(this.usernameOrAlias, packageFolder, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                }
+            } else {
+                const packageFile = Validator.validateFilePath(this.packageFile);
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceDeployPackageSFDX(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceDeployPackageSF(this.usernameOrAlias, packageFile, projectFolder, testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+                }
+            }
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const status = new DeployStatus(response.result);
+            endOperation(this);
+            return status;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -989,38 +879,30 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    deploy(types: string | string[] | { [key: string]: MetadataType }, testLevel?: string, runTests?: string | string[], waitMinutes?: string | number): Promise<DeployStatus> {
+    async deploy(types: string | string[] | { [key: string]: MetadataType }, testLevel?: string, runTests?: string | string[], waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<DeployStatus>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const testsToRun = Utils.forceArray(runTests);
-                let process;
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                if (this._useAuraHelperSFDX) {
-                    process = ProcessFactory.sourceDeploySFDX(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
-                } else {
-                    process = ProcessFactory.sourceDeploySF(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
-                }
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const status = new DeployStatus(response.result);
-                        endOperation(this);
-                        resolve(status);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            const testsToRun = Utils.forceArray(runTests);
+            let process;
+            const projectFolder = Validator.validateFolderPath(this.projectFolder);
+            if (this._useAuraHelperSFDX) {
+                process = ProcessFactory.sourceDeploySFDX(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+            } else {
+                process = ProcessFactory.sourceDeploySF(this.usernameOrAlias, projectFolder, transformMetadataTypesIntoCSV(types), testLevel, (testsToRun) ? testsToRun.join(',') : undefined, this.apiVersion, waitMinutes);
+            }
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const status = new DeployStatus(response.result);
+            endOperation(this);
+            return status;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1038,45 +920,37 @@ export class SFConnector {
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    quickDeploy(deployId: string, useMetadataAPI?: boolean): Promise<DeployStatus> {
+    async quickDeploy(deployId: string, useMetadataAPI?: boolean): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<DeployStatus>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                let process;
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                if (useMetadataAPI) {
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.sourceQuickDeploySFDX(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
-                    } else {
-                        process = ProcessFactory.mdapiQuickDeploySF(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
-                    }
-                } else {
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.sourceQuickDeploySFDX(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
-                    } else {
-                        process = ProcessFactory.sourceQuickDeploySF(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
-                    }
-                }
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const status = new DeployStatus(response.result);
-                        endOperation(this);
-                        resolve(status);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            let process;
+            const projectFolder = Validator.validateFolderPath(this.projectFolder);
+            if (useMetadataAPI) {
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceQuickDeploySFDX(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                } else {
+                    process = ProcessFactory.mdapiQuickDeploySF(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                }
+            } else {
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceQuickDeploySFDX(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                } else {
+                    process = ProcessFactory.sourceQuickDeploySF(this.usernameOrAlias, deployId, projectFolder, this.apiVersion);
+                }
+            }
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const status = new DeployStatus(response.result);
+            endOperation(this);
+            return status;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1091,48 +965,39 @@ export class SFConnector {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    deployReport(deployId: string, useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
+    async deployReport(deployId: string, useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<DeployStatus>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                this._allowConcurrence = true;
-                let process;
-                if (useMetadataAPI) {
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.mdapiDeployReportSFDX(this.usernameOrAlias, deployId, waitMinutes);
-                    } else {
-                        process = ProcessFactory.sourceDeployReportSF(this.usernameOrAlias, deployId, waitMinutes);
-                    }
-                } else {
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.sourceDeployReportSFDX(this.usernameOrAlias, deployId, waitMinutes);
-                    } else {
-                        process = ProcessFactory.sourceDeployReportSF(this.usernameOrAlias, deployId, waitMinutes);
-                    }
-                }
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        this._allowConcurrence = false;
-                        const status = new DeployStatus(response.result);
-                        endOperation(this);
-                        resolve(status);
-                    });
-                }).catch((error) => {
-                    this._allowConcurrence = false;
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                this._allowConcurrence = false;
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            this._allowConcurrence = true;
+            let process;
+            if (useMetadataAPI) {
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.mdapiDeployReportSFDX(this.usernameOrAlias, deployId, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceDeployReportSF(this.usernameOrAlias, deployId, waitMinutes);
+                }
+            } else {
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceDeployReportSFDX(this.usernameOrAlias, deployId, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceDeployReportSF(this.usernameOrAlias, deployId, waitMinutes);
+                }
+            }
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const status = new DeployStatus(response.result);
+            this._allowConcurrence = false;
+            endOperation(this);
+            return status;
+        } catch (error) {
+            this._allowConcurrence = false;
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1147,44 +1012,36 @@ export class SFConnector {
      * @throws {DataRequiredException} If required data is not provided
      * @throws {OSNotSupportedException} When run this processes with not supported operative system
      */
-    cancelDeploy(deployId: string, useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
+    async cancelDeploy(deployId: string, useMetadataAPI?: boolean, waitMinutes?: string | number): Promise<DeployStatus> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<DeployStatus>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                let process;
-                if (useMetadataAPI) {
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.mdapiCancelDeploySFDX(this.usernameOrAlias, deployId, waitMinutes);
-                    } else {
-                        process = ProcessFactory.sourceCancelDeploySF(this.usernameOrAlias, deployId, waitMinutes);
-                    }
-                } else {
-                    if (this._useAuraHelperSFDX) {
-                        process = ProcessFactory.sourceCancelDeploySFDX(this.usernameOrAlias, deployId, waitMinutes);
-                    } else {
-                        process = ProcessFactory.sourceCancelDeploySF(this.usernameOrAlias, deployId, waitMinutes);
-                    }
-                }
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const status = new DeployStatus(response.result);
-                        endOperation(this);
-                        resolve(status);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            let process;
+            if (useMetadataAPI) {
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.mdapiCancelDeploySFDX(this.usernameOrAlias, deployId, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceCancelDeploySF(this.usernameOrAlias, deployId, waitMinutes);
+                }
+            } else {
+                if (this._useAuraHelperSFDX) {
+                    process = ProcessFactory.sourceCancelDeploySFDX(this.usernameOrAlias, deployId, waitMinutes);
+                } else {
+                    process = ProcessFactory.sourceCancelDeploySF(this.usernameOrAlias, deployId, waitMinutes);
+                }
+            }
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const status = new DeployStatus(response.result);
+            endOperation(this);
+            return status;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1204,30 +1061,22 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    convertProjectToSFDX(targetDir: string): Promise<void> {
+    async convertProjectToSFDX(targetDir: string): Promise<void> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<void>((resolve, reject) => {
-            try {
-                const packageFile = Validator.validateFilePath(this.packageFile);
-                const packageFolder = Validator.validateFolderPath(this.packageFolder);
-                targetDir = Validator.validateFolderPath(targetDir);
-                let process = this._useAuraHelperSFDX ? ProcessFactory.convertMdApiToSFDX(packageFolder, packageFile, targetDir, this.apiVersion) : ProcessFactory.convertMdApiToSF(packageFolder, packageFile, targetDir, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        endOperation(this);
-                        resolve();
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
-            }
-        });
+        try {
+            const packageFile = Validator.validateFilePath(this.packageFile);
+            const packageFolder = Validator.validateFolderPath(this.packageFolder);
+            targetDir = Validator.validateFolderPath(targetDir);
+            let process = this._useAuraHelperSFDX ? ProcessFactory.convertMdApiToSFDX(packageFolder, packageFile, targetDir, this.apiVersion) : ProcessFactory.convertMdApiToSF(packageFolder, packageFile, targetDir, this.apiVersion);
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            endOperation(this);
+            return;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1247,29 +1096,21 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the package file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    convertProjectToMetadataAPI(targetDir: string): Promise<void> {
+    async convertProjectToMetadataAPI(targetDir: string): Promise<void> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<void>((resolve, reject) => {
-            try {
-                const packageFile = Validator.validateFilePath(this.packageFile);
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                let process = this._useAuraHelperSFDX ? ProcessFactory.convertSFDXToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion) : ProcessFactory.convertSFToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        endOperation(this);
-                        resolve();
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
-            }
-        });
+        try {
+            const packageFile = Validator.validateFilePath(this.packageFile);
+            const projectFolder = Validator.validateFolderPath(this.projectFolder);
+            let process = this._useAuraHelperSFDX ? ProcessFactory.convertSFDXToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion) : ProcessFactory.convertSFToMetadataAPI(packageFile, projectFolder, targetDir, this.apiVersion);
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            endOperation(this);
+            return;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1288,35 +1129,27 @@ export class SFConnector {
      * @throws {DirectoryNotFoundException} If the project folder not exists or not have access to it
      * @throws {InvalidDirectoryPathException} If the project folder is not a directory
      */
-    createSFDXProject(projectName: string, projectFolder?: string, template?: string, withManifest?: boolean): Promise<SFDXProjectResult> {
+    async createSFDXProject(projectName: string, projectFolder?: string, template?: string, withManifest?: boolean): Promise<SFDXProjectResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<SFDXProjectResult>((resolve, reject) => {
-            try {
-                let projectFolderRes = Validator.validateFolderPath(projectFolder || this.projectFolder);
-                let process = this._useAuraHelperSFDX ? ProcessFactory.createSFDXProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest) : ProcessFactory.createSFProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const result = new SFDXProjectResult(response.result);
-                        projectFolderRes = StrUtils.replace(projectFolderRes, '\\', '/');
-                        this.setProjectFolder(projectFolderRes + '/' + projectName);
-                        if (withManifest) {
-                            this.setPackageFolder(projectFolderRes + '/' + projectName + '/manifest');
-                            this.setPackageFile(projectFolderRes + '/' + projectName + '/manifest/package.xml');
-                        }
-                        endOperation(this);
-                        resolve(result);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            let projectFolderRes = Validator.validateFolderPath(projectFolder || this.projectFolder);
+            let process = this._useAuraHelperSFDX ? ProcessFactory.createSFDXProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest) : ProcessFactory.createSFProject(projectName, projectFolderRes, template, this.namespacePrefix, withManifest);
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const result = new SFDXProjectResult(response.result);
+            projectFolderRes = StrUtils.replace(projectFolderRes, '\\', '/');
+            this.setProjectFolder(projectFolderRes + '/' + projectName);
+            if (withManifest) {
+                this.setPackageFolder(projectFolderRes + '/' + projectName + '/manifest');
+                this.setPackageFile(projectFolderRes + '/' + projectName + '/manifest/package.xml');
             }
-        });
+            endOperation(this);
+            return result;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1379,31 +1212,23 @@ export class SFConnector {
      * @throws {InvalidDirectoryPathException} If the output folder is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    exportTreeData(query: string, outputPath: string, prefix?: string): Promise<ExportTreeDataResult[]> {
+    async exportTreeData(query: string, outputPath: string, prefix?: string): Promise<ExportTreeDataResult[]> {
         startOperation(this);
         resetProgress(this);
-        return new Promise((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                outputPath = Validator.validateFolderPath(outputPath);
-                let process = this._useAuraHelperSFDX ? ProcessFactory.exportTreeDataSFDX(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion) : ProcessFactory.exportTreeDataSF(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        endOperation(this);
-                        resolve(processExportTreeDataOut(response));
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            outputPath = Validator.validateFolderPath(outputPath);
+            let process = this._useAuraHelperSFDX ? ProcessFactory.exportTreeDataSFDX(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion) : ProcessFactory.exportTreeDataSF(this.usernameOrAlias, query, outputPath, prefix, this.apiVersion);
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            endOperation(this);
+            return processExportTreeDataOut(response);
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1420,48 +1245,43 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    importTreeData(file: string): Promise<ImportTreeDataResponse> {
+    async importTreeData(file: string): Promise<ImportTreeDataResponse> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<ImportTreeDataResponse>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                file = Validator.validateFilePath(file);
-                let process = this._useAuraHelperSFDX ? ProcessFactory.importTreeDataSFDX(this.usernameOrAlias, file, this.apiVersion) : ProcessFactory.importTreeDataSF(this.usernameOrAlias, file, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    if (response.status === 0) {
-                        let results: ImportTreeDataResult[] = [];
-                        for (let insertResult of response.result) {
-                            results.push({
-                                refId: '@' + insertResult.refId,
-                                id: insertResult.id,
-                                sobject: insertResult.type,
-                            });
-                        }
-                        endOperation(this);
-                        resolve({ results: results, errors: undefined });
-                    } else {
-                        if (response.name === 'ERROR_HTTP_400') {
-                            let errorResults = JSON.parse(response.message);
-                            endOperation(this);
-                            resolve({ results: undefined, errors: errorResults.results });
-                        } else {
-                            endOperation(this);
-                            reject(response.message);
-                        }
-                    }
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            file = Validator.validateFilePath(file);
+            let process = this._useAuraHelperSFDX ? ProcessFactory.importTreeDataSFDX(this.usernameOrAlias, file, this.apiVersion) : ProcessFactory.importTreeDataSF(this.usernameOrAlias, file, this.apiVersion);
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            endOperation(this);
+            if (response.status === 0) {
+                let results: ImportTreeDataResult[] = [];
+                for (let insertResult of response.result) {
+                    results.push({
+                        refId: '@' + insertResult.refId,
+                        id: insertResult.id,
+                        sobject: insertResult.type,
+                    });
+                }
+                endOperation(this);
+                return { results: results, errors: undefined };
+            } else {
+                if (response.name === 'ERROR_HTTP_400') {
+                    let errorResults = JSON.parse(response.message);
+                    endOperation(this);
+                    return { results: undefined, errors: errorResults.results };
+                } else {
+                    endOperation(this);
+                    throw new Error(response.message);
+                }
+            }
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1482,36 +1302,25 @@ export class SFConnector {
      * @throws {InvalidFilePathException} If the csv file is not a file
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    bulkDelete(csvfile: string, sObject: string): Promise<BulkStatus[]> {
+    async bulkDelete(csvfile: string, sObject: string): Promise<BulkStatus[]> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<BulkStatus[]>((resolve, reject) => {
-            try {
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                csvfile = Validator.validateFilePath(csvfile);
-                const projectFolder = Validator.validateFolderPath(this.projectFolder);
-                let process = this._useAuraHelperSFDX ? ProcessFactory.bulkDeleteSFDX(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion) : ProcessFactory.bulkDeleteSF(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion);
-                addProcess(this, process);
-                ProcessHandler.runProcess(process).then((response) => {
-                    this.handleResponse(response, () => {
-                        const bulkStatus = [];
-                        for (const result of response.result) {
-                            bulkStatus.push(new BulkStatus(result));
-                        }
-                        endOperation(this);
-                        resolve(bulkStatus);
-                    });
-                }).catch((error) => {
-                    endOperation(this);
-                    reject(error);
-                });
-            } catch (error) {
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
             }
-        });
+            csvfile = Validator.validateFilePath(csvfile);
+            const projectFolder = Validator.validateFolderPath(this.projectFolder);
+            let process = this._useAuraHelperSFDX ? ProcessFactory.bulkDeleteSFDX(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion) : ProcessFactory.bulkDeleteSF(this.usernameOrAlias, csvfile, sObject, projectFolder, this.apiVersion);
+            addProcess(this, process);
+            const response = this.handleResponse(await ProcessHandler.runProcess(process));
+            const bulkStatus = response.result?.map((result: any) => new BulkStatus(result));
+            endOperation(this);
+            return bulkStatus;
+        } catch (error) {
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1586,56 +1395,54 @@ export class SFConnector {
      * @throws {InvalidDirectoryPathException} If the temp folder is not a directory
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    loadUserPermissions(tmpFolder: string): Promise<string[]> {
+    async loadUserPermissions(tmpFolder: string): Promise<string[]> {
         startOperation(this);
         resetProgress(this);
-        return new Promise(async (resolve, reject) => {
-            try {
-                if (!this.packageFolder) {
-                    throw new DataRequiredException('packageFolder');
-                }
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                const originalProjectFolder = Validator.validateFolderPath(this.projectFolder);
-                callEvent(this, EVENT.PREPARE);
-                this._allowConcurrence = true;
-                const metadata: { [key: string]: MetadataType } = {};
-                const metadataType = new MetadataType(MetadataTypes.PROFILE, true);
-                metadataType.childs["Admin"] = new MetadataObject("Admin", true);
-                metadata[MetadataTypes.PROFILE] = metadataType;
-                if (FileChecker.isExists(tmpFolder)) {
-                    FileWriter.delete(tmpFolder);
-                }
-                FileWriter.createFolderSync(tmpFolder);
-                callEvent(this, EVENT.CREATE_PROJECT);
-                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
-                FileWriter.delete(this.projectFolder + '/.forceignore');
-                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callEvent(this, EVENT.RETRIEVE);
-                const retrieveOut = await this.retrieve(false);
-                callEvent(this, EVENT.PROCESS);
-                const result = [];
-                const xmlRoot = XMLParser.parseXML(FileReader.readFileSync(this.projectFolder + '/force-app/main/default/profiles/Admin.profile-meta.xml'), true);
-                if (xmlRoot[MetadataTypes.PROFILE] && xmlRoot[MetadataTypes.PROFILE].userPermissions) {
-                    let permissions = XMLUtils.forceArray(xmlRoot[MetadataTypes.PROFILE].userPermissions);
-                    for (let permission of permissions) {
-                        result.push(permission.name);
-                    }
-                }
-                //callProgressCalback(this, EVENT.CLEANING);
-                //FileWriter.delete(tmpFolder);
-                restoreOriginalProjectData(this, originalProjectFolder);
-                this._allowConcurrence = false;
-                endOperation(this);
-                resolve(result);
-            } catch (error) {
-                this._allowConcurrence = false;
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.packageFolder) {
+                throw new DataRequiredException('packageFolder');
             }
-        });
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
+            }
+            const originalProjectFolder = Validator.validateFolderPath(this.projectFolder);
+            callEvent(this, EVENT.PREPARE);
+            this._allowConcurrence = true;
+            const metadata: { [key: string]: MetadataType } = {};
+            const metadataType = new MetadataType(MetadataTypes.PROFILE, true);
+            metadataType.childs["Admin"] = new MetadataObject("Admin", true);
+            metadata[MetadataTypes.PROFILE] = metadataType;
+            if (FileChecker.isExists(tmpFolder)) {
+                FileWriter.delete(tmpFolder);
+            }
+            FileWriter.createFolderSync(tmpFolder);
+            callEvent(this, EVENT.CREATE_PROJECT);
+            await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+            new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
+            FileWriter.delete(this.projectFolder + '/.forceignore');
+            await this.setAuthOrg(this.usernameOrAlias);
+            callEvent(this, EVENT.RETRIEVE);
+            await this.retrieve(false);
+            callEvent(this, EVENT.PROCESS);
+            const result = [];
+            const xmlRoot = XMLParser.parseXML(FileReader.readFileSync(this.projectFolder + '/force-app/main/default/profiles/Admin.profile-meta.xml'), true);
+            if (xmlRoot[MetadataTypes.PROFILE] && xmlRoot[MetadataTypes.PROFILE].userPermissions) {
+                let permissions = XMLUtils.forceArray(xmlRoot[MetadataTypes.PROFILE].userPermissions);
+                for (let permission of permissions) {
+                    result.push(permission.name);
+                }
+            }
+            //callProgressCalback(this, EVENT.CLEANING);
+            //FileWriter.delete(tmpFolder);
+            restoreOriginalProjectData(this, originalProjectFolder);
+            this._allowConcurrence = false;
+            endOperation(this);
+            return result;
+        } catch (error) {
+            this._allowConcurrence = false;
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1659,85 +1466,83 @@ export class SFConnector {
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieveLocalSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
+    async retrieveLocalSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<RetrieveResult>(async (resolve, reject) => {
-            try {
-                if (!this.projectFolder) {
-                    throw new DataRequiredException('projectFolder');
-                }
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                let typesToRetrieve: { [key: string]: MetadataType } | undefined;
-                tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if (types) {
-                    typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
-                }
-                const originalProjectFolder = this.projectFolder;
-                callEvent(this, EVENT.PREPARE);
-                const dataToRetrieve: string[] = [];
-                Object.keys(SpecialMetadata).forEach(function (key: string) {
-                    if (!typesToRetrieve || typesToRetrieve[key]) {
-                        if (!dataToRetrieve.includes(key)) {
-                            dataToRetrieve.push(key);
-                        }
-                        for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
-                            if (!dataToRetrieve.includes(child)) {
-                                dataToRetrieve.push(child);
-                            }
-                        }
-                    }
-                });
-                this._allowConcurrence = true;
-                const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
-                this._increment = calculateIncrement(metadataToProcess);
-                callEvent(this, EVENT.LOADING_LOCAL);
-                const metadataDetails = await this.listMetadataTypes();
-                const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
-                const metadataFromFileSystem = MetadataFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
-                const metadata: { [key: string]: MetadataType } = {};
-                for (const type of dataToRetrieve) {
-                    if (metadataFromFileSystem[type]) {
-                        metadata[type] = metadataFromFileSystem[type];
-                    }
-                }
-                MetadataUtils.checkAll(metadata);
-                try {
-                    if (FileChecker.isExists(tmpFolder)) {
-                        FileWriter.delete(tmpFolder);
-                    }
-                } catch (error) {
-
-                }
-                FileWriter.createFolderSync(tmpFolder);
-                callEvent(this, EVENT.CREATE_PROJECT);
-                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                if (this.packageFolder) {
-                    const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
-                }
-                FileWriter.delete(this.projectFolder + '/.forceignore');
-                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callEvent(this, EVENT.RETRIEVE);
-                const retrieveOut = await this.retrieve(false);
-                waitForFiles(this.projectFolder);
-                callEvent(this, EVENT.COPY_DATA);
-                if (typesToRetrieve) {
-                    copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadataFromFileSystem, compress, sortOrder);
-                }
-                //callProgressCalback(this, EVENT.CLEANING);
-                //FileWriter.delete(tmpFolder);
-                restoreOriginalProjectData(this, originalProjectFolder);
-                this._allowConcurrence = false;
-                endOperation(this);
-                resolve(retrieveOut);
-            } catch (error) {
-                this._allowConcurrence = false;
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.projectFolder) {
+                throw new DataRequiredException('projectFolder');
             }
-        });
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
+            }
+            let typesToRetrieve: { [key: string]: MetadataType } | undefined;
+            tmpFolder = Validator.validateFolderPath(tmpFolder);
+            if (types) {
+                typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
+            }
+            const originalProjectFolder = this.projectFolder;
+            callEvent(this, EVENT.PREPARE);
+            const dataToRetrieve: string[] = [];
+            Object.keys(SpecialMetadata).forEach(function (key: string) {
+                if (!typesToRetrieve || typesToRetrieve[key]) {
+                    if (!dataToRetrieve.includes(key)) {
+                        dataToRetrieve.push(key);
+                    }
+                    for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
+                        if (!dataToRetrieve.includes(child)) {
+                            dataToRetrieve.push(child);
+                        }
+                    }
+                }
+            });
+            this._allowConcurrence = true;
+            const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
+            this._increment = calculateIncrement(metadataToProcess);
+            callEvent(this, EVENT.LOADING_LOCAL);
+            const metadataDetails = await this.listMetadataTypes();
+            const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
+            const metadataFromFileSystem = MetadataFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
+            const metadata: { [key: string]: MetadataType } = {};
+            for (const type of dataToRetrieve) {
+                if (metadataFromFileSystem[type]) {
+                    metadata[type] = metadataFromFileSystem[type];
+                }
+            }
+            MetadataUtils.checkAll(metadata);
+            try {
+                if (FileChecker.isExists(tmpFolder)) {
+                    FileWriter.delete(tmpFolder);
+                }
+            } catch (error) {
+
+            }
+            FileWriter.createFolderSync(tmpFolder);
+            callEvent(this, EVENT.CREATE_PROJECT);
+            await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+            if (this.packageFolder) {
+                new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
+            }
+            FileWriter.delete(this.projectFolder + '/.forceignore');
+            await this.setAuthOrg(this.usernameOrAlias);
+            callEvent(this, EVENT.RETRIEVE);
+            const retrieveOut = await this.retrieve(false);
+            waitForFiles(this.projectFolder);
+            callEvent(this, EVENT.COPY_DATA);
+            if (typesToRetrieve) {
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadataFromFileSystem, compress, sortOrder);
+            }
+            //callProgressCalback(this, EVENT.CLEANING);
+            //FileWriter.delete(tmpFolder);
+            restoreOriginalProjectData(this, originalProjectFolder);
+            this._allowConcurrence = false;
+            endOperation(this);
+            return retrieveOut;
+        } catch (error) {
+            this._allowConcurrence = false;
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1762,89 +1567,87 @@ export class SFConnector {
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieveMixedSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, downloadAll?: boolean, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
+    async retrieveMixedSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, downloadAll?: boolean, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<RetrieveResult>(async (resolve, reject) => {
-            try {
-                if (!this.projectFolder) {
-                    throw new DataRequiredException('projectFolder');
-                }
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                let typesToRetrieve: { [key: string]: MetadataType } | undefined;
-                tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if (types) {
-                    typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
-                }
-                const originalProjectFolder = this.projectFolder;
-                callEvent(this, EVENT.PREPARE);
-                const dataToRetrieve: string[] = [];
-                Object.keys(SpecialMetadata).forEach(function (key) {
-                    if (!typesToRetrieve || typesToRetrieve[key]) {
-                        if (!dataToRetrieve.includes(key)) {
-                            dataToRetrieve.push(key);
-                        }
-                        for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
-                            if (!dataToRetrieve.includes(child)) {
-                                dataToRetrieve.push(child);
-                            }
-                        }
-                    }
-                });
-                this._allowConcurrence = true;
-                const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
-                this._increment = calculateIncrement(metadataToProcess);
-                callEvent(this, EVENT.LOADING_LOCAL);
-                const metadataDetails = await this.listMetadataTypes();
-                const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
-                const metadataFromFileSystem = MetadataFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
-                let metadata: { [key: string]: MetadataType } = {};
-                for (const type of dataToRetrieve) {
-                    if (metadataFromFileSystem[type]) {
-                        metadata[type] = metadataFromFileSystem[type];
-                    }
-                }
-                callEvent(this, EVENT.LOADING_ORG);
-                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
-                this._allowConcurrence = true;
-                metadata = MetadataUtils.combineMetadata(metadata, metadataFromOrg);
-                MetadataUtils.checkAll(metadata);
-                try {
-                    if (FileChecker.isExists(tmpFolder)) {
-                        FileWriter.delete(tmpFolder);
-                    }
-                } catch (error) {
-
-                }
-                FileWriter.createFolderSync(tmpFolder);
-                callEvent(this, EVENT.CREATE_PROJECT);
-                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                if (this.packageFolder) {
-                    const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
-                }
-                FileWriter.delete(this.projectFolder + '/.forceignore');
-                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callEvent(this, EVENT.RETRIEVE);
-                const retrieveOut = await this.retrieve(false);
-                waitForFiles(this.projectFolder);
-                callEvent(this, EVENT.COPY_DATA);
-                if (typesToRetrieve) {
-                    copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadata, compress, sortOrder);
-                }
-                //callProgressCalback(this, EVENT.CLEANING);
-                //FileWriter.delete(tmpFolder);
-                restoreOriginalProjectData(this, originalProjectFolder);
-                this._allowConcurrence = false;
-                endOperation(this);
-                resolve(retrieveOut);
-            } catch (error) {
-                this._allowConcurrence = false;
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.projectFolder) {
+                throw new DataRequiredException('projectFolder');
             }
-        });
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
+            }
+            let typesToRetrieve: { [key: string]: MetadataType } | undefined;
+            tmpFolder = Validator.validateFolderPath(tmpFolder);
+            if (types) {
+                typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
+            }
+            const originalProjectFolder = this.projectFolder;
+            callEvent(this, EVENT.PREPARE);
+            const dataToRetrieve: string[] = [];
+            Object.keys(SpecialMetadata).forEach(function (key) {
+                if (!typesToRetrieve || typesToRetrieve[key]) {
+                    if (!dataToRetrieve.includes(key)) {
+                        dataToRetrieve.push(key);
+                    }
+                    for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
+                        if (!dataToRetrieve.includes(child)) {
+                            dataToRetrieve.push(child);
+                        }
+                    }
+                }
+            });
+            this._allowConcurrence = true;
+            const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
+            this._increment = calculateIncrement(metadataToProcess);
+            callEvent(this, EVENT.LOADING_LOCAL);
+            const metadataDetails = await this.listMetadataTypes();
+            const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
+            const metadataFromFileSystem = MetadataFactory.createMetadataTypesFromFileSystem(folderMetadataMap, this.projectFolder);
+            let metadata: { [key: string]: MetadataType } = {};
+            for (const type of dataToRetrieve) {
+                if (metadataFromFileSystem[type]) {
+                    metadata[type] = metadataFromFileSystem[type];
+                }
+            }
+            callEvent(this, EVENT.LOADING_ORG);
+            const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
+            this._allowConcurrence = true;
+            metadata = MetadataUtils.combineMetadata(metadata, metadataFromOrg);
+            MetadataUtils.checkAll(metadata);
+            try {
+                if (FileChecker.isExists(tmpFolder)) {
+                    FileWriter.delete(tmpFolder);
+                }
+            } catch (error) {
+
+            }
+            FileWriter.createFolderSync(tmpFolder);
+            callEvent(this, EVENT.CREATE_PROJECT);
+            await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+            if (this.packageFolder) {
+                new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadata, this.packageFolder);
+            }
+            FileWriter.delete(this.projectFolder + '/.forceignore');
+            await this.setAuthOrg(this.usernameOrAlias);
+            callEvent(this, EVENT.RETRIEVE);
+            const retrieveOut = await this.retrieve(false);
+            waitForFiles(this.projectFolder);
+            callEvent(this, EVENT.COPY_DATA);
+            if (typesToRetrieve) {
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadata, compress, sortOrder);
+            }
+            //callProgressCalback(this, EVENT.CLEANING);
+            //FileWriter.delete(tmpFolder);
+            restoreOriginalProjectData(this, originalProjectFolder);
+            this._allowConcurrence = false;
+            endOperation(this);
+            return retrieveOut;
+        } catch (error) {
+            this._allowConcurrence = false;
+            endOperation(this);
+            throw error;
+        }
     }
 
     /**
@@ -1869,99 +1672,93 @@ export class SFConnector {
      * @throws {WrongFormatException} If types object or file is not a JSON file or not have the correct Metadata JSON format
      * @throws {WrongDatatypeException} If the api version is not a Number or String. Can be undefined
      */
-    retrieveOrgSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, downloadAll?: boolean, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
+    async retrieveOrgSpecialTypes(tmpFolder: string, types?: string | { [key: string]: MetadataType }, downloadAll?: boolean, compress?: boolean, sortOrder?: string): Promise<RetrieveResult> {
         startOperation(this);
         resetProgress(this);
-        return new Promise<RetrieveResult>(async (resolve, reject) => {
-            try {
-                if (!this.projectFolder) {
-                    throw new DataRequiredException('projectFolder');
-                }
-                if (!this.usernameOrAlias) {
-                    throw new DataRequiredException('usernameOrAlias');
-                }
-                let typesToRetrieve: { [key: string]: MetadataType } | undefined;
-                tmpFolder = Validator.validateFolderPath(tmpFolder);
-                if (types) {
-                    typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
-                }
-                const originalProjectFolder = this.projectFolder;
-                callEvent(this, EVENT.PREPARE);
-                const dataToRetrieve: string[] = [];
-                Object.keys(SpecialMetadata).forEach(function (key) {
-                    if (!typesToRetrieve || typesToRetrieve[key]) {
-                        if (!dataToRetrieve.includes(key)) {
-                            dataToRetrieve.push(key);
-                        }
-                        for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
-                            if (!dataToRetrieve.includes(child)) {
-                                dataToRetrieve.push(child);
-                            }
-                        }
-                    }
-                });
-                this._allowConcurrence = true;
-                const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
-                this._increment = calculateIncrement(metadataToProcess);
-                callEvent(this, EVENT.LOADING_ORG);
-                const metadataDetails = await this.listMetadataTypes();
-                const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
-                const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
-                this._allowConcurrence = true;
-                MetadataUtils.checkAll(metadataFromOrg);
-                try {
-                    if (FileChecker.isExists(tmpFolder)) {
-                        FileWriter.delete(tmpFolder);
-                    }
-                } catch (error) {
-
-                }
-                FileWriter.createFolderSync(tmpFolder);
-                callEvent(this, EVENT.CREATE_PROJECT);
-                const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
-                if (this.packageFolder) {
-                    const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadataFromOrg, this.packageFolder);
-                }
-                FileWriter.delete(this.projectFolder + '/.forceignore');
-                const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
-                callEvent(this, EVENT.RETRIEVE);
-                const retrieveOut = await this.retrieve(false);
-                waitForFiles(this.projectFolder);
-                callEvent(this, EVENT.COPY_DATA);
-                if (typesToRetrieve) {
-                    copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadataFromOrg, compress, sortOrder);
-                }
-                //callProgressCalback(this, EVENT.CLEANING);
-                //FileWriter.delete(tmpFolder);
-                restoreOriginalProjectData(this, originalProjectFolder);
-                this._allowConcurrence = false;
-                endOperation(this);
-                resolve(retrieveOut);
-            } catch (error) {
-                this._allowConcurrence = false;
-                endOperation(this);
-                reject(error);
+        try {
+            if (!this.projectFolder) {
+                throw new DataRequiredException('projectFolder');
             }
-        });
+            if (!this.usernameOrAlias) {
+                throw new DataRequiredException('usernameOrAlias');
+            }
+            let typesToRetrieve: { [key: string]: MetadataType } | undefined;
+            tmpFolder = Validator.validateFolderPath(tmpFolder);
+            if (types) {
+                typesToRetrieve = MetadataFactory.deserializeMetadataTypes(Validator.validateMetadataJSON(types));
+            }
+            const originalProjectFolder = this.projectFolder;
+            callEvent(this, EVENT.PREPARE);
+            const dataToRetrieve: string[] = [];
+            Object.keys(SpecialMetadata).forEach(function (key) {
+                if (!typesToRetrieve || typesToRetrieve[key]) {
+                    if (!dataToRetrieve.includes(key)) {
+                        dataToRetrieve.push(key);
+                    }
+                    for (let child of SpecialMetadata[key as keyof SpecialMetadataDef]) {
+                        if (!dataToRetrieve.includes(child)) {
+                            dataToRetrieve.push(child);
+                        }
+                    }
+                }
+            });
+            this._allowConcurrence = true;
+            const metadataToProcess = getMetadataTypeNames(dataToRetrieve);
+            this._increment = calculateIncrement(metadataToProcess);
+            callEvent(this, EVENT.LOADING_ORG);
+            const metadataDetails = await this.listMetadataTypes();
+            const folderMetadataMap = MetadataFactory.createFolderMetadataMap(metadataDetails);
+            const metadataFromOrg = await this.describeMetadataTypes(dataToRetrieve, downloadAll);
+            this._allowConcurrence = true;
+            MetadataUtils.checkAll(metadataFromOrg);
+            try {
+                if (FileChecker.isExists(tmpFolder)) {
+                    FileWriter.delete(tmpFolder);
+                }
+            } catch (error) {
+
+            }
+            FileWriter.createFolderSync(tmpFolder);
+            callEvent(this, EVENT.CREATE_PROJECT);
+            const createProjectOut = await this.createSFDXProject(PROJECT_NAME, tmpFolder, undefined, true);
+            if (this.packageFolder) {
+                const packageResult = new PackageGenerator(this.apiVersion).setExplicit().createPackage(metadataFromOrg, this.packageFolder);
+            }
+            FileWriter.delete(this.projectFolder + '/.forceignore');
+            const setDefaultOrgOut = await this.setAuthOrg(this.usernameOrAlias);
+            callEvent(this, EVENT.RETRIEVE);
+            const retrieveOut = await this.retrieve(false);
+            waitForFiles(this.projectFolder);
+            callEvent(this, EVENT.COPY_DATA);
+            if (typesToRetrieve) {
+                copyMetadataFiles(this, originalProjectFolder, folderMetadataMap, typesToRetrieve, metadataFromOrg, compress, sortOrder);
+            }
+            //callProgressCalback(this, EVENT.CLEANING);
+            //FileWriter.delete(tmpFolder);
+            restoreOriginalProjectData(this, originalProjectFolder);
+            this._allowConcurrence = false;
+            endOperation(this);
+            return retrieveOut;
+        } catch (error) {
+            this._allowConcurrence = false;
+            endOperation(this);
+            throw error;
+        }
     }
 
-    private handleResponse(response: any, onSuccess: () => void) {
+    private handleResponse(response: any) {
         if (response !== undefined) {
             if (typeof response === 'object') {
-                if (response.status === 0) {
-                    onSuccess.call(this);
-                } else {
+                if (response.status !== 0) {
                     throw new ConnectionException(response.message);
                 }
-            } else {
-                onSuccess.call(this);
             }
         } else {
             response = {
                 result: {}
             };
-            onSuccess.call(this);
         }
+        return response;
     }
 }
 
@@ -2109,58 +1906,91 @@ function callEvent(connection: SFConnector, stage: string, entityName?: string, 
     connection._event.emit(stage, new ProgressStatus(connection._increment, connection._percentage, entityName, entityType, entityItem, data));
 }
 
-function downloadMetadata(sfConnection: SFConnector, connection: Connection, metadataToDownload: string[], downloadAll?: boolean, foldersByType?: { [key: string]: any[] }, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
-    return new Promise<{ [key: string]: MetadataType }>(async (resolve, reject) => {
+async function downloadMetadata(sfConnection: SFConnector, connection: Connection, metadataToDownload: string[], downloadAll?: boolean, foldersByType?: { [key: string]: any[] }, groupGlobalActions?: boolean): Promise<{ [key: string]: MetadataType }> {
+    const metadata: { [key: string]: MetadataType } = {};
+    for (const metadataTypeName of metadataToDownload) {
         try {
-            const metadata: { [key: string]: MetadataType } = {};
-            for (const metadataTypeName of metadataToDownload) {
-                try {
-                    if (sfConnection._abort) {
-                        resolve(metadata);
-                        return;
-                    }
-                    callEvent(sfConnection, EVENT.BEFORE_DOWNLOAD_TYPE, metadataTypeName);
-                    if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
-                        const result = await connection.query(METADATA_QUERIES[metadataTypeName]);
-                        if (!result.records || result.records.length <= 0) {
-                            continue;
-                        }
-                        const metadataType = MetadataFactory.createMetadataTypeFromRecords(metadataTypeName, result.records, foldersByType, sfConnection.namespacePrefix, downloadAll);
-                        sfConnection._percentage += sfConnection._increment;
-                        if (metadataType !== undefined && metadataType.hasChilds()) {
-                            metadata[metadataTypeName] = metadataType;
-                        }
-                        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
-                    } else if (NotIncludedMetadata[metadataTypeName as keyof NotIncludedMetadataDef]) {
-                        const metadataType = MetadataFactory.createNotIncludedMetadataType(metadataTypeName);
-                        sfConnection._percentage += sfConnection._increment;
-                        if (metadataType !== undefined && metadataType.hasChilds()) {
-                            metadata[metadataTypeName] = metadataType;
-                        }
-                        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
-                    } else if (sfConnection.usernameOrAlias) {
-                        const query: ListMetadataQuery = {
-                            type: metadataTypeName,
-                        };
-                        const apiVersion = sfConnection.apiVersion !== undefined ? ProjectUtils.getApiAsString(sfConnection.apiVersion) : undefined;
-                        const result = await connection.metadata.list(query, apiVersion);
-                        const metadataType = MetadataFactory.createMetedataTypeFromResponse(metadataTypeName, result, sfConnection.namespacePrefix, downloadAll, groupGlobalActions);
-                        sfConnection._percentage += sfConnection._increment;
-                        if (metadataType !== undefined && metadataType.hasChilds()) {
-                            metadata[metadataTypeName] = metadataType;
-                        }
-                        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
-                    }
-                } catch (error) {
-                    const err = error as Error;
-                    callEvent(sfConnection, EVENT.DOWNLOAD_ERROR, metadataTypeName, undefined, undefined, err.message);
-                }
+            if (sfConnection._abort) {
+                return metadata;
             }
-            resolve(metadata);
+            callEvent(sfConnection, EVENT.BEFORE_DOWNLOAD_TYPE, metadataTypeName);
+            if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
+                const result = await connection.query(METADATA_QUERIES[metadataTypeName]);
+                if (!result.records || result.records.length <= 0) {
+                    continue;
+                }
+                const metadataType = MetadataFactory.createMetadataTypeFromRecords(metadataTypeName, result.records, foldersByType, sfConnection.namespacePrefix, downloadAll);
+                sfConnection._percentage += sfConnection._increment;
+                if (metadataType !== undefined && metadataType.hasChilds()) {
+                    metadata[metadataTypeName] = metadataType;
+                }
+                callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+            } else if (NotIncludedMetadata[metadataTypeName as keyof NotIncludedMetadataDef]) {
+                const metadataType = MetadataFactory.createNotIncludedMetadataType(metadataTypeName);
+                sfConnection._percentage += sfConnection._increment;
+                if (metadataType !== undefined && metadataType.hasChilds()) {
+                    metadata[metadataTypeName] = metadataType;
+                }
+                callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+            } else if (sfConnection.usernameOrAlias) {
+                const query: ListMetadataQuery = {
+                    type: metadataTypeName,
+                };
+                const apiVersion = sfConnection.apiVersion !== undefined ? ProjectUtils.getApiAsString(sfConnection.apiVersion) : undefined;
+                const result = await connection.metadata.list(query, apiVersion);
+                const metadataType = MetadataFactory.createMetedataTypeFromResponse(metadataTypeName, result, sfConnection.namespacePrefix, downloadAll, groupGlobalActions);
+                sfConnection._percentage += sfConnection._increment;
+                if (metadataType !== undefined && metadataType.hasChilds()) {
+                    metadata[metadataTypeName] = metadataType;
+                }
+                callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+            }
         } catch (error) {
-            reject(error);
+            const err = error as Error;
+            callEvent(sfConnection, EVENT.DOWNLOAD_ERROR, metadataTypeName, undefined, undefined, err.message);
         }
-    });
+    }
+    return metadata;
+}
+
+async function downloadMetadataType(sfConnection: SFConnector, connection: Connection, metadataTypeName: string, downloadAll?: boolean, foldersByType?: { [key: string]: any[] }, groupGlobalActions?: boolean) {
+    let metadataTypeResult: MetadataType | undefined;
+    if (sfConnection._abort) {
+        return undefined;
+    }
+    callEvent(sfConnection, EVENT.BEFORE_DOWNLOAD_TYPE, metadataTypeName);
+    if (metadataTypeName === MetadataTypes.REPORT || metadataTypeName === MetadataTypes.DASHBOARD || metadataTypeName === MetadataTypes.EMAIL_TEMPLATE || metadataTypeName === MetadataTypes.DOCUMENT) {
+        const result = await connection.query(METADATA_QUERIES[metadataTypeName]);
+        if (!result.records || result.records.length <= 0) {
+            return undefined;
+        }
+        const metadataType = MetadataFactory.createMetadataTypeFromRecords(metadataTypeName, result.records, foldersByType, sfConnection.namespacePrefix, downloadAll);
+        sfConnection._percentage += sfConnection._increment;
+        if (metadataType !== undefined && metadataType.hasChilds()) {
+            metadataTypeResult = metadataType;
+        }
+        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+    } else if (NotIncludedMetadata[metadataTypeName as keyof NotIncludedMetadataDef]) {
+        const metadataType = MetadataFactory.createNotIncludedMetadataType(metadataTypeName);
+        sfConnection._percentage += sfConnection._increment;
+        if (metadataType !== undefined && metadataType.hasChilds()) {
+            metadataTypeResult = metadataType;
+        }
+        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+    } else if (sfConnection.usernameOrAlias) {
+        const query: ListMetadataQuery = {
+            type: metadataTypeName,
+        };
+        const apiVersion = sfConnection.apiVersion !== undefined ? ProjectUtils.getApiAsString(sfConnection.apiVersion) : undefined;
+        const result = await connection.metadata.list(query, apiVersion);
+        const metadataType = MetadataFactory.createMetedataTypeFromResponse(metadataTypeName, result, sfConnection.namespacePrefix, downloadAll, groupGlobalActions);
+        sfConnection._percentage += sfConnection._increment;
+        if (metadataType !== undefined && metadataType.hasChilds()) {
+            metadataTypeResult = metadataType;
+        }
+        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_TYPE, metadataTypeName, undefined, undefined, metadataType);
+    }
+    return metadataTypeResult;
 }
 
 function downloadSObjectsData(sfConnection: SFConnector, connection: Connection, sObjects: string[]): Promise<{ [key: string]: SObject }> {
@@ -2191,6 +2021,24 @@ function downloadSObjectsData(sfConnection: SFConnector, connection: Connection,
             reject(error);
         }
     });
+}
+
+async function downloadSObject(sfConnection: SFConnector, connection: Connection, sObject: string) {
+    try {
+        if (sfConnection._abort) {
+            return undefined;
+        }
+        callEvent(sfConnection, EVENT.BEFORE_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject);
+        const result = await connection.describe(sObject);
+        sfConnection._percentage += sfConnection._increment;
+        const object = new SObject(result);
+        callEvent(sfConnection, EVENT.AFTER_DOWNLOAD_OBJECT, MetadataTypes.CUSTOM_OBJECT, sObject, undefined, object);
+        return object;
+    } catch (error) {
+        const err = error as Error;
+        callEvent(sfConnection, EVENT.DOWNLOAD_ERROR, sObject, undefined, undefined, err.message);
+        return undefined;
+    }
 }
 
 function getBatches(connection: SFConnector, objects: string[]) {

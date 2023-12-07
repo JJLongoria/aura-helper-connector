@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [2.3.0 - 2023-12-07]
+### Changed
+- Optimized all methods, specially, methods like describe metadata or sobjects to make it at least 50% faster
+
 ## [2.1.1 - 2022-06-21]
 ### Fixed
 - Fixed the Email template group problem when download it from org
